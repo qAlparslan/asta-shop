@@ -23,7 +23,11 @@ echo "==> frontend bağımlılıklar"
 npm install --no-audit --no-fund
 
 echo "==> frontend build (dist/)"
-rm -rf dist
+# aaPanel dist/.user.ini güvenlik dosyasını korur; immutable ise rm -rf takılır.
+if [[ -d dist ]]; then
+    chattr -i dist/.user.ini 2>/dev/null || true
+    find dist -mindepth 1 -not -name '.user.ini' -exec rm -rf {} + 2>/dev/null || true
+fi
 npm run build
 
 if [[ ! -f dist/index.html ]]; then
