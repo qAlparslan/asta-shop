@@ -155,7 +155,7 @@ Sağlık kontrolü: `GET /api/health`.
 | Servis | Rol |
 | -------- | ----- |
 | **PayTR iFrame** | Tek ödeme sağlayıcısı. `POST /api/payments/create-payment` → iframe token, `POST /api/payments/paytr-notification` → arka bildirim. Sipariş kesinleşmesi yalnızca bildirim hash doğrulamasına bağlıdır. |
-| **Paraşüt v4** | OAuth2; ödeme sonrası **`invoiceService`** arka plan hattı `.env` ile adım adım: **`PARASUT_STEP_CREATE_SALES_INVOICE`**, **`PARASUT_STEP_CONVERT_ESTIMATE_TO_OFFICIAL`** veya `PARASUT_SALES_INVOICE_ITEM_TYPE=invoice` (doğrudan resmi), **`PARASUT_STEP_RECORD_PAYMENT`**, **`PARASUT_STEP_EARCHIVE_TO_GIB`** + `PARASUT_GIB_IRREVERSIBLE_CONFIRM=YES`. **`PARASUT_AUTO_CONVERT_WHEN_EARCHIVE`** ile e-arşiv açıkken otomatik resmileştirmeyi kapatılabilir. Legacy: `PARASUT_CONVERT_ESTIMATE_TO_INVOICE`, `PARASUT_RECORD_PAYMENT_*`, `PARASUT_SUBMIT_EARCHIVE_TO_GIB`. |
+| **Paraşüt v4** | OAuth2; ödeme sonrası **`invoiceService`** arka planda Paraşüt'te **yalnızca TASLAK satış faturası (estimate / proforma)** açar. Resmileştirme, tahsilat kaydı, e-arşiv ve GİB iletimi YAPILMAZ — Paraşüt panelinden elle yönetin. Anahtarlar: `PARASUT_AUTO_DRAFT`, `PARASUT_DEFAULT_PRODUCT_ID`, `PARASUT_PRICE_INCLUDES_VAT`, `PARASUT_DEFAULT_VAT_RATE`. |
 | **Nodemailer** | Sipariş onayı, şifre sıfırlama, admin bildirimi, kampanya vb. |
 | **Sentry** | Sunucu hata izleme (isteğe bağlı DSN ile) |
 
@@ -210,8 +210,8 @@ Gerçek değerler **`backend/.env`** içindedir (depoya **işlenmez**).
 - **AUTH / GÜVENLİK:** JWT sırrı, rate limit parametreleri
 - **ÖDEME:** PayTR kimlikleri (`PAYTR_MERCHANT_ID`, `PAYTR_MERCHANT_KEY`, `PAYTR_MERCHANT_SALT`), test/debug bayrakları, genel geri bildirim URL’leri (`BACKEND_PUBLIC_URL`, `FRONTEND_PUBLIC_URL`)
 - **MAİL:** SMTP veya transactional sağlayıcı ayarları, bildirim e‑posta listesi (`ADMIN_NOTIFICATION_EMAIL`)
-- **FRONTEND:** `FRONTEND_PUBLIC_URL` — sitemap, ödeme dönüş URL’leri, Paraşüt `internet_sale.url` için referans
-- **PARASUT_\*** Anahtarlar ve yeni pipeline bayrakları `backend/.env` içinde açıklamalı bloklar halinde güncellenir (credentials, firma ID, tahsilat hesabı, e‑arşiv onayı, vb.)
+- **FRONTEND:** `FRONTEND_PUBLIC_URL` — sitemap ve ödeme dönüş URL’leri için referans
+- **PARASUT_\*** Sadece TASLAK satış faturası için gerekli anahtarlar (`PARASUT_CLIENT_ID`, `PARASUT_CLIENT_SECRET`, `PARASUT_USERNAME`, `PARASUT_PASSWORD`, `PARASUT_COMPANY_ID`, `PARASUT_DEFAULT_PRODUCT_ID`, `PARASUT_AUTO_DRAFT`, vs.). `backend/.env` içinde açıklamalı.
 
 Tam liste için depodaki güncel `backend/.env` şablon yorumlarına bakın.
 

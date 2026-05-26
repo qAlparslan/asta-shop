@@ -1,6 +1,7 @@
 /**
- * Paraşüt API v4 — Satış faturası (varsayılan: taslak / proforma = `estimate`).
- * OAuth2 + cari (e-posta veya VKN/TCKN) + kalemlerde dinamik KDV.
+ * Paraşüt API v4 — Yalnızca TASLAK (estimate / proforma) satış faturası oluşturma.
+ * Resmileştirme, tahsilat kaydı, e-arşiv ve GİB iletimi bu modülde YAPILMAZ
+ * (gereksiz görüldü; akış sadeleştirildi).
  */
 
 const Order = require('../models/Order');
@@ -27,7 +28,7 @@ function hasParasutCredentials() {
 }
 
 function isParasutAutomationEnabled() {
-    if (String(process.env.PARASUT_AUTO_SALES_INVOICE || 'true').toLowerCase() === 'false') {
+    if (String(process.env.PARASUT_AUTO_DRAFT || 'true').toLowerCase() === 'false') {
         return false;
     }
     return hasParasutCredentials();
@@ -49,7 +50,6 @@ function escapeHtml(s) {
         .replace(/"/g, '&quot;');
 }
 
-/** Siparişteki fatura kimliği — kurumsal girilmediyse sahte TCKN (isteğe bağlı senaryo). */
 function effectiveTaxDigits(order) {
     const raw = String(order.invoiceTaxNumber || '').replace(/\D/g, '');
     if (raw.length === 10 || raw.length === 11) return raw;
@@ -63,10 +63,6 @@ function effectiveInvoiceTitle(order) {
 }
 
 class ParasutSalesInvoiceService {
-    /**
-     * @param {string} companyId
-     * @param {string} email
-     */
     async findContactIdByEmail(companyId, email) {
         const e = encodeURIComponent(String(email || '').trim().toLowerCase());
         if (!e) return null;
@@ -117,9 +113,7 @@ class ParasutSalesInvoiceService {
         return String(id);
     }
 
-    /**
-     * Önce e-posta, sonra vergi numarası; yoksa oluştur.
-     */
+    /** Önce e-posta, sonra vergi no; yoksa oluştur. */
     async findOrCreateContactId(companyId, order) {
         const byMail = await this.findContactIdByEmail(companyId, order.email);
         if (byMail) return byMail;
@@ -129,9 +123,7 @@ class ParasutSalesInvoiceService {
         return this.createContact(companyId, order);
     }
 
-    /**
-     * @returns {Promise<object[]>} sales_invoice_details JSON:API gövdeleri
-     */
+    /** @returns {Promise<object[]>} sales_invoice_details JSON:API gövdeleri */
     async buildSalesInvoiceDetailRows(order, defaultProductId, priceIncludesVat) {
         const items = Array.isArray(order.items) ? order.items : [];
         const pid = String(defaultProductId);
@@ -198,14 +190,10 @@ class ParasutSalesInvoiceService {
     }
 
     /**
-     * Taslak satış faturası — `item_type` varsayılan `estimate` (Paraşüt’te proforma/taslak).
+     * Taslak satış faturası oluştur — item_type her zaman 'estimate'.
      * @param {import('../models/Order')} order
-     * @param {{
-     *   itemTypeOverride?: string,
-     *   extraInvoiceAttributes?: Record<string, unknown>,
-     * } | undefined} [opts]
      */
-    async createDraftSalesInvoice(order, opts = {}) {
+    async createDraftSalesInvoice(order) {
         const productId = (process.env.PARASUT_DEFAULT_PRODUCT_ID || '').trim();
         if (!productId) {
             throw new Error(
@@ -217,12 +205,6 @@ class ParasutSalesInvoiceService {
         const companyId = cfg.companyId;
         const priceIncludesVat =
             String(process.env.PARASUT_PRICE_INCLUDES_VAT || 'true').toLowerCase() === 'true';
-        const itemTypeEnv = (process.env.PARASUT_SALES_INVOICE_ITEM_TYPE || 'estimate').trim();
-        const itemType = String(opts.itemTypeOverride || itemTypeEnv).trim();
-        const extraAttrs =
-            opts.extraInvoiceAttributes && typeof opts.extraInvoiceAttributes === 'object'
-                ? opts.extraInvoiceAttributes
-                : {};
 
         const contactId = await this.findOrCreateContactId(companyId, order);
         const detailRows = await this.buildSalesInvoiceDetailRows(
@@ -237,14 +219,13 @@ class ParasutSalesInvoiceService {
             data: {
                 type: 'sales_invoices',
                 attributes: {
-                    item_type: itemType,
+                    item_type: 'estimate',
                     description: `E-ticaret sipariş #${oidShort}`.slice(0, 255),
                     issue_date: issueDate,
                     due_date: issueDate,
                     currency: 'TRL',
                     order_no: oidShort,
                     order_date: issueDate,
-                    ...extraAttrs,
                 },
                 relationships: {
                     contact: { data: { type: 'contacts', id: String(contactId) } },
@@ -259,102 +240,9 @@ class ParasutSalesInvoiceService {
 
         return {
             salesInvoiceId: String(salesInvoiceId),
-            itemType,
+            itemType: 'estimate',
         };
     }
-}
-
-/**
- * Proforma (estimate) → resmi satış faturası; stok hareketleri tetiklenebilir.
- * @see Paraşüt API PATCH .../sales_invoices/{id}/convert_to_invoice
- */
-async function convertParasutEstimateToInvoice(companyId, salesInvoiceId) {
-    const id = String(salesInvoiceId);
-    return apiRequest('PATCH', `/${companyId}/sales_invoices/${id}/convert_to_invoice`, {
-        data: {
-            id,
-            type: 'sales_invoices',
-            attributes: {},
-        },
-    });
-}
-
-/**
- * Satış faturasına tahsilat kaydı.
- */
-async function payParasutSalesInvoice(companyId, salesInvoiceId, { accountId, amount, dateStr }) {
-    const id = String(salesInvoiceId);
-    const acc = Number(accountId);
-    if (!Number.isFinite(acc) || acc <= 0) {
-        throw new Error('Paraşüt ödeme: account_id geçersiz (PARASUT_PAY_ACCOUNT_ID sayısal olmalı).');
-    }
-    const body = {
-        data: {
-            type: 'payments',
-            attributes: {
-                account_id: acc,
-                date: dateStr,
-                amount: round2(Number(amount)),
-            },
-        },
-    };
-    return apiRequest('POST', `/${companyId}/sales_invoices/${id}/payments`, body);
-}
-
-/**
- * E-arşiv oluşturma isteği — yanıt genelde `trackable_jobs` (async iş).
- * @returns {Promise<{ jobId: string, raw: object }>}
- */
-async function createParasutEArchive(companyId, salesInvoiceId, internetSale) {
-    const attrs = {};
-    if (internetSale && typeof internetSale === 'object' && Object.keys(internetSale).length) {
-        attrs.internet_sale = internetSale;
-    }
-    const sid = String(salesInvoiceId);
-    const body = {
-        data: {
-            type: 'e_archives',
-            attributes: attrs,
-            relationships: {
-                sales_invoice: { data: { id: sid, type: 'sales_invoices' } },
-            },
-        },
-    };
-    const raw = await apiRequest('POST', `/${companyId}/e_archives`, body);
-    const jobId = raw?.data?.id;
-    const dtype = raw?.data?.type;
-    if (!jobId || dtype !== 'trackable_jobs') {
-        throw new Error(
-            'Paraşüt e-arşiv: beklenen trackable_jobs yanıtı gelmedi (id veya tip eksik).',
-        );
-    }
-    return { jobId: String(jobId), raw };
-}
-
-/**
- * @param {string} companyId
- * @param {string} jobId trackable_jobs id
- * @param {{ maxMs?: number, intervalMs?: number }} [opts]
- */
-async function waitParasutTrackableJob(companyId, jobId, opts = {}) {
-    const maxMs = Number(opts.maxMs ?? Number(process.env.PARASUT_TRACKABLE_JOB_MAX_MS || 120000));
-    const intervalMs = Number(opts.intervalMs ?? Number(process.env.PARASUT_TRACKABLE_JOB_POLL_MS || 2000));
-    const start = Date.now();
-    const cid = String(companyId);
-    const jid = String(jobId);
-
-    while (Date.now() - start < maxMs) {
-        const res = await apiRequest('GET', `/${cid}/trackable_jobs/${jid}`);
-        const status = res?.data?.attributes?.status;
-        if (status === 'done') return res;
-        if (status === 'error') {
-            const errs = res?.data?.attributes?.errors;
-            const detail = Array.isArray(errs) ? errs.join('; ') : JSON.stringify(errs || []);
-            throw new Error(`Paraşüt iş kuyruğu hatası: ${detail}`);
-        }
-        await new Promise((r) => setTimeout(r, intervalMs));
-    }
-    throw new Error('Paraşüt trackable_jobs zaman aşımı (e-arşiv / e-fatura işi bitmedi).');
 }
 
 const singleton = new ParasutSalesInvoiceService();
@@ -363,7 +251,7 @@ const singleton = new ParasutSalesInvoiceService();
  * @param {import('../models/Order')} order
  */
 async function createDraftSalesInvoiceForOrder(order) {
-    const r = await singleton.createDraftSalesInvoice(order, {});
+    const r = await singleton.createDraftSalesInvoice(order);
     const ref = `ps:draft:si:${r.salesInvoiceId}`;
     await order.update({
         eInvoiceIntegrationRef: ref.slice(0, 160),
@@ -394,9 +282,9 @@ async function notifyAdminsOfParasutFailure(order, err) {
     <p style="margin:0 0 4px;font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:${T.gold};font-family:${T.fontSans};">
       Paraşüt
     </p>
-    <h2 style="${T.heading}">Satış faturası oluşturulamadı</h2>
+    <h2 style="${T.heading}">Taslak satış faturası oluşturulamadı</h2>
     <p style="${T.bodyText}">
-      Sipariş <strong style="color:${T.navy};font-family:${T.fontMono};">${orderIdSafe}</strong> için Paraşüt entegrasyonu satış faturası oluştururken bir hata oluştu.
+      Sipariş <strong style="color:${T.navy};font-family:${T.fontMono};">${orderIdSafe}</strong> için Paraşüt'te taslak satış faturası oluştururken bir hata oluştu.
     </p>
     <div style="${T.cardNeutral}">
       <p style="margin:0;font-family:${T.fontMono};font-size:12px;line-height:1.65;color:${T.textSecondary};white-space:pre-wrap;word-break:break-word;">${escapeHtml(msg)}</p>
@@ -404,14 +292,14 @@ async function notifyAdminsOfParasutFailure(order, err) {
     `;
         await sendMail({
             to: recipients.join(','),
-            subject: `Paraşüt satış faturası hatası — sipariş ${order.id}`,
+            subject: `Paraşüt taslak fatura hatası — sipariş ${order.id}`,
             html: baseLayout({
-                title: 'Paraşüt satış faturası hatası',
+                title: 'Paraşüt taslak fatura hatası',
                 content,
                 storeName: meta.storeName,
                 logoUrl: meta.logoUrl,
             }),
-            text: `Sipariş ${order.id} için Paraşüt satış faturası oluşturulamadı.\n\n${msg}`,
+            text: `Sipariş ${order.id} için Paraşüt taslak satış faturası oluşturulamadı.\n\n${msg}`,
             type: 'generic',
         });
     } catch (mailErr) {
@@ -419,6 +307,9 @@ async function notifyAdminsOfParasutFailure(order, err) {
     }
 }
 
+/**
+ * Ödeme sonrası — sadece taslak oluşturma akışını sıraya alır (bloklamaz).
+ */
 function dispatchParasutDraftAfterPayment(orderId) {
     const id = String(orderId || '');
     if (!id || !isParasutAutomationEnabled()) return;
@@ -443,12 +334,4 @@ module.exports = {
     isParasutAutomationEnabled,
     hasParasutCredentials,
     notifyAdminsOfParasutFailure,
-    convertParasutEstimateToInvoice,
-    payParasutSalesInvoice,
-    createParasutEArchive,
-    waitParasutTrackableJob,
-    /** Eski isimle uyumluluk */
-    submitParasutForOrder: async function legacySubmit(order) {
-        return createDraftSalesInvoiceForOrder(order);
-    },
 };
