@@ -1,15 +1,20 @@
 const { isDeliveredTrackingStatus } = require('../../utils/trackingLink');
 
+/**
+ * DHL Shipment Tracking - Unified API client.
+ * Tek header'lık kimlik doğrulama (`DHL-API-Key`); Express müşteri hesabına gerek yok.
+ * Developer portal app'inin "Shipment Tracking - Unified" ürününe abone olması yeterli.
+ */
 function getDhlConfig() {
     const base =
-        (process.env.DHL_API_BASE_URL || 'https://express.api.dhl.com/mydhlapi/test').replace(/\/$/, '');
-    const username = String(process.env.DHL_API_USERNAME || '').trim();
-    const password = String(process.env.DHL_API_PASSWORD || '').trim();
-    return { base, username, password, enabled: Boolean(username && password) };
+        (process.env.DHL_API_BASE_URL || 'https://api-eu.dhl.com/track/shipments').replace(/\/$/, '');
+    const apiKey = String(process.env.DHL_API_USERNAME || process.env.DHL_API_KEY || '').trim();
+    const service = String(process.env.DHL_TRACKING_SERVICE || 'express').trim() || 'express';
+    return { base, apiKey, service, enabled: Boolean(apiKey) };
 }
 
 /**
- * DHL Express MyDHL+ tracking sorgusu.
+ * DHL takip sorgusu (Shipment Tracking - Unified).
  * @param {string} trackingNumber
  * @returns {Promise<{ ok: boolean; status: string | null; delivered: boolean; error?: string }>}
  */
@@ -19,14 +24,16 @@ async function queryDhlTracking(trackingNumber) {
         return { ok: false, status: null, delivered: false, error: 'tracking_number_empty' };
     }
 
-    const { base, username, password, enabled } = getDhlConfig();
+    const { base, apiKey, service, enabled } = getDhlConfig();
     if (!enabled) {
         return { ok: false, status: null, delivered: false, error: 'dhl_api_not_configured' };
     }
 
     const timeoutMs = Number(process.env.DHL_TRACKING_TIMEOUT_MS) || 20000;
-    const url = `${base}/tracking?shipmentTrackingNumber=${encodeURIComponent(no)}`;
-    const auth = Buffer.from(`${username}:${password}`, 'utf8').toString('base64');
+    const params = new URLSearchParams({ trackingNumber: no });
+    if (service) params.set('service', service);
+    const url = `${base}?${params.toString()}`;
+
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
 
@@ -34,7 +41,7 @@ async function queryDhlTracking(trackingNumber) {
         const res = await fetch(url, {
             method: 'GET',
             headers: {
-                Authorization: `Basic ${auth}`,
+                'DHL-API-Key': apiKey,
                 Accept: 'application/json',
             },
             signal: controller.signal,
@@ -49,10 +56,16 @@ async function queryDhlTracking(trackingNumber) {
         }
 
         if (res.status === 401 || res.status === 403) {
+            if (process.env.DHL_DEBUG === 'true') {
+                console.warn('[dhl-tracking] auth_failed', no, text?.slice(0, 200));
+            }
             return { ok: false, status: null, delivered: false, error: 'dhl_auth_failed' };
         }
         if (res.status === 404) {
             return { ok: false, status: null, delivered: false, error: 'dhl_not_found' };
+        }
+        if (res.status === 429) {
+            return { ok: false, status: null, delivered: false, error: 'dhl_rate_limited' };
         }
         if (!res.ok) {
             return {
@@ -65,19 +78,28 @@ async function queryDhlTracking(trackingNumber) {
 
         const shipments = parsed?.shipments;
         const first = Array.isArray(shipments) ? shipments[0] : null;
-        const status =
-            first?.status ||
-            first?.shipmentStatus ||
+        const statusObj = first?.status || null;
+
+        // Yeni format: status objesi → { statusCode, status, description, timestamp }
+        const statusCode = statusObj?.statusCode || null;
+        const statusLabel =
+            statusObj?.description ||
+            statusObj?.status ||
             (Array.isArray(first?.events) && first.events.length
-                ? first.events[first.events.length - 1]?.description
+                ? first.events[0]?.description
                 : null) ||
+            statusCode ||
             null;
 
-        const statusStr = status ? String(status) : null;
+        const statusStr = statusLabel ? String(statusLabel) : null;
+        const delivered =
+            (statusCode && /^delivered$/i.test(String(statusCode))) ||
+            isDeliveredTrackingStatus(statusStr);
+
         return {
             ok: true,
             status: statusStr,
-            delivered: isDeliveredTrackingStatus(statusStr),
+            delivered: Boolean(delivered),
         };
     } catch (err) {
         const msg = err.name === 'AbortError' ? 'dhl_timeout' : err.message;
