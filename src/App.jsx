@@ -5,6 +5,7 @@ import { CartProvider } from './context/CartContext.jsx';
 import { SiteSettingsProvider } from './context/SiteSettingsContext.jsx';
 import Navbar from './components/Navbar.jsx';
 import CookieConsentBanner from './components/CookieConsentBanner.jsx';
+import CartToast from './components/CartToast.jsx';
 import SiteFooter from './components/SiteFooter.jsx';
 import HomePage from './pages/HomePage.jsx';
 import ProductsPage from './pages/ProductsPage.jsx';
@@ -105,6 +106,7 @@ function StorefrontShell() {
         <Navbar />
         <Outlet />
         <CookieConsentBanner />
+        <CartToast />
         <SiteFooter />
       </div>
     </SiteSettingsProvider>

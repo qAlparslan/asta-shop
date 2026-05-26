@@ -98,6 +98,8 @@ const CartContext = createContext(null);
 
 export function CartProvider({ children }) {
   const [lines, setLines] = useState(readStorage);
+  /** @type {[null | { line: CartLine; at: number }, Function]} */
+  const [lastAdded, setLastAdded] = useState(null);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -131,7 +133,10 @@ export function CartProvider({ children }) {
       };
       return next;
     });
+    setLastAdded({ line: normalized, at: Date.now() });
   }, []);
+
+  const dismissLastAdded = useCallback(() => setLastAdded(null), []);
 
   const removeLine = useCallback((lineId) => {
     setLines((prev) => prev.filter((l) => l.lineId !== lineId));
@@ -168,8 +173,20 @@ export function CartProvider({ children }) {
       clearCart,
       itemCount: totals.itemCount,
       subtotal: totals.subtotal,
+      lastAdded,
+      dismissLastAdded,
     }),
-    [lines, addItem, removeLine, setQuantity, clearCart, totals.itemCount, totals.subtotal],
+    [
+      lines,
+      addItem,
+      removeLine,
+      setQuantity,
+      clearCart,
+      totals.itemCount,
+      totals.subtotal,
+      lastAdded,
+      dismissLastAdded,
+    ],
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
