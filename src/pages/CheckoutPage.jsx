@@ -5,10 +5,12 @@ import {
   ArrowRight,
   Check,
   FileText,
+  Lock,
   MapPin,
   Package,
   ShieldCheck,
   TicketPercent,
+  X,
 } from 'lucide-react';
 import { useCart } from '../context/CartContext.jsx';
 import { formatTRY } from '../lib/formatTRY.js';
@@ -76,6 +78,7 @@ export default function CheckoutPage() {
   const [couponBusy, setCouponBusy] = useState(false);
   const [checkoutPayBusy, setCheckoutPayBusy] = useState(false);
   const [paytrIframeToken, setPaytrIframeToken] = useState('');
+  const [paytrModalOpen, setPaytrModalOpen] = useState(false);
   const [orderSubmitError, setOrderSubmitError] = useState('');
   /** Ön bilgilendirme / mesafeli satış sürüm kodları */
   const [legalCheckout, setLegalCheckout] = useState(null);
@@ -249,7 +252,11 @@ export default function CheckoutPage() {
   };
 
   useEffect(() => {
-    if (!paytrIframeToken) return undefined;
+    if (!paytrIframeToken) {
+      setPaytrModalOpen(false);
+      return undefined;
+    }
+    setPaytrModalOpen(true);
     const src = 'https://www.paytr.com/js/iframeResizer.min.js';
     const attach = () => {
       try {
@@ -274,6 +281,32 @@ export default function CheckoutPage() {
       /* script globalde kalır; başka sayfalar da kullanıyor olabilir */
     };
   }, [paytrIframeToken]);
+
+  useEffect(() => {
+    if (!paytrModalOpen) return undefined;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const onKey = (e) => {
+      if (e.key === 'Escape') closePaytrModal();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => {
+      document.body.style.overflow = previous;
+      window.removeEventListener('keydown', onKey);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [paytrModalOpen]);
+
+  const closePaytrModal = () => {
+    if (typeof window !== 'undefined') {
+      const ok = window.confirm(
+        'Ödeme penceresini kapatmak istediğinize emin misiniz? Ödeme yarıda kalırsa siparişiniz iptal edilecektir.',
+      );
+      if (!ok) return;
+    }
+    setPaytrModalOpen(false);
+    setPaytrIframeToken('');
+  };
 
   const nextFromStep1 = () => {
     if (!validateAddress()) return;
@@ -843,21 +876,16 @@ export default function CheckoutPage() {
                     )}
                   </div>
 
-                  {paytrIframeToken ? (
-                    <div className="mt-8 rounded-xl border border-brand/25 bg-neutral-50/90 p-4 sm:p-6">
-                      <p className="text-[11px] font-bold uppercase tracking-wide text-brand">PayTR ile ödeme</p>
-                      <p className="mt-2 text-xs text-neutral-600">
-                        Siparişiniz kesin olarak yalnızca ödeme sağlayıcısından bildirim geldikten sonra onaylanır;
-                        işlem sonrası yönlendirme yalnızca bilgilendirme amaçlıdır.
-                      </p>
-                      <iframe
-                        title="PayTR ödeme"
-                        src={`https://www.paytr.com/odeme/guvenli/${paytrIframeToken}`}
-                        id="paytriframe"
-                        frameBorder="0"
-                        scrolling="no"
-                        className="mt-6 min-h-[520px] w-full rounded-md border border-neutral-200 bg-white"
-                      />
+                  {paytrIframeToken && !paytrModalOpen ? (
+                    <div className="mt-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                      Ödeme penceresi kapandı.{' '}
+                      <button
+                        type="button"
+                        onClick={() => setPaytrModalOpen(true)}
+                        className="font-bold underline-offset-2 hover:underline"
+                      >
+                        Tekrar aç
+                      </button>
                     </div>
                   ) : null}
 
@@ -868,6 +896,7 @@ export default function CheckoutPage() {
                         setErrors({});
                         setStep(1);
                         setPaytrIframeToken('');
+                        setPaytrModalOpen(false);
                       }}
                       className="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-neutral-300 px-6 text-sm font-semibold text-neutral-700 transition-colors hover:bg-neutral-50"
                     >
@@ -993,6 +1022,60 @@ export default function CheckoutPage() {
           </aside>
         </div>
       </div>
+
+      {paytrIframeToken && paytrModalOpen ? (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-asta-navy/70 px-3 py-4 backdrop-blur-sm sm:px-6 sm:py-8"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="paytr-modal-title"
+        >
+          <div className="relative flex max-h-[95dvh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-2xl">
+            <div className="flex shrink-0 items-center justify-between gap-3 border-b border-neutral-100 bg-neutral-50/80 px-4 py-3 sm:px-6 sm:py-4">
+              <div className="flex items-center gap-2 text-left">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-muted text-brand">
+                  <Lock className="h-4 w-4" strokeWidth={2} aria-hidden />
+                </span>
+                <div className="min-w-0">
+                  <h3
+                    id="paytr-modal-title"
+                    className="text-sm font-bold text-asta-navy sm:text-base"
+                  >
+                    Güvenli ödeme
+                  </h3>
+                  <p className="text-[11px] text-neutral-500 sm:text-xs">
+                    PayTR · SSL şifreli · {formatTRY(totals.total)}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={closePaytrModal}
+                className="rounded-full border border-transparent p-2 text-neutral-500 transition-colors hover:border-neutral-200 hover:bg-white hover:text-asta-navy"
+                aria-label="Ödeme penceresini kapat"
+              >
+                <X className="h-5 w-5" strokeWidth={1.75} aria-hidden />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto bg-white">
+              <iframe
+                title="PayTR ödeme"
+                src={`https://www.paytr.com/odeme/guvenli/${paytrIframeToken}`}
+                id="paytriframe"
+                frameBorder="0"
+                scrolling="auto"
+                className="block min-h-[600px] w-full"
+              />
+            </div>
+
+            <div className="shrink-0 border-t border-neutral-100 bg-neutral-50/80 px-4 py-3 text-center text-[11px] leading-relaxed text-neutral-500 sm:px-6">
+              Siparişiniz, ödeme sağlayıcısından bildirim geldikten sonra kesinleşir. Pencereyi kapatırsanız
+              sipariş otomatik olarak iptal edilir.
+            </div>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }
