@@ -33,11 +33,20 @@ async function tick() {
             limit: batchSize,
         });
 
+        if (process.env.DHL_DEBUG === 'true') {
+            console.log(`[tracking-poller] tick: ${orders.length} sipariş kontrol edilecek (interval=${intervalMin}dk).`);
+        }
+
         for (const order of orders) {
             const no = String(order.trackingNumber || '').trim();
             if (!no) continue;
 
             const result = await queryDhlTracking(no);
+            if (process.env.DHL_DEBUG === 'true') {
+                console.log(
+                    `[tracking-poller] order#${order.id} no=${no} → ok=${result.ok} status=${result.status || '-'} delivered=${result.delivered} err=${result.error || '-'}`,
+                );
+            }
             const updates = {
                 trackingLastCheckedAt: new Date(),
             };
