@@ -9,7 +9,7 @@ async function ensureOrderShipmentColumns() {
     const columns = [
         {
             name: 'carrier',
-            ddl: "VARCHAR(20) NULL DEFAULT 'DHL' AFTER `trackingNumber`",
+            ddl: "VARCHAR(20) NULL DEFAULT 'MNG' AFTER `trackingNumber`",
         },
         { name: 'shippedAt', ddl: 'DATETIME NULL DEFAULT NULL' },
         { name: 'trackingLastCheckedAt', ddl: 'DATETIME NULL DEFAULT NULL' },

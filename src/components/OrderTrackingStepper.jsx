@@ -73,7 +73,7 @@ export default function OrderTrackingStepper({ order }) {
       {trackingNo && (status === 'kargolandi' || status === 'teslim-edildi') ? (
         <div className="rounded-lg border border-neutral-200 bg-neutral-50/90 px-3 py-3 text-xs text-neutral-800">
           <p>
-            <span className="font-semibold text-neutral-600">DHL takip no:</span>{' '}
+            <span className="font-semibold text-neutral-600">Kargo takip no:</span>{' '}
             <span className="font-mono font-bold text-asta-navy">{trackingNo}</span>
           </p>
           {providerLabel && status === 'kargolandi' ? (
@@ -88,7 +88,7 @@ export default function OrderTrackingStepper({ order }) {
               rel="noopener noreferrer"
               className="mt-2 inline-flex text-xs font-bold text-brand underline-offset-2 hover:underline"
             >
-              DHL üzerinde takip et →
+              MNG / DHL eCommerce üzerinde takip et →
             </a>
           ) : null}
         </div>

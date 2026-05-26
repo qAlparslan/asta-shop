@@ -1,18 +1,23 @@
 const { Op } = require('sequelize');
 const Order = require('../../models/Order');
-const { queryDhlTracking, getDhlConfig } = require('./dhlTrackingClient');
+const { queryMngTracking, getMngConfig } = require('./mngTrackingClient');
 const { sendOrderStatusUpdateEmail } = require('../../controllers/orderController');
 
 let timer = null;
 let busy = false;
 
+function isDebug() {
+    return process.env.MNG_DEBUG === 'true' || process.env.DHL_DEBUG === 'true';
+}
+
 /**
- * Kargodaki siparişler için DHL takip sorgusu; teslimde otomatik status günceller.
+ * Kargodaki siparişler için MNG/DHL eCommerce TR takip sorgusu;
+ * teslimde otomatik status günceller.
  */
 async function tick() {
     if (busy) return;
     if (process.env.TRACKING_POLL_ENABLED === 'false') return;
-    if (!getDhlConfig().enabled) return;
+    if (!getMngConfig().enabled) return;
 
     busy = true;
     try {
@@ -33,7 +38,7 @@ async function tick() {
             limit: batchSize,
         });
 
-        if (process.env.DHL_DEBUG === 'true') {
+        if (isDebug()) {
             console.log(`[tracking-poller] tick: ${orders.length} sipariş kontrol edilecek (interval=${intervalMin}dk).`);
         }
 
@@ -41,8 +46,8 @@ async function tick() {
             const no = String(order.trackingNumber || '').trim();
             if (!no) continue;
 
-            const result = await queryDhlTracking(no);
-            if (process.env.DHL_DEBUG === 'true') {
+            const result = await queryMngTracking(no);
+            if (isDebug()) {
                 console.log(
                     `[tracking-poller] order#${order.id} no=${no} → ok=${result.ok} status=${result.status || '-'} delivered=${result.delivered} err=${result.error || '-'}`,
                 );
@@ -59,7 +64,7 @@ async function tick() {
                 const snapshot = order.toJSON ? order.toJSON() : { ...order.get(), status: 'teslim-edildi' };
                 snapshot.status = 'teslim-edildi';
                 sendOrderStatusUpdateEmail(snapshot, 'teslim-edildi');
-                if (process.env.DHL_DEBUG === 'true') {
+                if (isDebug()) {
                     console.log('[tracking-poller] teslim-edildi', order.id, no);
                 }
             } else {
@@ -78,8 +83,10 @@ function start() {
         console.log('📦 Kargo takip cron kapalı (TRACKING_POLL_ENABLED=false).');
         return;
     }
-    if (!getDhlConfig().enabled) {
-        console.log('📦 Kargo takip cron: DHL_API_USERNAME/PASSWORD yok — otomatik teslim senkronu atlanır.');
+    if (!getMngConfig().enabled) {
+        console.log(
+            '📦 Kargo takip cron: MNG_* / customerNumber / password eksik — otomatik teslim senkronu atlanır.',
+        );
         return;
     }
     const intervalMin = Math.max(Number(process.env.TRACKING_POLL_INTERVAL_MIN) || 15, 5);
@@ -89,7 +96,7 @@ function start() {
         tick().catch(() => {});
     }, ms);
     setTimeout(() => tick().catch(() => {}), 30 * 1000);
-    console.log(`📦 Kargo takip cron başladı (her ${intervalMin} dk, DHL).`);
+    console.log(`📦 Kargo takip cron başladı (her ${intervalMin} dk, MNG/DHL eCommerce TR).`);
 }
 
 function stop() {

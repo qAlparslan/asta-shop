@@ -222,7 +222,7 @@ export default function AdminOrdersPage() {
     if (!detailOrder) return;
     const no = (modalTracking || '').trim();
     if (!no) {
-      setError('Kargoya vermek için DHL takip numarası zorunludur.');
+      setError('Kargoya vermek için MNG/DHL eCommerce takip numarası zorunludur.');
       return;
     }
     setShipping(true);
@@ -573,16 +573,16 @@ export default function AdminOrdersPage() {
                 <section className="rounded-xl border-2 border-brand/25 bg-brand-muted/30 p-4 shadow-sm">
                   <div className="mb-3 flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-brand">
                     <Truck className="h-4 w-4" strokeWidth={1.75} />
-                    Kargoya ver (DHL)
+                    Kargoya ver (MNG / DHL eCommerce)
                   </div>
                   <p className="mb-3 text-xs leading-relaxed text-neutral-700">
-                    DHL’den aldığınız takip numarasını girin. Kayıt sonrası sipariş &quot;Kargoda&quot; olur ve
-                    müşteriye e-posta gider.
+                    MNG Kargo (DHL eCommerce TR) takip numarasını girin. Kayıt sonrası sipariş &quot;Kargoda&quot;
+                    olur ve müşteriye e-posta gider; sistem teslim durumunu otomatik takip eder.
                   </p>
-                  <label className="text-xs font-semibold text-neutral-600">DHL takip numarası *</label>
+                  <label className="text-xs font-semibold text-neutral-600">MNG takip numarası *</label>
                   <input
                     type="text"
-                    placeholder="Örn: 1234567890"
+                    placeholder="Örn: 614118757013"
                     value={modalTracking}
                     onChange={(e) => setModalTracking(e.target.value)}
                     className={`mt-1 ${inputClass} rounded-xl`}
@@ -612,7 +612,8 @@ export default function AdminOrdersPage() {
                 )}
                 <p className="mb-3 text-[11px] leading-relaxed text-neutral-500">
                   Kargoya verme işlemini yukarıdaki <span className="font-semibold text-asta-navy">Kargoya
-                  ver (DHL)</span> kartından yapın. Aşağıdaki butonlar yalnızca diğer durum geçişleri içindir.
+                  ver (MNG / DHL eCommerce)</span> kartından yapın. Aşağıdaki butonlar yalnızca diğer durum
+                  geçişleri içindir.
                 </p>
                 <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                   {QUICK_STATUS_OPTIONS.map(({ value, label, icon: Icon }) => {

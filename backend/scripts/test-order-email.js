@@ -23,7 +23,7 @@ const sampleOrder = {
     status: 'hazirlaniyor',
     couponCode: 'TEST10',
     trackingNumber: '1234567890',
-    carrier: 'DHL',
+    carrier: 'MNG',
     items: JSON.stringify([
         { name: 'Örnek Ürün A', quantity: 2, price: 149.95 },
         { name: 'Örnek Ürün B', quantity: 1, price: 200 },

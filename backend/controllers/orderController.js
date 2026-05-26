@@ -318,7 +318,7 @@ exports.exportOrdersCsv = async (req, res) => {
 };
 
 /**
- * Siparişi kargoya ver (DHL takip no + kargolandi + müşteri maili).
+ * Siparişi kargoya ver (MNG/DHL eCommerce takip no + kargolandi + müşteri maili).
  * POST /api/orders/:id/ship  { trackingNumber }
  */
 exports.shipOrder = async (req, res) => {
@@ -343,7 +343,7 @@ exports.shipOrder = async (req, res) => {
         const now = new Date();
         await order.update({
             trackingNumber,
-            carrier: 'DHL',
+            carrier: 'MNG',
             status: 'kargolandi',
             shippedAt: order.shippedAt || now,
         });
@@ -355,7 +355,7 @@ exports.shipOrder = async (req, res) => {
             action: 'order.ship',
             entityType: 'order',
             entityId: order.id,
-            meta: { trackingNumber, carrier: 'DHL' },
+            meta: { trackingNumber, carrier: 'MNG' },
         });
 
         sendOrderStatusUpdateEmail(order, 'kargolandi');
@@ -384,7 +384,7 @@ exports.updateOrderStatus = async (req, res) => {
         if (status !== undefined) patch.status = status;
         if (trackingNumber !== undefined) patch.trackingNumber = trackingNumber || null;
         if (status === 'kargolandi' && trackingNumber) {
-            patch.carrier = 'DHL';
+            patch.carrier = 'MNG';
             if (!order.shippedAt) patch.shippedAt = new Date();
         }
         await order.update(patch);
