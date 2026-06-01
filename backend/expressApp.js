@@ -96,6 +96,26 @@ function buildApp() {
 
     sentryService.setupErrorHandler(app);
 
+    // Global hata yakalayıcı — multer ve diğer middleware hatalarını JSON olarak döndür
+    // ve pm2 log'una stack trace düşür (aksi halde 500'ler sessiz kalıyor).
+    // eslint-disable-next-line no-unused-vars
+    app.use((err, req, res, _next) => {
+        const status = Number(err.status || err.statusCode) || 500;
+        const message =
+            err.message ||
+            (status === 413 ? 'Yüklenen dosya çok büyük.' : 'Sunucuda bir hata oluştu.');
+        console.error(
+            `[express:error] ${req.method} ${req.originalUrl} → ${status}: ${message}`,
+        );
+        if (err.stack) console.error(err.stack);
+        if (res.headersSent) return;
+        res.status(status).json({
+            status: 'fail',
+            message,
+            ...(err.code ? { code: err.code } : {}),
+        });
+    });
+
     return app;
 }
 
