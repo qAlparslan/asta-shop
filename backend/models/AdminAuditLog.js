@@ -9,10 +9,13 @@ const AdminAuditLog = sequelize.define(
             defaultValue: DataTypes.UUIDV4,
             primaryKey: true,
         },
+        // Audit kaydı kalıcıdır; kullanıcı silindiğinde sadece referans NULL'a çekilir
+        // (delete user akışı önce buradaki adminUserId'yi NULL yapar, sonra user'ı siler).
         adminUserId: {
             type: DataTypes.UUID,
-            allowNull: false,
+            allowNull: true,
             references: { model: 'users', key: 'id' },
+            onDelete: 'SET NULL',
         },
         action: { type: DataTypes.STRING(120), allowNull: false },
         entityType: { type: DataTypes.STRING(80), allowNull: true },

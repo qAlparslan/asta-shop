@@ -14,6 +14,7 @@ const ConsentEvent = sequelize.define(
             type: DataTypes.UUID,
             allowNull: true,
             references: { model: 'users', key: 'id' },
+            onDelete: 'SET NULL',
         },
         visitorKey: {
             type: DataTypes.STRING(64),
