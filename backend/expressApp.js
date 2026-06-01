@@ -69,7 +69,6 @@ function buildApp() {
     const homeHeroRoutes = require('./routes/homeHeroRoutes');
     const emailMetricsRoutes = require('./routes/emailMetricsRoutes');
     const adminProductReviewRoutes = require('./routes/adminProductReviewRoutes');
-    const parasutRoutes = require('./routes/parasutRoutes');
 
     app.use('/api/inventory', inventoryRoutes);
     app.get('/sitemap.xml', sitemapController.serveSitemap);
@@ -79,7 +78,6 @@ function buildApp() {
     app.use('/api/audit-logs', auditRoutes);
     app.use('/api/email-metrics', emailMetricsRoutes);
     app.use('/api/admin/product-reviews', adminProductReviewRoutes);
-    app.use('/api/integrations/parasut', parasutRoutes);
 
     app.use('/api/auth', authRoutes);
     app.use('/api/products', productRoutes);

@@ -152,12 +152,6 @@ sequelize
         } catch (e) {
             console.warn('automatedReminders başlatılamadı:', e.message);
         }
-        try {
-            require('./services/tracking/trackingPoller').start();
-        } catch (e) {
-            console.warn('trackingPoller başlatılamadı:', e.message);
-        }
-
         setInterval(async () => {
             try {
                 const { cancelStalePendingOrders } = require('./services/orderInventory');

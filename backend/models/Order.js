@@ -45,28 +45,19 @@ const Order = sequelize.define('Order', {
         type: DataTypes.ENUM('odeme_bekleniyor', 'hazirlaniyor', 'kargolandi', 'teslim-edildi', 'iptal-edildi'),
         defaultValue: 'hazirlaniyor'
     },
-    // Kargo takip numarası (MNG ShipmentId / DHL eCommerce — admin girer)
+    // Kargo takip numarası (admin manuel girer)
     trackingNumber: {
         type: DataTypes.STRING,
         allowNull: true
     },
-    /** Sabit: MNG Kargo / DHL eCommerce TR (tek kargo firması) */
+    /** Opsiyonel kargo firma adı (varsayılan boş — admin elle yönetir) */
     carrier: {
         type: DataTypes.STRING(20),
         allowNull: true,
-        defaultValue: 'MNG',
+        defaultValue: null,
     },
     shippedAt: {
         type: DataTypes.DATE,
-        allowNull: true,
-    },
-    trackingLastCheckedAt: {
-        type: DataTypes.DATE,
-        allowNull: true,
-    },
-    /** MNG/DHL eCommerce API son ham durum (ör. "Teslim Edildi", "Transfer Aşamasında") */
-    trackingProviderStatus: {
-        type: DataTypes.STRING(80),
         allowNull: true,
     },
     /** Müşteri e-fatura / e-arşiv talebi (firma seçimi entegrasyonda yapılabilir) */

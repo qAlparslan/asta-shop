@@ -3,8 +3,6 @@ const { releaseOrderInventory } = require('../services/orderInventory');
 const { commitOrderInventory } = require('../services/orderInventory');
 const Order = require('../models/Order');
 const sequelize = require('../config/database');
-const { dispatchElectronicInvoiceAfterPayment } = require('../services/electronicInvoice');
-const { dispatchParasutDraftAfterPayment } = require('../services/parasutInvoiceService');
 const { getFrontendUrl } = require('../services/mailer');
 const {
     sendOrderConfirmationEmail,
@@ -435,10 +433,6 @@ exports.handlePaytrNotification = async (req, res) => {
             const snap = fresh.toJSON ? fresh.toJSON() : fresh;
             await sendOrderConfirmationEmail(snap);
             await sendAdminNewOrderEmail(snap);
-            dispatchParasutDraftAfterPayment(snap.id);
-            if (snap.wantsElectronicInvoice) {
-                dispatchElectronicInvoiceAfterPayment(snap.id);
-            }
             console.log('PayTR ödeme tamamlandı:', snap.id, payment_typePosted ? `[${payment_typePosted}]` : '');
             return sendPlainOk();
         }

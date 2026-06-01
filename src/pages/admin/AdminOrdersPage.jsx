@@ -72,50 +72,16 @@ const QUICK_STATUS_OPTIONS = [
   { value: 'iptal-edildi', label: 'İptal et', icon: XCircle },
 ];
 
-/** @param {{ wantsElectronicInvoice?: boolean; eInvoiceStatus?: string | null; eInvoiceIntegrationRef?: string | null }} o */
+/** @param {{ wantsElectronicInvoice?: boolean }} o */
 function electronicInvoiceCellLabel(o) {
-    const ref = String(o?.eInvoiceIntegrationRef || '');
-    if (ref.startsWith('ps:')) {
-        if (String(o?.eInvoiceLastError || '').trim()) return 'Paraşüt hata';
-        return 'Paraşüt kayıtlı';
-    }
     if (!o?.wantsElectronicInvoice) return '—';
-    const st = String(o.eInvoiceStatus || '');
-    switch (st) {
-        case 'awaiting_integration':
-            return 'İşleniyor';
-        case 'submitted':
-            return 'Entegratörde';
-        case 'pending_manual':
-            return 'Manuel';
-        case 'failed':
-            return 'Hata';
-        case 'none':
-        default:
-            return 'Talep';
-    }
+    return 'Talep';
 }
 
-/** @param {{ wantsElectronicInvoice?: boolean; eInvoiceStatus?: string | null; eInvoiceIntegrationRef?: string | null; eInvoiceLastError?: string | null }} o */
+/** @param {{ wantsElectronicInvoice?: boolean }} o */
 function electronicInvoiceTone(o) {
-    const ref = String(o?.eInvoiceIntegrationRef || '');
-    if (ref.startsWith('ps:')) {
-        if (String(o?.eInvoiceLastError || '').trim()) return 'text-rose-700 font-semibold';
-        return 'text-emerald-700 font-semibold';
-    }
     if (!o?.wantsElectronicInvoice) return 'text-neutral-400 font-medium';
-    switch (String(o.eInvoiceStatus || '')) {
-        case 'submitted':
-            return 'text-emerald-700 font-semibold';
-        case 'failed':
-            return 'text-rose-700 font-semibold';
-        case 'pending_manual':
-            return 'text-amber-800 font-semibold';
-        case 'awaiting_integration':
-            return 'text-sky-700 font-semibold';
-        default:
-            return 'text-neutral-700 font-semibold';
-    }
+    return 'text-amber-800 font-semibold';
 }
 
 export default function AdminOrdersPage() {
@@ -222,7 +188,7 @@ export default function AdminOrdersPage() {
     if (!detailOrder) return;
     const no = (modalTracking || '').trim();
     if (!no) {
-      setError('Kargoya vermek için MNG/DHL eCommerce takip numarası zorunludur.');
+      setError('Kargoya vermek için kargo takip numarası zorunludur.');
       return;
     }
     setShipping(true);
@@ -487,24 +453,14 @@ export default function AdminOrdersPage() {
               <section className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
                 <div className="mb-3 flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-neutral-500">
                   <FileText className="h-4 w-4 text-brand" strokeWidth={1.75} />
-                  Fatura / entegrasyon
+                  Fatura bilgileri
                 </div>
                 <div className="grid gap-3 text-sm">
                   <p>
-                    <span className="text-xs text-neutral-500">E-belge süreci (entegrasyon)</span>{' '}
+                    <span className="text-xs text-neutral-500">Kurumsal fatura talebi</span>{' '}
                     <span className={`inline-block ${electronicInvoiceTone(detailOrder)} ml-2`}>
                       {electronicInvoiceCellLabel(detailOrder)}
                     </span>
-                    {detailOrder.eInvoiceIntegrationRef ? (
-                      <span className="mt-1 block font-mono text-xs text-neutral-600">
-                        Ref: {detailOrder.eInvoiceIntegrationRef}
-                      </span>
-                    ) : null}
-                    {detailOrder.eInvoiceLastError ? (
-                      <span className="mt-2 block rounded-md bg-rose-50 px-3 py-2 text-xs leading-relaxed text-rose-900 ring-1 ring-rose-200">
-                        {String(detailOrder.eInvoiceLastError)}
-                      </span>
-                    ) : null}
                   </p>
                   {detailOrder.wantsElectronicInvoice ? (
                     <>
@@ -527,8 +483,7 @@ export default function AdminOrdersPage() {
                     </>
                   ) : (
                     <p className="text-xs leading-relaxed text-neutral-600">
-                      Müşteri kurumsal fatura talebinde bulunmadı; sistem bireysel/varsayılan kimlik ve ünvan ile Paraşüt
-                      taslak satış faturası oluşturur (TCKN gerektiğinde yer tutucu kullanılabilir).
+                      Müşteri kurumsal fatura talebinde bulunmadı.
                     </p>
                   )}
                 </div>
@@ -573,13 +528,13 @@ export default function AdminOrdersPage() {
                 <section className="rounded-xl border-2 border-brand/25 bg-brand-muted/30 p-4 shadow-sm">
                   <div className="mb-3 flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-brand">
                     <Truck className="h-4 w-4" strokeWidth={1.75} />
-                    Kargoya ver (MNG / DHL eCommerce)
+                    Kargoya ver
                   </div>
                   <p className="mb-3 text-xs leading-relaxed text-neutral-700">
-                    MNG Kargo (DHL eCommerce TR) takip numarasını girin. Kayıt sonrası sipariş &quot;Kargoda&quot;
-                    olur ve müşteriye e-posta gider; sistem teslim durumunu otomatik takip eder.
+                    Kargo takip numarasını girin. Kayıt sonrası sipariş &quot;Kargoda&quot;
+                    durumuna geçer ve müşteriye e-posta gider.
                   </p>
-                  <label className="text-xs font-semibold text-neutral-600">MNG takip numarası *</label>
+                  <label className="text-xs font-semibold text-neutral-600">Kargo takip numarası *</label>
                   <input
                     type="text"
                     placeholder="Örn: 614118757013"
@@ -612,8 +567,7 @@ export default function AdminOrdersPage() {
                 )}
                 <p className="mb-3 text-[11px] leading-relaxed text-neutral-500">
                   Kargoya verme işlemini yukarıdaki <span className="font-semibold text-asta-navy">Kargoya
-                  ver (MNG / DHL eCommerce)</span> kartından yapın. Aşağıdaki butonlar yalnızca diğer durum
-                  geçişleri içindir.
+                  ver</span> kartından yapın. Aşağıdaki butonlar yalnızca diğer durum geçişleri içindir.
                 </p>
                 <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                   {QUICK_STATUS_OPTIONS.map(({ value, label, icon: Icon }) => {

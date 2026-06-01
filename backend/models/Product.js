@@ -102,7 +102,7 @@ const Product = sequelize.define('Product', {
         type: DataTypes.BOOLEAN,
         defaultValue: true // Admin panelinden ürünü silmeden gizlemek için
     },
-    /** Paraşüt / KDV: null ise purpose + PARASUT_VAT_BY_PURPOSE ile eşlenir. */
+    /** KDV oranı (yüzde). Boş bırakılırsa muhasebe yazılımı varsayılanı uygulanır. */
     vatRate: {
         type: DataTypes.INTEGER,
         allowNull: true,

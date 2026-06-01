@@ -1,5 +1,5 @@
 import { Check, Package, Truck } from 'lucide-react';
-import { buildPublicTrackingUrl, trackingStatusLabelTr } from '../lib/trackingLink.js';
+import { buildPublicTrackingUrl } from '../lib/trackingLink.js';
 
 /** @param {string} status */
 function stepState(status, stepIndex) {
@@ -21,13 +21,12 @@ const STEPS = [
 ];
 
 /**
- * @param {{ status?: string; trackingNumber?: string | null; carrier?: string | null; trackingProviderStatus?: string | null }} order
+ * @param {{ status?: string; trackingNumber?: string | null; carrier?: string | null }} order
  */
 export default function OrderTrackingStepper({ order }) {
   const status = String(order?.status || '');
   const trackingNo = String(order?.trackingNumber || '').trim();
   const trackUrl = buildPublicTrackingUrl(order?.carrier, trackingNo);
-  const providerLabel = trackingStatusLabelTr(order?.trackingProviderStatus);
 
   if (status === 'iptal-edildi') {
     return (
@@ -76,11 +75,6 @@ export default function OrderTrackingStepper({ order }) {
             <span className="font-semibold text-neutral-600">Kargo takip no:</span>{' '}
             <span className="font-mono font-bold text-asta-navy">{trackingNo}</span>
           </p>
-          {providerLabel && status === 'kargolandi' ? (
-            <p className="mt-1 text-neutral-600">
-              Son durum: <span className="font-medium">{providerLabel}</span>
-            </p>
-          ) : null}
           {trackUrl && status !== 'teslim-edildi' ? (
             <a
               href={trackUrl}
@@ -88,7 +82,7 @@ export default function OrderTrackingStepper({ order }) {
               rel="noopener noreferrer"
               className="mt-2 inline-flex text-xs font-bold text-brand underline-offset-2 hover:underline"
             >
-              MNG / DHL eCommerce üzerinde takip et →
+              Kargo firmasından takip et →
             </a>
           ) : null}
         </div>

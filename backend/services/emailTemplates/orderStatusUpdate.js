@@ -15,7 +15,7 @@ const STATUS_COPY = {
     kargolandi: {
         title: 'Siparişiniz kargoya verildi',
         message:
-            'Siparişiniz MNG Kargo (DHL eCommerce) ile yola çıktı. Takip numaranız ve bağlantı aşağıdadır.',
+            'Siparişiniz yola çıktı. Takip numaranız ve bağlantı aşağıdadır.',
         pillBg: T.brandMuted,
         pillColor: T.brand,
         border: '#f5d0d6',
@@ -53,18 +53,18 @@ module.exports = function orderStatusUpdateTemplate({ order, newStatus, storeNam
     const trackingNo = String(order.trackingNumber || '').trim();
     const trackUrl =
         newStatus === 'kargolandi' && trackingNo
-            ? buildPublicTrackingUrl(order.carrier || 'MNG', trackingNo)
+            ? buildPublicTrackingUrl(order.carrier, trackingNo)
             : null;
 
     const trackingBlock =
         newStatus === 'kargolandi' && trackingNo
             ? `
     <div style="${T.cardSoft} margin:22px 0;">
-      <h3 style="${T.labelUpper}">MNG / DHL eCommerce kargo takibi</h3>
+      <h3 style="${T.labelUpper}">Kargo takibi</h3>
       <p style="margin:0;font-family:${T.fontMono};font-size:17px;font-weight:700;color:${T.brand};letter-spacing:0.02em;">
         ${escapeHtml(trackingNo)}
       </p>
-      ${trackUrl ? renderCtaButton('Kargonuzu MNG üzerinde takip edin', trackUrl) : ''}
+      ${trackUrl ? renderCtaButton('Kargonuzu takip edin', trackUrl) : ''}
     </div>`
             : '';
 

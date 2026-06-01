@@ -138,7 +138,6 @@ export default function MyOrdersPage() {
                           status,
                           trackingNumber: o.trackingNumber,
                           carrier: o.carrier,
-                          trackingProviderStatus: o.trackingProviderStatus,
                         }}
                       />
                     ) : null}
