@@ -6,12 +6,14 @@ import {
   CloudUpload,
   FilePlus2,
   Globe,
+  GripVertical,
   Package,
   Pencil,
   Percent,
   Plus,
   Search,
   Sparkles,
+  Star,
   Tag as TagIcon,
   Trash2,
   TrendingUp,
@@ -962,13 +964,16 @@ function ProductEditorOverlay({ mode, product, onClose, onSaved }) {
   const [planPct, setPlanPct] = useState('');
   const [planStart, setPlanStart] = useState('');
   const [planEnd, setPlanEnd] = useState('');
-  const [existingUrls, setExistingUrls] = useState([]);
+  /**
+   * Tek sıralı görsel listesi. İlk eleman = kapak resmi.
+   * @type {Array<{ id: string; kind: 'existing' | 'new'; url: string; file?: File }>}
+   */
+  const [images, setImages] = useState([]);
+  const [dragIndex, setDragIndex] = useState(null);
   /** @type {Array<{ id: string; name: string; slug: string }>} */
   const [categoriesList, setCategoriesList] = useState([]);
   const [categoriesErr, setCategoriesErr] = useState('');
   const [categoriesLoading, setCategoriesLoading] = useState(true);
-  /** @type {Array<{ file: File; url: string }>} */
-  const [pendingFiles, setPendingFiles] = useState([]);
 
   const [err, setErr] = useState('');
   const [busy, setBusy] = useState(false);
@@ -992,10 +997,9 @@ function ProductEditorOverlay({ mode, product, onClose, onSaved }) {
       setPlanPct('');
       setPlanStart('');
       setPlanEnd('');
-      setExistingUrls([]);
       blobUrlsRef.current.forEach((u) => URL.revokeObjectURL(u));
       blobUrlsRef.current = [];
-      setPendingFiles([]);
+      setImages([]);
       setErr('');
       return;
     }
@@ -1030,8 +1034,7 @@ function ProductEditorOverlay({ mode, product, onClose, onSaved }) {
     );
     blobUrlsRef.current.forEach((u) => URL.revokeObjectURL(u));
     blobUrlsRef.current = [];
-    setExistingUrls(imagePaths(product.images));
-    setPendingFiles([]);
+    setImages(imagePaths(product.images).map((u) => ({ id: u, kind: 'existing', url: u })));
     setErr('');
   }, [product]);
 
@@ -1070,38 +1073,56 @@ function ProductEditorOverlay({ mode, product, onClose, onSaved }) {
     setErr('Önceki kategori adı güncel listede yok; lütfen listeden seçin.');
   }, [product, categoriesList, categoriesLoading, categoriesErr]);
 
-  const slotsLeft = Math.max(0, 5 - existingUrls.length - pendingFiles.length);
+  const slotsLeft = Math.max(0, 5 - images.length);
 
   /** @param {FileList | null} fileList */
   const appendImagesFromPicker = (fileList) => {
     const incoming = [...(fileList || [])].filter((f) => f instanceof File);
     if (!incoming.length) return;
-    setPendingFiles((cur) => {
+    setImages((cur) => {
       const next = [...cur];
       for (const f of incoming) {
-        if (existingUrls.length + next.length >= 5) break;
+        if (next.length >= 5) break;
         const url = URL.createObjectURL(f);
         blobUrlsRef.current.push(url);
-        next.push({ file: f, url });
+        next.push({ id: url, kind: 'new', url, file: f });
       }
       return next;
     });
   };
 
-  const removeExisting = (url) =>
-    setExistingUrls((urls) => urls.filter((u) => u !== url));
-
-  const removePendingAt = (idx) => {
-    setPendingFiles((cur) => {
+  const removeImageAt = (idx) => {
+    setImages((cur) => {
       const next = [...cur];
       const [gone] = next.splice(idx, 1);
-      if (gone?.url) {
+      if (gone?.kind === 'new' && gone.url) {
         URL.revokeObjectURL(gone.url);
         blobUrlsRef.current = blobUrlsRef.current.filter((u) => u !== gone.url);
       }
       return next;
     });
   };
+
+  /** Bir görseli yeni konuma taşır (sürükle-bırak ve kapak yap için). */
+  const moveImage = (from, to) => {
+    setImages((cur) => {
+      if (
+        from === to ||
+        from < 0 ||
+        to < 0 ||
+        from >= cur.length ||
+        to >= cur.length
+      ) {
+        return cur;
+      }
+      const next = [...cur];
+      const [moved] = next.splice(from, 1);
+      next.splice(to, 0, moved);
+      return next;
+    });
+  };
+
+  const makeCover = (idx) => moveImage(idx, 0);
 
   const addVariantRow = () => {
     const uid =
@@ -1277,9 +1298,26 @@ function ProductEditorOverlay({ mode, product, onClose, onSaved }) {
       fd.append('discountExpiresAt', plannedDiscEndIso ?? '');
     }
 
-    if (mode === 'edit' && product) fd.append('existingImages', JSON.stringify(existingUrls));
+    if (mode === 'edit' && product) {
+      fd.append(
+        'existingImages',
+        JSON.stringify(images.filter((it) => it.kind === 'existing').map((it) => it.url)),
+      );
+    }
 
-    pendingFiles.forEach(({ file }) => fd.append('images', file));
+    // Kesin sıra + dosyalar (kapak = ilk eleman). new:<index> dosya sırasıyla eşleşir.
+    const order = [];
+    let newIdx = 0;
+    images.forEach((it) => {
+      if (it.kind === 'existing') {
+        order.push(`existing:${it.url}`);
+      } else if (it.file) {
+        fd.append('images', it.file);
+        order.push(`new:${newIdx}`);
+        newIdx += 1;
+      }
+    });
+    fd.append('imageOrder', JSON.stringify(order));
 
     setBusy(true);
     try {
@@ -1342,39 +1380,66 @@ function ProductEditorOverlay({ mode, product, onClose, onSaved }) {
               <p className="text-[11px] font-bold uppercase tracking-wider text-neutral-500">
                 Ürün görselleri (maks 5)
               </p>
+              <p className="mt-1 text-[11px] leading-relaxed text-neutral-500">
+                İlk sıradaki görsel <strong>kapak resmi</strong> olur. Görselleri sürükleyerek sıralayabilir
+                veya yıldız butonuna basarak kapak yapabilirsin.
+              </p>
               <div className="mt-3 flex flex-wrap gap-2">
-                {existingUrls.map((url) => (
-                  <div
-                    key={url}
-                    className="relative h-[92px] w-[92px] overflow-hidden rounded-xl border border-dashed border-neutral-200 bg-neutral-50"
-                  >
-                    <img src={mediaUrl(url)} alt="" className="h-full w-full object-contain p-1" />
-                    <button
-                      type="button"
-                      onClick={() => removeExisting(url)}
-                      className="absolute right-1 top-1 rounded-full bg-white/95 p-1 text-rose-600 shadow"
+                {images.map((it, idx) => {
+                  const isCover = idx === 0;
+                  const src = it.kind === 'existing' ? mediaUrl(it.url) : it.url;
+                  return (
+                    <div
+                      key={it.id}
+                      draggable
+                      onDragStart={() => setDragIndex(idx)}
+                      onDragOver={(e) => e.preventDefault()}
+                      onDrop={() => {
+                        if (dragIndex !== null) moveImage(dragIndex, idx);
+                        setDragIndex(null);
+                      }}
+                      onDragEnd={() => setDragIndex(null)}
+                      className={`group relative h-[96px] w-[96px] cursor-move overflow-hidden rounded-xl border bg-neutral-50 ${
+                        isCover ? 'border-2 border-brand' : 'border border-dashed border-neutral-200'
+                      } ${dragIndex === idx ? 'opacity-50' : ''}`}
+                      title="Sürükleyerek sırala"
                     >
-                      <Trash2 className="h-3.5 w-3.5" strokeWidth={2} />
-                    </button>
-                  </div>
-                ))}
-                {pendingFiles.map((pf, idx) => (
-                  <div
-                    key={pf.url}
-                    className="relative h-[92px] w-[92px] overflow-hidden rounded-xl border border-dashed border-brand/30 bg-brand-muted/20"
-                  >
-                    <img src={pf.url} alt="" className="h-full w-full object-contain p-1" />
-                    <button
-                      type="button"
-                      onClick={() => removePendingAt(idx)}
-                      className="absolute right-1 top-1 rounded-full bg-white/95 p-1 text-rose-600 shadow"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" strokeWidth={2} />
-                    </button>
-                  </div>
-                ))}
+                      <img src={src} alt="" className="h-full w-full object-contain p-1" />
+
+                      <span className="pointer-events-none absolute left-1 top-1 rounded bg-black/45 p-0.5 text-white">
+                        <GripVertical className="h-3 w-3" strokeWidth={2} />
+                      </span>
+
+                      {isCover ? (
+                        <span className="absolute bottom-1 left-1 inline-flex items-center gap-1 rounded bg-brand px-1.5 py-0.5 text-[10px] font-bold text-white shadow">
+                          <Star className="h-3 w-3 fill-current" strokeWidth={2} /> Kapak
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => makeCover(idx)}
+                          title="Kapak yap"
+                          aria-label="Kapak yap"
+                          className="absolute bottom-1 left-1 rounded-full bg-white/95 p-1 text-amber-500 shadow hover:bg-white"
+                        >
+                          <Star className="h-3.5 w-3.5" strokeWidth={2} />
+                        </button>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={() => removeImageAt(idx)}
+                        title="Kaldır"
+                        aria-label="Görseli kaldır"
+                        className="absolute right-1 top-1 rounded-full bg-white/95 p-1 text-rose-600 shadow hover:bg-white"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" strokeWidth={2} />
+                      </button>
+                    </div>
+                  );
+                })}
                 {slotsLeft > 0 ? (
-                  <label className="flex h-[92px] w-[92px] cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-neutral-300 bg-neutral-50 text-center hover:border-brand/35 hover:bg-brand-muted/25">
+                  <label className="flex h-[96px] w-[96px] cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-neutral-300 bg-neutral-50 text-center hover:border-brand/35 hover:bg-brand-muted/25">
                     <CloudUpload className="h-5 w-5 text-brand" strokeWidth={1.5} />
                     <span className="text-[11px] font-semibold text-asta-navy">Ekle</span>
                     <input

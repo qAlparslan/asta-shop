@@ -209,6 +209,45 @@ exports.getProductById = async (req, res) => {
     }
 };
 
+/**
+ * Frontend'in gönderdiği kesin görsel sırasını uygular.
+ * `imageOrder` jeton dizisi: "existing:<url>" mevcut görsel, "new:<index>" yeni yüklenen dosya.
+ * @param {string} raw  imageOrder JSON metni
+ * @param {string[]} existingAllowed  korunmasına izin verilen mevcut url'ler
+ * @param {string[]} uploaded  yeni yüklenen dosya yolları (req.files sırası)
+ * @returns {string[] | null}  çözümlenmiş sıralı liste veya geçersizse null
+ */
+function resolveImageOrder(raw, existingAllowed, uploaded) {
+    let order;
+    try {
+        order = JSON.parse(raw);
+    } catch {
+        return null;
+    }
+    if (!Array.isArray(order)) return null;
+    const allow = new Set(existingAllowed);
+    const usedUploads = new Set();
+    const out = [];
+    for (const tok of order) {
+        if (typeof tok !== 'string') continue;
+        if (tok.startsWith('new:')) {
+            const i = parseInt(tok.slice(4), 10);
+            if (Number.isInteger(i) && uploaded[i] && !usedUploads.has(i)) {
+                out.push(uploaded[i]);
+                usedUploads.add(i);
+            }
+        } else if (tok.startsWith('existing:')) {
+            const u = tok.slice('existing:'.length);
+            if (allow.has(u) && !out.includes(u)) out.push(u);
+        }
+    }
+    // Sırada referans verilmeyen yeni dosyaları kaybetme — sona ekle
+    uploaded.forEach((u, i) => {
+        if (!usedUploads.has(i)) out.push(u);
+    });
+    return out.slice(0, 5);
+}
+
 // 2. YENİ ÜRÜN EKLE
 exports.createProduct = async (req, res) => {
     try {
@@ -216,11 +255,16 @@ exports.createProduct = async (req, res) => {
         const productData = { ...req.body };
 
         // Çoklu resim dosyalarını yakala ve diziye çevir
-        if (req.files && req.files.length > 0) {
-            productData.images = req.files.map(file => `/uploads/${file.filename}`);
+        const uploaded = (req.files && req.files.length > 0)
+            ? req.files.map((file) => `/uploads/${file.filename}`)
+            : [];
+        if (req.body.imageOrder) {
+            const ordered = resolveImageOrder(req.body.imageOrder, [], uploaded);
+            productData.images = (ordered && ordered.length) ? ordered : uploaded;
         } else {
-            productData.images = [];
+            productData.images = uploaded;
         }
+        delete productData.imageOrder;
 
         // Frontend'den gelen varyant verisini JSON'a çevir
         if (req.body.variants) {
@@ -277,10 +321,12 @@ exports.updateProduct = async (req, res) => {
 
         delete updateData.existingImages;
         delete updateData.images;
+        delete updateData.imageOrder;
 
         // Mevcut görseller + yeni yüklemeler (en fazla 5)
         const hasExistingField = Object.prototype.hasOwnProperty.call(req.body, 'existingImages');
-        if (hasExistingField || (req.files && req.files.length > 0)) {
+        const hasOrderField = Object.prototype.hasOwnProperty.call(req.body, 'imageOrder');
+        if (hasExistingField || hasOrderField || (req.files && req.files.length > 0)) {
             let imgs = Array.isArray(product.images) ? [...product.images] : [];
             if (hasExistingField && req.body.existingImages) {
                 try {
@@ -292,8 +338,15 @@ exports.updateProduct = async (req, res) => {
                     imgs = [];
                 }
             }
-            if (req.files && req.files.length > 0) {
-                imgs = imgs.concat(req.files.map((file) => `/uploads/${file.filename}`));
+            const uploaded = (req.files && req.files.length > 0)
+                ? req.files.map((file) => `/uploads/${file.filename}`)
+                : [];
+            if (hasOrderField && req.body.imageOrder) {
+                // Kesin sıra: hem mevcutları hem yenileri istenen düzende yerleştir
+                const ordered = resolveImageOrder(req.body.imageOrder, imgs, uploaded);
+                imgs = ordered || imgs.concat(uploaded);
+            } else if (uploaded.length) {
+                imgs = imgs.concat(uploaded);
             }
             updateData.images = imgs.slice(0, 5);
         }
