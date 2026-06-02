@@ -3,10 +3,45 @@ const User = require('../models/User');
 const Product = require('../models/Product');
 const SiteSetting = require('../models/SiteSetting');
 const { Op, fn, col, Sequelize } = require('sequelize');
+const sequelize = require('../config/database');
 const {
     sendOrderStatusUpdateEmail,
 } = require('../services/orderEmailService');
+const {
+    releaseOrderInventory,
+    restockOrderInventory,
+    deductOrderInventory,
+} = require('../services/orderInventory');
 const { logAdminAudit } = require('../services/auditService');
+
+/** Stoğun düşürülmüş (commit edilmiş) sayıldığı durumlar. */
+const COMMITTED_STATUSES = new Set(['hazirlaniyor', 'kargolandi', 'teslim-edildi']);
+const CANCELLED_STATUS = 'iptal-edildi';
+const PENDING_STATUS = 'odeme_bekleniyor';
+
+/**
+ * Sipariş durumu değişiminde envanteri düzeltir (aynı transaction içinde).
+ * - committed → iptal : stoğu geri ver (restock)
+ * - pending   → iptal : rezervasyonu serbest bırak
+ * - iptal     → committed : stoğu tekrar düş (deduct)
+ */
+async function applyInventoryForStatusChange(order, oldStatus, newStatus, transaction) {
+    if (oldStatus === newStatus) return;
+
+    if (newStatus === CANCELLED_STATUS) {
+        if (COMMITTED_STATUSES.has(oldStatus)) {
+            await restockOrderInventory(order, transaction);
+        } else if (oldStatus === PENDING_STATUS) {
+            await releaseOrderInventory(order, transaction);
+        }
+        return;
+    }
+
+    // İptalden tekrar aktif/komit duruma alınırsa stoğu yeniden düş
+    if (oldStatus === CANCELLED_STATUS && COMMITTED_STATUSES.has(newStatus)) {
+        await deductOrderInventory(order, transaction);
+    }
+}
 
 /** Cron / tracking poller — orderEmailService ile aynı. */
 exports.sendOrderStatusUpdateEmail = sendOrderStatusUpdateEmail;
@@ -371,11 +406,18 @@ exports.shipOrder = async (req, res) => {
 
 // 5. SİPARİŞ DURUMUNU GÜNCELLE
 exports.updateOrderStatus = async (req, res) => {
+    const t = await sequelize.transaction();
     try {
         const { status, trackingNumber } = req.body;
-        const order = await Order.findByPk(req.params.id);
+        const order = await Order.findByPk(req.params.id, {
+            transaction: t,
+            lock: t.LOCK.UPDATE,
+        });
 
-        if (!order) return res.status(404).json({ status: 'fail', message: 'Sipariş bulunamadı.' });
+        if (!order) {
+            await t.rollback();
+            return res.status(404).json({ status: 'fail', message: 'Sipariş bulunamadı.' });
+        }
 
         const oldStatus = order.status;
         const oldTracking = order.trackingNumber;
@@ -385,7 +427,14 @@ exports.updateOrderStatus = async (req, res) => {
         if (status === 'kargolandi' && trackingNumber) {
             if (!order.shippedAt) patch.shippedAt = new Date();
         }
-        await order.update(patch);
+
+        // Durum değiştiyse envanteri düzelt (stok iadesi / yeniden düşme)
+        if (status !== undefined && status !== oldStatus) {
+            await applyInventoryForStatusChange(order, oldStatus, status, t);
+        }
+
+        await order.update(patch, { transaction: t });
+        await t.commit();
         await order.reload();
 
         await logAdminAudit({
@@ -408,6 +457,11 @@ exports.updateOrderStatus = async (req, res) => {
 
         res.status(200).json({ status: 'success', message: 'Sipariş başarıyla güncellendi.', data: { order } });
     } catch (err) {
+        try {
+            if (!t.finished) await t.rollback();
+        } catch {
+            /* yoksay */
+        }
         res.status(400).json({ status: 'fail', message: err.message });
     }
 };

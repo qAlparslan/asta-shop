@@ -57,6 +57,10 @@ async function ensureProductColumns() {
         },
         { name: 'vatRate', sql: 'ALTER TABLE `products` ADD COLUMN `vatRate` INT NULL' },
         { name: 'barcode', sql: 'ALTER TABLE `products` ADD COLUMN `barcode` VARCHAR(64) NULL' },
+        {
+            name: 'autoHiddenOutOfStock',
+            sql: 'ALTER TABLE `products` ADD COLUMN `autoHiddenOutOfStock` TINYINT(1) NOT NULL DEFAULT 0',
+        },
         { name: 'deletedAt', sql: 'ALTER TABLE `products` ADD COLUMN `deletedAt` DATETIME NULL' },
     ];
 

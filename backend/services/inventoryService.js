@@ -62,10 +62,25 @@ async function getAvailableStock(productId, transaction) {
  */
 async function syncProductStockField(productId, transaction) {
     const available = await getAvailableStock(productId, transaction);
-    await Product.update(
-        { stock: available },
-        { where: { id: productId }, transaction },
-    );
+    const product = await Product.findByPk(productId, {
+        attributes: ['id', 'is_active', 'autoHiddenOutOfStock'],
+        transaction,
+    });
+
+    const patch = { stock: available };
+    if (product) {
+        if (available <= 0 && product.is_active) {
+            // Stok bitti → vitrinden otomatik kaldır (manuel gizlemeden ayırt için bayrak)
+            patch.is_active = false;
+            patch.autoHiddenOutOfStock = true;
+        } else if (available > 0 && !product.is_active && product.autoHiddenOutOfStock) {
+            // Stok geri geldi ve daha önce otomatik gizlenmişti → tekrar vitrine al
+            patch.is_active = true;
+            patch.autoHiddenOutOfStock = false;
+        }
+    }
+
+    await Product.update(patch, { where: { id: productId }, transaction });
 }
 
 async function ensureProductWarehouseRows(productId) {

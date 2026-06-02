@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Asta Ticaret — Site Kullanım ve Teslim Kılavuzu</title>
+  <style>
+    @page { size: A4; margin: 18mm 16mm; }
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      font-size: 10.5pt;
+      line-height: 1.55;
+      color: #1a1a1a;
+      max-width: 210mm;
+      margin: 0 auto;
+      padding: 12mm 10mm;
+      background: #fff;
+    }
+    h1 { font-size: 22pt; color: #1a2332; margin: 0 0 6px; letter-spacing: -0.02em; }
+    h2 {
+      font-size: 14pt;
+      color: #9f2133;
+      margin: 28px 0 10px;
+      padding-bottom: 4px;
+      border-bottom: 2px solid #e8d4d8;
+      page-break-after: avoid;
+    }
+    h3 { font-size: 11.5pt; color: #1a2332; margin: 18px 0 8px; page-break-after: avoid; }
+    h4 { font-size: 10.5pt; margin: 12px 0 6px; color: #444; }
+    p { margin: 0 0 8px; }
+    .cover {
+      text-align: center;
+      padding: 40px 20px 50px;
+      border-bottom: 3px solid #9f2133;
+      margin-bottom: 24px;
+    }
+    .cover .sub { font-size: 12pt; color: #555; margin-top: 8px; }
+    .cover .meta { font-size: 9pt; color: #888; margin-top: 24px; }
+    .toc { background: #faf8f8; border: 1px solid #e5e5e5; border-radius: 8px; padding: 16px 20px; margin: 20px 0; }
+    .toc ol { margin: 8px 0 0; padding-left: 22px; }
+    .toc li { margin: 4px 0; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 10px 0 16px;
+      font-size: 9.5pt;
+    }
+    th, td { border: 1px solid #ddd; padding: 8px 10px; text-align: left; vertical-align: top; }
+    th { background: #1a2332; color: #fff; font-weight: 600; }
+    tr:nth-child(even) td { background: #f9f9f9; }
+    .note {
+      background: #fff8e6;
+      border-left: 4px solid #c9a227;
+      padding: 10px 14px;
+      margin: 12px 0;
+      font-size: 9.5pt;
+    }
+    .tip {
+      background: #f0f7f4;
+      border-left: 4px solid #2d6a4f;
+      padding: 10px 14px;
+      margin: 12px 0;
+      font-size: 9.5pt;
+    }
+    ul, ol { margin: 6px 0 12px; padding-left: 22px; }
+    li { margin: 3px 0; }
+    code, .path { font-family: Consolas, monospace; font-size: 9pt; background: #f0f0f0; padding: 1px 5px; border-radius: 3px; }
+    .section-num { color: #9f2133; font-weight: 700; margin-right: 6px; }
+    .page-break { page-break-before: always; }
+    @media print {
+      body { padding: 0; }
+      a { color: inherit; text-decoration: none; }
+      h2 { page-break-before: auto; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="cover">
+  <h1>Asta Ticaret E-Ticaret Sitesi</h1>
+  <p class="sub">Müşteri Mağazası ve Yönetici Paneli — Kullanım ve Teslim Kılavuzu</p>
+  <p class="meta">Hazırlanma: Haziran 2026 · Teknik altyapı: React + Node.js + MySQL · Ödeme: PayTR</p>
+</div>
+
+<div class="toc">
+  <strong>İçindekiler</strong>
+  <ol>
+    <li>Genel bakış ve site adresleri</li>
+    <li>Müşteri tarafı (mağaza) — sayfalar ve özellikler</li>
+    <li>Görsel ve medya ölçüleri (1:1, 16:9, logo vb.)</li>
+    <li>Yönetici paneli — menüler ve işlevler</li>
+    <li>E-posta, bülten ve iletişim</li>
+    <li>Ödeme, kargo ve yasal süreçler</li>
+    <li>Günlük işletme önerileri ve teslim kontrol listesi</li>
+  </ol>
+</div>
+
+<h2><span class="section-num">1.</span> Genel bakış</h2>
+<p>
+  Bu proje, doğal güzellik / kozmetik ürünleri için hazırlanmış tam özellikli bir e-ticaret sitesidir.
+  Ziyaretçiler ürünleri inceleyebilir, sepete ekleyebilir, üye olabilir ve PayTR ile güvenli ödeme yapabilir.
+  Mağaza sahibi veya yetkili personel, <strong>yönetici paneli</strong> üzerinden ürün, sipariş, kupon, kullanıcı ve
+  sistem ayarlarını yönetir.
+</p>
+<table>
+  <tr><th>Bölüm</th><th>Adres (örnek)</th><th>Kim kullanır?</th></tr>
+  <tr><td>Mağaza (ön yüz)</td><td><span class="path">https://astaticaret.com</span></td><td>Müşteriler</td></tr>
+  <tr><td>Yönetici paneli</td><td><span class="path">https://astaticaret.com/admin</span></td><td>Sadece admin hesabı</td></tr>
+  <tr><td>API / sunucu</td><td>Ayrı backend adresi (sunucu .env)</td><td>Sistem (görünmez)</td></tr>
+</table>
+<div class="note">
+  <strong>Önemli:</strong> Yönetici paneline yalnızca <em>admin</em> rolündeki kullanıcılar giriş yapabilir.
+  Normal müşteri hesapları paneli göremez.
+</div>
+
+<h2><span class="section-num">2.</span> Müşteri tarafı (mağaza)</h2>
+
+<h3>2.1 Üst menü (navbar)</h3>
+<ul>
+  <li><strong>Logo ve mağaza adı</strong> — Ana sayfaya link. Logo ve boyutu (küçük / orta / büyük) Mağaza bilgilerinden ayarlanır.</li>
+  <li><strong>Ana Sayfa, Ürünler, Hakkımızda, İletişim</strong> — Masaüstünde yatay menü; mobilde hamburger menü (çekmece).</li>
+  <li><strong>Hesabım / Giriş</strong> — Üye girişi veya kayıt.</li>
+  <li><strong>Sepet</strong> — Ürün adedi ve ara toplam gösterimi.</li>
+</ul>
+
+<h3>2.2 Ana sayfa</h3>
+<ul>
+  <li><strong>Hero (kaydırmalı vitrin)</strong> — Admin → Sistem → Hero’dan yönetilir. Her slaytta başlık, alt metin, buton ve sağda <strong>16:9</strong> görsel veya gradient arka plan.</li>
+  <li><strong>Öne çıkan / çok satan ürünler</strong> — Ürün etiketine göre (ör. «çok satan») listelenir.</li>
+  <li><strong>Güven kartları + bülten</strong> — Alt bölümde güven mesajları ve «Abone ol» formu. Abonelik için e-postaya gelen onay linkine tıklanması gerekir (çift onay).</li>
+</ul>
+
+<h3>2.3 Ürünler sayfası</h3>
+<ul>
+  <li>Kategori ve cilt tipi filtreleri (admin’de tanımlı kategoriler ve cilt filtresi seçenekleri).</li>
+  <li>Sıralama ve arama.</li>
+  <li>Mobilde ürünler <strong>2 sütun</strong>; görseller <strong>1:1 (kare)</strong> kutuda <em>object-cover</em> ile doldurulur (kenar boşluğu yok).</li>
+</ul>
+
+<h3>2.4 Ürün detay sayfası</h3>
+<ul>
+  <li>Büyük ana görsel ve küçük galeri (hepsi 1:1 kare çerçeve).</li>
+  <li>Fiyat, indirim, stok, varyant seçimi (beden/renk vb. tanımlıysa).</li>
+  <li>Sepete ekleme; stok yoksa stok bildirimi talebi.</li>
+  <li>Ürün açıklaması (zengin metin / HTML).</li>
+</ul>
+
+<h3>2.5 Sepet ve ödeme</h3>
+<ul>
+  <li><strong>Sepet</strong> — Tarayıcıda tutulur; miktar güncelleme, kupon kodu.</li>
+  <li><strong>Ödeme</strong> — Teslimat bilgileri, KVKK / mesafeli satış onayları, PayTR iframe ile kart ödemesi.</li>
+  <li>Başarılı ödeme → sipariş onay e-postası; hata → hata sayfası ve tekrar deneme.</li>
+</ul>
+
+<h3>2.6 Üyelik ve hesap</h3>
+<table>
+  <tr><th>Sayfa</th><th>Adres</th><th>İşlev</th></tr>
+  <tr><td>Giriş</td><td><span class="path">/giris</span></td><td>E-posta + şifre</td></tr>
+  <tr><td>Üye ol</td><td><span class="path">/uye-ol</span></td><td>Kayıt, pazarlama izni seçenekleri</td></tr>
+  <tr><td>Şifremi unuttum</td><td><span class="path">/sifre-unuttum</span></td><td>Sıfırlama maili</td></tr>
+  <tr><td>Hesabım</td><td><span class="path">/hesabim</span></td><td>Profil, şifre, pazarlama tercihleri</td></tr>
+  <tr><td>Siparişlerim</td><td><span class="path">/hesabim/siparisler</span></td><td>Geçmiş siparişler</td></tr>
+</table>
+
+<h3>2.7 İletişim ve diğer</h3>
+<ul>
+  <li><strong>İletişim</strong> — Form mesajları veritabanına kaydedilir ve mağaza e-postasına bildirim gider. WhatsApp kartı (Mağaza bilgilerinde URL tanımlıysa).</li>
+  <li><strong>WhatsApp butonu</strong> — Tüm sitede sağ alt köşede yüzen buton (ayarlı URL varsa).</li>
+  <li><strong>Yasal sayfalar</strong> — <span class="path">/yasal/kvkk</span>, gizlilik, çerez, mesafeli satış vb. (admin’den düzenlenebilir).</li>
+  <li><strong>Çerez banner</strong> — İlk ziyarette onay.</li>
+  <li><strong>Bakım modu</strong> — Açıkken ziyaretçilere bakım mesajı; admin girişiyle site görülebilir.</li>
+</ul>
+
+<h2 class="page-break"><span class="section-num">3.</span> Görsel ve medya ölçüleri</h2>
+<p>Aşağıdaki oranlara uygun görseller yüklemeniz, sitede kırpılma ve boşluk sorunlarını en aza indirir.</p>
+
+<table>
+  <tr>
+    <th>Kullanım yeri</th>
+    <th>Önerilen oran</th>
+    <th>Önerilen piksel (yaklaşık)</th>
+    <th>Format / limit</th>
+    <th>Not</th>
+  </tr>
+  <tr>
+    <td><strong>Ürün fotoğrafları</strong></td>
+    <td><strong>1:1 (kare)</strong></td>
+    <td>1200×1200 px veya 1000×1000 px</td>
+    <td>JPG, PNG, WebP · Ürün başına en fazla <strong>5</strong> fotoğraf</td>
+    <td>İlk sıradaki fotoğraf = <strong>kapak</strong>. Sürükle-bırak veya yıldız ile kapak seçilir. <em>object-cover</em> ile kare doldurulur.</td>
+  </tr>
+  <tr>
+    <td><strong>Ana sayfa Hero slayt görseli</strong></td>
+    <td><strong>16:9 (yatay)</strong></td>
+    <td>1920×1080 px veya 1600×900 px</td>
+    <td>PNG, JPG, WebP, GIF · max <strong>4 MB</strong></td>
+    <td>Metin solda; görsel sağ vitrinde büyük görünür. Alternatif: gradient (görsel yok).</td>
+  </tr>
+  <tr>
+    <td><strong>Mağaza logosu (navbar)</strong></td>
+    <td>Yatay logo (serbest)</td>
+    <td>Yükseklik ~80–120 px kaynak dosya</td>
+    <td>PNG (şeffaf), SVG, WebP · max <strong>3 MB</strong></td>
+    <td>Boyut: Mağaza bilgileri → Küçük / Orta / Büyük. Şeffaf arka planlı PNG önerilir.</td>
+  </tr>
+  <tr>
+    <td><strong>E-posta şablonları</strong></td>
+    <td>Logo kullanılmaz</td>
+    <td>—</td>
+    <td>—</td>
+    <td>Maillerde başlıkta yalnızca <strong>mağaza adı</strong> (metin) görünür; siyah kutu sorunu önlenmiştir.</td>
+  </tr>
+  <tr>
+    <td><strong>Footer ödeme / SSL görselleri</strong></td>
+    <td>Serbest (küçük ikon)</td>
+    <td>~200×80 px</td>
+    <td>URL veya varsayılan ikonlar</td>
+    <td>Mağaza bilgilerinden özelleştirilebilir; boş bırakılırsa yerleşik görseller kullanılır.</td>
+  </tr>
+</table>
+
+<div class="tip">
+  <strong>Pratik ipucu — ürün fotoğrafı:</strong> Tüm ürünlerde aynı 1:1 kare çerçeveyi düşünün; ürünü ortada, arka plan sade (beyaz veya açık gri) çekmek katalog görünümünü tutarlı yapar.
+</div>
+
+<h2 class="page-break"><span class="section-num">4.</span> Yönetici paneli</h2>
+<p>Giriş: <span class="path">/admin</span> — Sol menüden tüm modüllere erişilir. Mobilde hamburger ile yan menü açılır.</p>
+
+<h3>4.1 Gösterge paneli (Dashboard)</h3>
+<ul>
+  <li>Satış özeti, sipariş sayıları, gelir grafikleri (günlük / haftalık / aylık / yıllık).</li>
+  <li>Sipariş durumlarına göre dağılım, son siparişler, hızlı bağlantılar.</li>
+</ul>
+
+<h3>4.2 Siparişler</h3>
+<ul>
+  <li>Tüm siparişler listesi; durum güncelleme (hazırlanıyor, kargoda, teslim edildi, iptal vb.).</li>
+  <li>Sipariş detayı: müşteri, adres, ürün satırları, ödeme bilgisi.</li>
+</ul>
+
+<h3>4.3 Ürünler</h3>
+<ul>
+  <li>Ürün listesi: arama (ad, marka, kategori, <strong>barkod</strong>), vitrinde göster / gizle.</li>
+  <li><strong>Yeni ürün / Düzenle</strong> — Ad, marka, kategori, fiyat, indirimli fiyat, planlı yüzde indirimi, stok, cilt tipi, etiket (yeni, çok satan…).</li>
+  <li><strong>Görseller (max 5)</strong> — 1:1 kapak + sıralama (sürükle-bırak, «kapak yap» yıldızı).</li>
+  <li><strong>Barkod</strong> — Yalnızca panelde görünür; müşteriye gösterilmez.</li>
+  <li>Varyantlar, zengin açıklama, SEO (slug, meta başlık/açıklama, otomatik SEO üret).</li>
+  <li>Toplu işlemler, CSV ile içe aktarma şablonu.</li>
+</ul>
+
+<h3>4.4 Kuponlar</h3>
+<ul>
+  <li>İndirim kuponu oluşturma: kod, yüzde veya sabit tutar, minimum sepet, kullanım limiti, tarih aralığı.</li>
+  <li>Müşteri ödeme sayfasında kupon kodu girer.</li>
+</ul>
+
+<h3>4.5 Kullanıcılar</h3>
+<ul>
+  <li>Kayıtlı müşteri listesi; rol (müşteri / admin), hesap durumu.</li>
+  <li>Admin hesabı oluşturma dikkatli yapılmalı — tam yetki verir.</li>
+</ul>
+
+<h3>4.6 Sistem ayarları (alt menü)</h3>
+<table>
+  <tr><th>Menü</th><th>Ne yapılır?</th></tr>
+  <tr><td>Kategoriler</td><td>Ürün kategorileri; mağaza filtresi; cilt tipi filtre etiketleri</td></tr>
+  <tr><td>Hero</td><td>Ana sayfa slaytları — metin, 16:9 görsel veya gradient, buton linki, sıra, aktif/pasif</td></tr>
+  <tr><td>Mağaza bilgileri</td><td>Mağaza adı, logo yükleme, logo boyutu (küçük/orta/büyük), iletişim, sosyal medya, WhatsApp URL, yasal şirket bilgileri, footer güven görselleri</td></tr>
+  <tr><td>Kargo &amp; vergi</td><td>Kargo ücreti, ücretsiz kargo eşiği, KDV gösterimi</td></tr>
+  <tr><td>Bakım modu</td><td>Siteyi geçici kapatma + bakım mesajı</td></tr>
+  <tr><td>Kampanyalar</td><td>Toplu e-posta kampanyası — kitle, içerik, zamanlama, test gönderimi, A/B test</td></tr>
+  <tr><td>Yasal metinler</td><td>KVKK, gizlilik, çerez, mesafeli satış, iade vb. metinler</td></tr>
+</table>
+
+<h2><span class="section-num">5.</span> E-posta, bülten ve iletişim</h2>
+<ul>
+  <li><strong>Sipariş onayı</strong> — Ödeme sonrası otomatik.</li>
+  <li><strong>Şifre sıfırlama</strong> — Kullanıcı talebiyle.</li>
+  <li><strong>Bülten aboneliği</strong> — Ana sayfa/footer formu → onay maili → <span class="path">/abonelik-onayi/…</span> sayfası ile tamamlanır.</li>
+  <li><strong>İletişim formu</strong> — Mesaj kaydı + mağaza e-postasına bildirim (Reply-To müşteri adresi).</li>
+  <li><strong>Kampanya mailleri</strong> — Admin kampanyalar menüsünden; yalnızca izin vermiş kitleye.</li>
+</ul>
+<div class="note">
+  SMTP ayarları sunucu <span class="path">backend/.env</span> dosyasındadır (host, kullanıcı, şifre tırnak içinde).
+  Canlıda <span class="path">BACKEND_PUBLIC_URL</span> ve <span class="path">FRONTEND_PUBLIC_URL</span> doğru olmalıdır.
+</div>
+
+<h2><span class="section-num">6.</span> Ödeme, kargo ve yasal</h2>
+<ul>
+  <li><strong>PayTR</strong> — Kart bilgileri sitenizde saklanmaz; PayTR iframe üzerinden işlenir.</li>
+  <li><strong>Kargo</strong> — Sistem ayarlarından ücret ve ücretsiz eşik; sepet/ödeme özeti buna göre hesaplanır.</li>
+  <li><strong>Yasal onaylar</strong> — Ödeme öncesi sözleşme ve KVKK onayları zorunlu; metinler yasal metinler bölümünden güncellenir.</li>
+</ul>
+
+<h2 class="page-break"><span class="section-num">7.</span> Günlük işletme ve teslim kontrol listesi</h2>
+
+<h3>7.1 Mağaza sahibinin sık yapacağı işler</h3>
+<ol>
+  <li>Yeni ürün ekleme (1:1 fotoğraflar, kapak seçimi, fiyat, stok, kategori).</li>
+  <li>Sipariş durumlarını güncelleme ve müşteriye kargo bilgisi iletme.</li>
+  <li>Stok tükenen ürünleri güncelleme veya gizleme.</li>
+  <li>Kampanya / kupon dönemlerinde ilgili menüleri kullanma.</li>
+  <li>İletişim formu ve e-posta kutusunu kontrol etme.</li>
+  <li>Gerekirse bakım modu (güncelleme sırasında).</li>
+</ol>
+
+<h3>7.2 Teslim öncesi teknik kontrol (hosting)</h3>
+<table>
+  <tr><th>Kontrol</th><th>Açıklama</th></tr>
+  <tr><td>Site açılıyor mu?</td><td>HTTPS, ana sayfa, ürünler, sepet</td></tr>
+  <tr><td>Admin girişi</td><td>/admin — admin hesabı ile</td></tr>
+  <tr><td>Test siparişi</td><td>PayTR test/canlı moduna göre küçük tutarlı deneme</td></tr>
+  <tr><td>E-posta</td><td>Sipariş ve bülten onay maili geliyor mu?</td></tr>
+  <tr><td>Logo ve Hero</td><td>Mağaza bilgileri + Hero slaytları kayıtlı mı?</td></tr>
+  <tr><td>WhatsApp</td><td>Mağaza bilgilerinde URL varsa buton çalışıyor mu?</td></tr>
+  <tr><td>Yasal sayfalar</td><td>Footer linkleri ve ödeme onay metinleri dolu mu?</td></tr>
+  <tr><td>Sunucu süreçleri</td><td>PM2’de tek backend süreci (çift süreç SMTP/ayar karışıklığı yapar)</td></tr>
+</table>
+
+<h3>7.3 Destek ve güncelleme</h3>
+<p>
+  Kod güncellemeleri sunucuda <span class="path">git pull</span>, <span class="path">npm run build</span> ve
+  <span class="path">pm2 restart</span> ile uygulanır. Veritabanı yeni sütunları (ör. barkod) sunucu yeniden
+  başlatıldığında otomatik eklenir.
+</p>
+
+<p style="margin-top:32px; font-size:9pt; color:#888; text-align:center;">
+  — Bu belge Asta Ticaret e-ticaret sitesinin işletme ve teslim dokümantasyonudur. —
+</p>
+
+</body>
+</html>

@@ -102,6 +102,15 @@ const Product = sequelize.define('Product', {
         type: DataTypes.BOOLEAN,
         defaultValue: true // Admin panelinden ürünü silmeden gizlemek için
     },
+    /**
+     * Ürün stok bittiği için otomatik mi gizlendi? (manuel gizlemeden ayırmak için)
+     * true ise: stok geri geldiğinde otomatik tekrar vitrine alınır.
+     */
+    autoHiddenOutOfStock: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
+    },
     /** KDV oranı (yüzde). Boş bırakılırsa muhasebe yazılımı varsayılanı uygulanır. */
     vatRate: {
         type: DataTypes.INTEGER,

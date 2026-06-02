@@ -441,7 +441,9 @@ exports.patchProductVisibility = async (req, res) => {
                 message: 'is_active alanı true veya false olmalıdır.',
             });
         }
-        await product.update({ is_active });
+        // Admin elle değiştirdiyse "otomatik gizlendi" bayrağını temizle ki
+        // stok hareketi bu manuel kararı ezmesin.
+        await product.update({ is_active, autoHiddenOutOfStock: false });
         await logAdminAudit({
             req,
             adminUser: req.user,
