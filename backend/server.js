@@ -19,6 +19,7 @@ require('./models/Campaign');
 require('./models/Warehouse');
 require('./models/ProductWarehouseStock');
 require('./models/ConsentEvent');
+require('./models/ContactMessage');
 const AdminAuditLog = require('./models/AdminAuditLog');
 require('./models/HomeHeroSlide');
 const Product = require('./models/Product');

@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { useSiteSettings } from '../context/SiteSettingsContext.jsx';
 import { WhatsAppIcon } from '../components/icons/SocialIcons.jsx';
 import { sanitizeSocialUrl } from '../lib/socialLinks.js';
+import { apiFetch } from '../api/client.js';
 
 const inputClass =
   'w-full rounded-md border border-neutral-300 bg-white px-4 py-2.5 text-sm text-neutral-900 outline-none ring-brand ring-offset-2 placeholder:text-neutral-400 focus:border-neutral-400 focus:ring-2';
@@ -16,6 +17,8 @@ function footerTelHref(phone) {
 export default function ContactPage() {
   const s = useSiteSettings();
   const [sent, setSent] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [formError, setFormError] = useState('');
 
   const phone = String(s.footerPhone ?? '').trim();
   const email = String(s.footerEmail ?? '').trim();
@@ -70,11 +73,30 @@ export default function ContactPage() {
 
   const hasLegalBlock = Boolean(legalName || taxOffice || taxNumber || registeredAddr);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setSent(true);
-    e.target.reset();
-    window.setTimeout(() => setSent(false), 6000);
+    if (sending) return;
+    const form = e.currentTarget;
+    const fd = new FormData(form);
+    const payload = {
+      name: String(fd.get('name') || '').trim(),
+      email: String(fd.get('email') || '').trim(),
+      subject: String(fd.get('subject') || '').trim(),
+      message: String(fd.get('message') || '').trim(),
+    };
+    setFormError('');
+    setSent(false);
+    setSending(true);
+    try {
+      const res = await apiFetch('/api/contact', { method: 'POST', skipAuth: true, body: payload });
+      setSent(res?.message || 'Mesajınız bize ulaştı. En kısa sürede dönüş yapacağız.');
+      form.reset();
+      window.setTimeout(() => setSent(false), 8000);
+    } catch (ex) {
+      setFormError(typeof ex.message === 'string' ? ex.message : 'Mesaj gönderilemedi. Lütfen daha sonra tekrar deneyin.');
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
@@ -254,14 +276,20 @@ export default function ContactPage() {
                 </p>
                 <button
                   type="submit"
-                  className="w-full rounded-md bg-brand px-8 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-brand-hover sm:w-auto"
+                  disabled={sending}
+                  className="w-full rounded-md bg-brand px-8 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-brand-hover disabled:cursor-not-allowed disabled:bg-neutral-400 sm:w-auto"
                 >
-                  Gönder
+                  {sending ? 'Gönderiliyor…' : 'Gönder'}
                 </button>
                 {sent ? (
                   <p className="text-sm font-medium text-green-700">
-                    Talebiniz kayda alınmıştır; en kısa sürede tarafınıza dönüş sağlanacaktır.
+                    {typeof sent === 'string'
+                      ? sent
+                      : 'Talebiniz kayda alınmıştır; en kısa sürede tarafınıza dönüş sağlanacaktır.'}
                   </p>
+                ) : null}
+                {formError ? (
+                  <p className="text-sm font-medium text-red-600">{formError}</p>
                 ) : null}
               </form>
             </div>

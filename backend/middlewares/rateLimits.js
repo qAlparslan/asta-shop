@@ -248,6 +248,26 @@ const productStockAlertPostLimiter = rateLimit({
 
 
 
+/** İletişim formu — spam / otomasyon freni (IP bazlı) */
+
+const contactMessageLimiter = rateLimit({
+
+    windowMs: 60 * 60 * 1000,
+
+    limit: parseInt(process.env.RATE_LIMIT_CONTACT_MAX || '15', 10),
+
+    standardHeaders: 'draft-7',
+
+    legacyHeaders: false,
+
+    keyGenerator: (req) => `contact:${clientIp(req)}`,
+
+    message: jsonMessage('Çok fazla mesaj gönderdiniz. Lütfen bir süre sonra tekrar deneyin.'),
+
+});
+
+
+
 module.exports = {
 
     loginIpLimiter,
@@ -269,6 +289,8 @@ module.exports = {
     productReviewPostLimiter,
 
     productStockAlertPostLimiter,
+
+    contactMessageLimiter,
 
 };
 
