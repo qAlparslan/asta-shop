@@ -22,6 +22,7 @@ import CheckoutPage from './pages/CheckoutPage.jsx';
 import PaymentSuccessPage from './pages/PaymentSuccessPage.jsx';
 import PaymentFailurePage from './pages/PaymentFailurePage.jsx';
 import LegalDocumentPage from './pages/LegalDocumentPage.jsx';
+import NewsletterActionPage from './pages/NewsletterActionPage.jsx';
 import AccountLayout from './pages/account/AccountLayout.jsx';
 import AccountProfilePage from './pages/account/AccountProfilePage.jsx';
 import MyOrdersPage from './pages/account/MyOrdersPage.jsx';
@@ -152,6 +153,8 @@ export default function App() {
                 <Route path="siparisler" element={<MyOrdersPage />} />
               </Route>
               <Route path="/yasal/:slug" element={<LegalDocumentPage />} />
+              <Route path="/abonelik-onayi/:token" element={<NewsletterActionPage mode="confirm" />} />
+              <Route path="/abonelikten-cik/:token" element={<NewsletterActionPage mode="unsubscribe" />} />
             </Route>
           </Routes>
         </CartProvider>
