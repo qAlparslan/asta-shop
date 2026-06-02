@@ -8,6 +8,9 @@ const { applyMissingProductSeo, generateProductSeo } = require('../utils/product
 
 const SKIN_TYPE_VALUES = new Set(['hassas', 'kuru', 'yagli_karma', 'olgun', 'tumu']);
 
+/** Müşteriye dönen yanıtlardan gizlenecek alanlar (yalnızca admin görür). */
+const PUBLIC_PRODUCT_EXCLUDE = ['barcode'];
+
 /** Cilt tipi gönderildiğinde değeri doğrula; vitrin filtresi artık bölge/amaca bağlı olmadığı için bu alanları nötrle. */
 function normalizeProductSkinTypeAndLegacyFilters(data) {
     if (!Object.prototype.hasOwnProperty.call(data, 'skin_type')) return;
@@ -66,6 +69,10 @@ function applyProductTextAndVariantsSanitize(data) {
     }
     if (Object.prototype.hasOwnProperty.call(data, 'slug') && data.slug != null) {
         data.slug = stripToPlainText(data.slug).replace(/\s+/g, '-').slice(0, 220);
+    }
+    if (Object.prototype.hasOwnProperty.call(data, 'barcode')) {
+        const b = stripToPlainText(String(data.barcode ?? '')).trim().slice(0, 64);
+        data.barcode = b || null;
     }
     if (Object.prototype.hasOwnProperty.call(data, 'variants')) {
         const v = Array.isArray(data.variants) ? data.variants : [];
@@ -166,6 +173,7 @@ exports.getAllProducts = async (req, res) => {
 
         const products = await Product.findAll({
             where,
+            attributes: { exclude: PUBLIC_PRODUCT_EXCLUDE },
             order: [['createdAt', 'DESC']],
             ...(limit ? { limit } : {}),
         });
@@ -197,7 +205,9 @@ exports.getAllProductsAdmin = async (req, res) => {
 // 2. TEK BİR ÜRÜNÜ DETAYLI GETİR
 exports.getProductById = async (req, res) => {
     try {
-        const product = await Product.findByPk(req.params.id);
+        const product = await Product.findByPk(req.params.id, {
+            attributes: { exclude: PUBLIC_PRODUCT_EXCLUDE },
+        });
         
         if (!product) {
             return res.status(404).json({ status: 'fail', message: 'Aradığınız ürün bulunamadı.' });
@@ -866,7 +876,8 @@ exports.importProducts = async (req, res) => {
 exports.getProductBySlug = async (req, res) => {
     try {
         const product = await Product.findOne({ 
-            where: { slug: req.params.slug, is_active: true } 
+            where: { slug: req.params.slug, is_active: true },
+            attributes: { exclude: PUBLIC_PRODUCT_EXCLUDE },
         });
         
         if (!product) {
@@ -884,6 +895,7 @@ exports.getPublicProductById = async (req, res) => {
     try {
         const product = await Product.findOne({
             where: { id: req.params.id, is_active: true },
+            attributes: { exclude: PUBLIC_PRODUCT_EXCLUDE },
         });
 
         if (!product) {

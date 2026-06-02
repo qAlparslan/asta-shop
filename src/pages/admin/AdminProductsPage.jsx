@@ -196,6 +196,9 @@ export default function AdminProductsPage() {
           .includes(q) ||
         String(p.category || '')
           .toLowerCase()
+          .includes(q) ||
+        String(p.barcode || '')
+          .toLowerCase()
           .includes(q),
     );
   }, [products, query]);
@@ -408,7 +411,7 @@ export default function AdminProductsPage() {
           />
           <input
             type="search"
-            placeholder="Ürün adı ile ara…"
+            placeholder="Ürün adı, marka, kategori veya barkod ile ara…"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             className="w-full rounded-xl border border-neutral-200 bg-neutral-50/50 py-2.5 pl-10 pr-4 text-sm text-neutral-900 outline-none ring-brand ring-offset-2 placeholder:text-neutral-400 focus:border-brand/50 focus:bg-white focus:ring-2"
@@ -802,20 +805,21 @@ export default function AdminProductsPage() {
                 <th className="px-4 py-3.5 font-sans">Kategori</th>
                 <th className="px-4 py-3.5 font-sans">Fiyat</th>
                 <th className="px-4 py-3.5 font-sans">Stok</th>
+                <th className="px-4 py-3.5 font-sans">Barkod</th>
                 <th className="px-4 py-3.5 text-right font-sans">İşlem</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-100 bg-white">
               {loading && (
                 <tr>
-                  <td colSpan={7} className="px-4 py-12 text-center text-neutral-500">
+                  <td colSpan={8} className="px-4 py-12 text-center text-neutral-500">
                     Yükleniyor…
                   </td>
                 </tr>
               )}
               {!loading && visible.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="px-4 py-12 text-center text-neutral-500">
+                  <td colSpan={8} className="px-4 py-12 text-center text-neutral-500">
                     {query.trim() ? 'Aramaya uygun ürün yok.' : 'Ürün yok.'}
                   </td>
                 </tr>
@@ -873,6 +877,9 @@ export default function AdminProductsPage() {
                       </div>
                     </td>
                     <td className="whitespace-nowrap px-4 py-4 tabular-nums text-neutral-800">{p.stock}</td>
+                    <td className="whitespace-nowrap px-4 py-4 font-mono text-xs text-neutral-700">
+                      {p.barcode ? p.barcode : <span className="text-neutral-400">—</span>}
+                    </td>
                     <td className="whitespace-nowrap px-4 py-4">
                       <div className="flex flex-wrap justify-end gap-2">
                         <button
@@ -958,6 +965,7 @@ function ProductEditorOverlay({ mode, product, onClose, onSaved }) {
   const [slug, setSlug] = useState('');
   const [metaTitle, setMetaTitle] = useState('');
   const [metaDesc, setMetaDesc] = useState('');
+  const [barcode, setBarcode] = useState('');
   const [variants, setVariants] = useState([]);
   const [description, setDescription] = useState('');
   /** Planlı yüzde indirim (liste fiyatı üzerinden) — yüzde boş ise form bu alanı yok sayar */
@@ -992,6 +1000,7 @@ function ProductEditorOverlay({ mode, product, onClose, onSaved }) {
       setSlug('');
       setMetaTitle('');
       setMetaDesc('');
+      setBarcode('');
       setVariants([]);
       setDescription('');
       setPlanPct('');
@@ -1022,6 +1031,7 @@ function ProductEditorOverlay({ mode, product, onClose, onSaved }) {
     setSlug(String(product.slug || ''));
     setMetaTitle(String(product.meta_title || ''));
     setMetaDesc(String(product.meta_description || ''));
+    setBarcode(String(product.barcode || ''));
     setVariants(normalizeVariants(product.variants));
     const dp = Number(product.discountPercent);
     setPlanPct(Number.isFinite(dp) && dp > 0 ? String(dp) : '');
@@ -1290,6 +1300,7 @@ function ProductEditorOverlay({ mode, product, onClose, onSaved }) {
     fd.append('slug', slug.trim());
     fd.append('meta_title', metaTitle.trim());
     fd.append('meta_description', metaDesc.trim());
+    fd.append('barcode', barcode.trim());
     fd.append('variants', JSON.stringify(variantPayload));
 
     if (usePlan) {
@@ -1535,6 +1546,23 @@ function ProductEditorOverlay({ mode, product, onClose, onSaved }) {
                     onChange={(ev) => setStock(ev.target.value)}
                   />
                 </div>
+              </div>
+              <div className="mt-4">
+                <label className="text-[11px] font-bold uppercase text-neutral-500">
+                  Barkod kodu
+                </label>
+                <input
+                  className={`mt-2 ${inputClass}`}
+                  value={barcode}
+                  onChange={(ev) => setBarcode(ev.target.value)}
+                  placeholder="Örn. 8690000000000"
+                  inputMode="text"
+                  autoComplete="off"
+                  maxLength={64}
+                />
+                <p className="mt-1 text-[10px] text-neutral-500">
+                  Yalnızca yönetim için — müşterilere gösterilmez. İç stok/etiket takibinde kullanılır.
+                </p>
               </div>
               <div className="mt-4 rounded-xl border border-dashed border-amber-200 bg-amber-50/55 p-4">
                 <p className="text-[11px] font-bold uppercase tracking-wide text-amber-950">

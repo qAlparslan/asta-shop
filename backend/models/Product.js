@@ -108,6 +108,11 @@ const Product = sequelize.define('Product', {
         allowNull: true,
         validate: { min: 0, max: 100 },
     },
+    /** Ürün barkodu — yalnızca admin/iç kullanım, müşteriye gösterilmez. */
+    barcode: {
+        type: DataTypes.STRING(64),
+        allowNull: true,
+    },
 }, {
     tableName: 'products',
     timestamps: true,
