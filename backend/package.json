@@ -13,6 +13,8 @@
     "repair:indexes": "node scripts/repair-mysql-indexes.js",
     "verify:sanitize": "node scripts/verify-html-sanitize.js",
     "smtp:ping": "node scripts/smtp-ping.js",
+    "reset:data": "node scripts/reset-transactional-data.js",
+    "reset:data:yes": "node scripts/reset-transactional-data.js --confirm YES",
     "postinstall": "node scripts/verify-html-sanitize.js"
   },
   "keywords": [],
