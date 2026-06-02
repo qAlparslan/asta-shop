@@ -65,6 +65,7 @@ function buildApp() {
     const emailMetricsRoutes = require('./routes/emailMetricsRoutes');
     const adminProductReviewRoutes = require('./routes/adminProductReviewRoutes');
     const contactRoutes = require('./routes/contactRoutes');
+    const emailAutomationRoutes = require('./routes/emailAutomationRoutes');
 
     app.use('/api/inventory', inventoryRoutes);
     app.get('/sitemap.xml', sitemapController.serveSitemap);
@@ -86,6 +87,7 @@ function buildApp() {
     app.use('/api/campaigns', campaignRoutes);
     app.use('/api/home-hero', homeHeroRoutes);
     app.use('/api/contact', contactRoutes);
+    app.use('/api/email-automations', emailAutomationRoutes);
 
     app.get('/', (req, res) => {
         res.send('Asta Ticaret Backend API Çalışıyor 🚀');

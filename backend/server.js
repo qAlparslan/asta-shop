@@ -20,6 +20,7 @@ require('./models/Warehouse');
 require('./models/ProductWarehouseStock');
 require('./models/ConsentEvent');
 require('./models/ContactMessage');
+require('./models/EmailAutomation');
 const AdminAuditLog = require('./models/AdminAuditLog');
 require('./models/HomeHeroSlide');
 const Product = require('./models/Product');

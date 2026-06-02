@@ -3,6 +3,7 @@ const User = require('../models/User');
 const Order = require('../models/Order');
 const Campaign = require('../models/Campaign');
 const EmailLog = require('../models/EmailLog');
+const EmailAutomation = require('../models/EmailAutomation');
 const {
     sendMail,
     getMailMeta,
@@ -14,114 +15,159 @@ const campaignTemplate = require('./emailTemplates/campaign');
 const { buildMarketingVars } = require('./emailTemplateInterpolator');
 const { usersWantCampaignOffersClause } = require('./userEmailConsent');
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+
 /**
- * Otomatik hatırlatma maillerini günde bir kez çalıştırır.
+ * Admin panelinden yönetilen otomatik e-posta kuralları (EmailAutomation tablosu).
+ * Kurallar artık koda gömülü değil; admin oluşturur/düzenler/aç-kapatır.
  *
- * Kurallar:
- *   - welcome_followup_7d:
- *       Kayıt olalı 7+ gün olmuş, kampanya/teklif e-postası onaylı,
- *       hiç sipariş vermemiş kullanıcılara "geri dön" maili.
+ * Tetikleyiciler:
+ *   days_after_signup_no_order → kayıttan N gün sonra, hiç sipariş vermemişlere
+ *   days_after_last_order      → son siparişten N gün sonra (geri kazanım)
  *
- *   - reactivation_30d:
- *       Son siparişinin üstünden 30+ gün geçmiş, kampanya/teklif onayı açık
- *       kullanıcılara "seni özledik" maili.
- *
- * Her kural için her kullanıcıya en fazla 1 kez gönderilir
- * (EmailLog'a relatedId=`${rule}:${userId}` olarak işaretlenir).
+ * Tekilleştirme: EmailLog.relatedId = `auto:<automationId>:<userId>`
+ *   once      → bu kayıt varsa bir daha gönderme
+ *   recurring → son gönderim repeatDays günden eskiyse tekrar gönder
  */
 
-const RULES = [
+const DEFAULT_AUTOMATIONS = [
     {
-        id: 'welcome_followup_7d',
-        title: 'Sana özel bir hediyemiz var',
-        body: `
-            <p>Bizi keşfettiğin için teşekkür ederiz. Hâlâ ilk siparişini vermediğini fark ettik —
-            doğal güzellik koleksiyonumuza bir göz atmak ister misin?</p>
-            <p>Yeni başlayanlar için <strong>özel önerilerimiz</strong> hazır.</p>
-        `,
+        name: 'Hoş geldin — ilk sipariş teşviki',
+        enabled: false,
+        triggerType: 'days_after_signup_no_order',
+        triggerDays: 7,
+        subject: 'Sana özel bir hediyemiz var',
+        bodyHtml:
+            '<p>Bizi keşfettiğin için teşekkür ederiz. Hâlâ ilk siparişini vermediğini fark ettik — ' +
+            'doğal güzellik koleksiyonumuza bir göz atmak ister misin?</p>' +
+            '<p>Yeni başlayanlar için <strong>özel önerilerimiz</strong> hazır.</p>',
         ctaText: 'Mağazayı Keşfet',
         ctaPath: '/urunler',
-        getCandidates: async () => {
-            const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-            const users = await User.findAll({
-                where: {
-                    role: 'customer',
-                    ...usersWantCampaignOffersClause(),
-                    createdAt: { [Op.lte]: sevenDaysAgo },
-                },
-                attributes: ['id', 'fullName', 'email', 'unsubscribeToken', 'createdAt'],
-            });
-            // Hiç siparişi olmayanlar
-            const filtered = [];
-            for (const u of users) {
-                const orderCount = await Order.count({ where: { email: u.email } });
-                if (orderCount === 0) filtered.push(u);
-            }
-            return filtered;
-        },
+        repeatMode: 'once',
+        repeatDays: null,
     },
     {
-        id: 'reactivation_30d',
-        title: 'Seni özledik',
-        body: `
-            <p>Son siparişinin üzerinden bir süre geçti. Doğal koleksiyonumuza yeni ürünler eklendi —
-            tekrar geldiğinde sana özel sürprizler hazırladık.</p>
-            <p>Senin için seçtiğimiz <strong>en sevilen ürünleri</strong> incelemeye ne dersin?</p>
-        `,
+        name: 'Geri kazanım — seni özledik',
+        enabled: false,
+        triggerType: 'days_after_last_order',
+        triggerDays: 30,
+        subject: 'Seni özledik',
+        bodyHtml:
+            '<p>Son siparişinin üzerinden bir süre geçti. Doğal koleksiyonumuza yeni ürünler eklendi — ' +
+            'tekrar geldiğinde sana özel sürprizler hazırladık.</p>' +
+            '<p>Senin için seçtiğimiz <strong>en sevilen ürünleri</strong> incelemeye ne dersin?</p>',
         ctaText: 'Yeniliklere Bak',
         ctaPath: '/urunler',
-        getCandidates: async () => {
-            const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-            // Son siparişi 30+ gün önce olanları bul
-            const users = await User.findAll({
-                where: { role: 'customer', ...usersWantCampaignOffersClause() },
-                attributes: ['id', 'fullName', 'email', 'unsubscribeToken'],
-            });
-            const filtered = [];
-            for (const u of users) {
-                const lastOrder = await Order.findOne({
-                    where: { email: u.email },
-                    order: [['createdAt', 'DESC']],
-                });
-                if (lastOrder && lastOrder.createdAt < thirtyDaysAgo) {
-                    filtered.push(u);
-                }
-            }
-            return filtered;
-        },
+        repeatMode: 'recurring',
+        repeatDays: 45,
     },
 ];
 
 let timer = null;
 let busy = false;
 
-async function processRule(rule) {
+async function seedDefaultAutomations() {
+    try {
+        const count = await EmailAutomation.count();
+        if (count > 0) return;
+        for (const a of DEFAULT_AUTOMATIONS) {
+            await EmailAutomation.create(a);
+        }
+        console.log(`🤖 ${DEFAULT_AUTOMATIONS.length} örnek otomatik e-posta kuralı oluşturuldu (kapalı — panelden açın).`);
+    } catch (e) {
+        if (!/no such table|doesn't exist|ER_NO_SUCH_TABLE/i.test(String(e.message))) {
+            console.warn('Otomatik e-posta seed atlandı:', e.message);
+        }
+    }
+}
+
+/** Kuralın tetikleyicisine göre aday kullanıcıları döndürür. */
+async function getCandidates(a) {
+    const cutoff = new Date(Date.now() - Math.max(0, Number(a.triggerDays) || 0) * DAY_MS);
+
+    if (a.triggerType === 'days_after_signup_no_order') {
+        const users = await User.findAll({
+            where: {
+                role: 'customer',
+                ...usersWantCampaignOffersClause(),
+                createdAt: { [Op.lte]: cutoff },
+            },
+            attributes: ['id', 'fullName', 'email', 'unsubscribeToken', 'createdAt'],
+        });
+        const filtered = [];
+        for (const u of users) {
+            const orderCount = await Order.count({ where: { email: u.email } });
+            if (orderCount === 0) filtered.push(u);
+        }
+        return filtered;
+    }
+
+    if (a.triggerType === 'days_after_last_order') {
+        const users = await User.findAll({
+            where: { role: 'customer', ...usersWantCampaignOffersClause() },
+            attributes: ['id', 'fullName', 'email', 'unsubscribeToken'],
+        });
+        const filtered = [];
+        for (const u of users) {
+            const lastOrder = await Order.findOne({
+                where: { email: u.email },
+                order: [['createdAt', 'DESC']],
+            });
+            if (lastOrder && lastOrder.createdAt < cutoff) filtered.push(u);
+        }
+        return filtered;
+    }
+
+    return [];
+}
+
+/** Bu kuralla daha önce (uygun pencerede) mail almış kullanıcıların anahtar kümesi. */
+async function buildSeenSet(a) {
+    const prefix = `auto:${a.id}:`;
+    const where = {
+        type: 'campaign',
+        relatedId: { [Op.like]: `${prefix}%` },
+    };
+    // recurring: yalnızca son repeatDays içinde gönderilmişler "görülmüş" sayılır (soğuma)
+    if (a.repeatMode === 'recurring') {
+        const gapDays = Math.max(1, Number(a.repeatDays) || 30);
+        where.createdAt = { [Op.gte]: new Date(Date.now() - gapDays * DAY_MS) };
+    }
+    const rows = await EmailLog.findAll({ where, attributes: ['relatedId'] });
+    return new Set(rows.map((r) => r.relatedId));
+}
+
+function isWithinWindow(a, now = new Date()) {
+    if (a.startAt && now < new Date(a.startAt)) return false;
+    if (a.endAt && now > new Date(a.endAt)) return false;
+    return true;
+}
+
+async function processAutomation(a) {
+    if (!a.enabled) return { id: a.id, sent: 0, skipped: 0, reason: 'disabled' };
+    if (!isWithinWindow(a)) return { id: a.id, sent: 0, skipped: 0, reason: 'out-of-window' };
+
     const meta = await getMailMeta();
     const frontend = getFrontendUrl();
-    const candidates = await rule.getCandidates();
-    if (candidates.length === 0) return { rule: rule.id, sent: 0, skipped: 0 };
+    const candidates = await getCandidates(a);
 
-    // Bu kuralla daha önce mail gönderilmiş kullanıcıları topla
-    const alreadyKey = `auto:${rule.id}:`;
-    const existing = await EmailLog.findAll({
-        where: {
-            type: 'campaign',
-            relatedId: { [Op.like]: `${alreadyKey}%` },
-        },
-        attributes: ['relatedId'],
-    });
-    const seen = new Set(existing.map((e) => e.relatedId));
+    if (candidates.length === 0) {
+        await a.update({ lastRunAt: new Date(), lastSentCount: 0 });
+        return { id: a.id, sent: 0, skipped: 0 };
+    }
 
-    // Campaign kaydı oluştur (özet için)
+    const seen = await buildSeenSet(a);
+    const prefix = `auto:${a.id}:`;
+
     const campaign = await Campaign.create({
-        title: rule.title,
-        bodyHtml: rule.body,
-        ctaText: rule.ctaText,
-        ctaUrl: `${frontend}${rule.ctaPath}`,
+        title: a.subject,
+        bodyHtml: a.bodyHtml,
+        ctaText: a.ctaText,
+        ctaUrl: a.ctaPath ? `${frontend}${a.ctaPath}` : null,
         audience: 'all_consenting',
         status: 'sending',
         type: 'automated',
-        automatedRule: rule.id,
+        automatedRule: a.id,
         totalRecipients: candidates.length,
     });
 
@@ -129,7 +175,7 @@ async function processRule(rule) {
     let skipped = 0;
 
     for (const u of candidates) {
-        const key = `${alreadyKey}${u.id}`;
+        const key = `${prefix}${u.id}`;
         if (seen.has(key)) {
             skipped += 1;
             continue;
@@ -138,10 +184,10 @@ async function processRule(rule) {
             const token = await ensureUserUnsubscribeToken(u);
             const unsubscribeUrl = buildUnsubscribeUrl(token, 'user');
             const tpl = campaignTemplate({
-                title: rule.title,
-                bodyHtml: rule.body,
-                ctaText: rule.ctaText,
-                ctaUrl: `${frontend}${rule.ctaPath}`,
+                title: a.subject,
+                bodyHtml: a.bodyHtml,
+                ctaText: a.ctaText,
+                ctaUrl: a.ctaPath ? `${frontend}${a.ctaPath}` : null,
                 recipientName: u.fullName,
                 storeName: meta.storeName,
                 logoUrl: meta.logoUrl,
@@ -160,13 +206,13 @@ async function processRule(rule) {
                 type: 'campaign',
                 relatedId: key,
                 campaignId: campaign.id,
-                metadata: { rule: rule.id, automated: true },
+                metadata: { automationId: a.id, automated: true },
                 headers: { 'List-Unsubscribe': `<${unsubscribeUrl}>` },
             });
             if (out.success) sent += 1;
             await new Promise((r) => setTimeout(r, 200));
         } catch (e) {
-            console.error(`${rule.id} loop:`, e.message);
+            console.error(`otomasyon ${a.id} loop:`, e.message);
         }
     }
 
@@ -175,23 +221,29 @@ async function processRule(rule) {
         sentAt: new Date(),
         sentCount: sent,
         failedCount: candidates.length - sent - skipped,
-        metadata: { rule: rule.id, skipped },
+        metadata: { automationId: a.id, skipped },
     });
+    await a.update({ lastRunAt: new Date(), lastSentCount: sent });
 
-    console.log(`🤖 Otomatik kural [${rule.id}]: candidates=${candidates.length}, sent=${sent}, skipped=${skipped}`);
-    return { rule: rule.id, sent, skipped };
+    console.log(`🤖 Otomasyon [${a.name}]: aday=${candidates.length}, gönderildi=${sent}, atlandı=${skipped}`);
+    return { id: a.id, sent, skipped };
 }
 
 async function tick() {
     if (busy) return;
     busy = true;
     try {
-        for (const rule of RULES) {
+        const automations = await EmailAutomation.findAll({ where: { enabled: true } });
+        for (const a of automations) {
             try {
-                await processRule(rule);
+                await processAutomation(a);
             } catch (e) {
-                console.error(`Otomatik kural [${rule.id}] hatası:`, e.message);
+                console.error(`Otomasyon [${a.id}] hatası:`, e.message);
             }
+        }
+    } catch (e) {
+        if (!/no such table|doesn't exist|ER_NO_SUCH_TABLE/i.test(String(e.message))) {
+            console.error('automatedReminders.tick hatası:', e.message);
         }
     } finally {
         busy = false;
@@ -200,14 +252,13 @@ async function tick() {
 
 function start() {
     if (timer) return;
-    // Varsayılan: günde bir kez. Çok sık mail riskine karşı geniş aralık.
     const intervalMs = parseInt(process.env.AUTOMATED_REMINDER_INTERVAL_MS, 10) || (24 * 60 * 60 * 1000); // 24 saat
-    // Boot/deploy sırasındaki yeniden başlatma dalgalarında hemen mail atmasın diye ilk tur gecikmeli.
     const bootDelayMs = parseInt(process.env.AUTOMATED_REMINDER_BOOT_DELAY_MS, 10) || (5 * 60 * 1000); // 5 dk
     console.log(
-        `🤖 Otomatik hatırlatma sistemi aktif (${Math.round(intervalMs / 60000)}dk aralık, ` +
+        `🤖 Otomatik e-posta motoru aktif (${Math.round(intervalMs / 60000)}dk aralık, ` +
         `ilk tur ${Math.round(bootDelayMs / 60000)}dk sonra).`,
     );
+    seedDefaultAutomations().catch(() => {});
     setTimeout(tick, bootDelayMs);
     timer = setInterval(tick, intervalMs);
 }
@@ -219,4 +270,4 @@ function stop() {
     }
 }
 
-module.exports = { start, stop, _processRule: processRule, _rules: RULES };
+module.exports = { start, stop, _processAutomation: processAutomation, seedDefaultAutomations, _tick: tick };
