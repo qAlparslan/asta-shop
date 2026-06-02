@@ -2,6 +2,8 @@ import { Link } from 'react-router-dom';
 import { Phone, Mail, MapPin, Clock, MessageSquare, Building2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useSiteSettings } from '../context/SiteSettingsContext.jsx';
+import { WhatsAppIcon } from '../components/icons/SocialIcons.jsx';
+import { sanitizeSocialUrl } from '../lib/socialLinks.js';
 
 const inputClass =
   'w-full rounded-md border border-neutral-300 bg-white px-4 py-2.5 text-sm text-neutral-900 outline-none ring-brand ring-offset-2 placeholder:text-neutral-400 focus:border-neutral-400 focus:ring-2';
@@ -22,6 +24,7 @@ export default function ContactPage() {
   const taxOffice = String(s.companyTaxOffice ?? '').trim();
   const taxNumber = String(s.companyTaxNumber ?? '').trim();
   const registeredAddr = String(s.companyRegisteredAddress ?? '').trim();
+  const whatsappHref = sanitizeSocialUrl(s.footerWhatsAppUrl);
 
   const contacts = useMemo(() => {
     /** @type {Array<{ icon: typeof Phone; title: string; lines: Array<{ href?: string; text: string; external?: boolean }> }>} */
@@ -90,6 +93,28 @@ export default function ContactPage() {
       <section className="py-12 sm:py-16">
         <div className="mx-auto grid max-w-6xl gap-10 px-4 sm:px-6 lg:grid-cols-12 lg:items-start lg:gap-12">
           <div className="space-y-4 lg:col-span-5">
+            {whatsappHref ? (
+              <a
+                href={whatsappHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-4 rounded-xl border border-[#25D366]/30 bg-[#25D366]/10 p-5 shadow-card transition-colors hover:bg-[#25D366]/15 sm:p-6"
+              >
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-[#25D366] text-white">
+                  <WhatsAppIcon className="h-6 w-6" />
+                </div>
+                <div className="min-w-0">
+                  <h2 className="text-sm font-bold text-neutral-900">WhatsApp iletişim hattı</h2>
+                  <p className="mt-1 text-sm text-neutral-600">
+                    Hızlı soru ve sipariş takibi için WhatsApp üzerinden bize yazın.
+                  </p>
+                  <span className="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-[#1fb457]">
+                    WhatsApp&apos;tan yaz →
+                  </span>
+                </div>
+              </a>
+            ) : null}
+
             {contacts.map(({ icon: Icon, title, lines }) => (
               <div
                 key={title}

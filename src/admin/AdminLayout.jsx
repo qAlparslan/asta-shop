@@ -11,6 +11,8 @@ import {
   LogOut,
   Store,
   ExternalLink,
+  Menu,
+  X,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { SYSTEM_SECTIONS } from '../pages/admin/systemSectionConfig.js';
@@ -31,12 +33,27 @@ export default function AdminLayout() {
   const [systemOpen, setSystemOpen] = useState(() =>
     location.pathname.startsWith('/admin/sistem'),
   );
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const systemRouteActive = location.pathname.startsWith('/admin/sistem');
 
   useEffect(() => {
     if (systemRouteActive) setSystemOpen(true);
   }, [systemRouteActive]);
+
+  // Rota değişince mobil sidebar'ı kapat.
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    if (!sidebarOpen) return undefined;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [sidebarOpen]);
 
   const handleLogout = () => {
     logout();
@@ -45,11 +62,33 @@ export default function AdminLayout() {
 
   return (
     <div className="flex min-h-screen bg-neutral-100 font-sans text-neutral-900">
-      <aside className="sticky top-0 flex h-screen w-[260px] shrink-0 flex-col border-r border-white/10 bg-asta-navy text-white">
-        <div className="border-b border-white/10 px-5 py-6">
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-brand-muted">Yönetim</p>
-          <p className="mt-1 text-lg font-semibold">Asta Ticaret</p>
-          <p className="mt-2 truncate text-xs text-neutral-400">{user?.email}</p>
+      {sidebarOpen ? (
+        <div
+          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+          aria-hidden
+        />
+      ) : null}
+
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 flex h-screen w-[260px] shrink-0 flex-col border-r border-white/10 bg-asta-navy text-white transition-transform duration-200 lg:sticky lg:top-0 lg:z-auto lg:translate-x-0 ${
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
+        <div className="flex items-start justify-between border-b border-white/10 px-5 py-6">
+          <div className="min-w-0">
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-brand-muted">Yönetim</p>
+            <p className="mt-1 text-lg font-semibold">Asta Ticaret</p>
+            <p className="mt-2 truncate text-xs text-neutral-400">{user?.email}</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setSidebarOpen(false)}
+            aria-label="Menüyü kapat"
+            className="-mr-2 rounded-lg p-2 text-neutral-300 hover:bg-white/10 hover:text-white lg:hidden"
+          >
+            <X className="h-5 w-5" strokeWidth={1.75} />
+          </button>
         </div>
         <nav className="flex flex-1 flex-col gap-1 overflow-y-auto p-3">
           <NavLink
@@ -139,16 +178,26 @@ export default function AdminLayout() {
         </div>
       </aside>
       <div className="min-w-0 flex-1">
-        <header className="sticky top-0 z-10 border-b border-neutral-200 bg-white/90 px-6 py-4 backdrop-blur">
+        <header className="sticky top-0 z-30 border-b border-neutral-200 bg-white/90 px-4 py-4 backdrop-blur sm:px-6">
           <div className="mx-auto flex max-w-6xl items-center gap-3">
-            <Store className="h-8 w-8 text-brand" strokeWidth={1.25} aria-hidden />
-            <div>
-              <h1 className="text-lg font-bold text-asta-navy">Yönetici paneli</h1>
-              <p className="text-xs text-neutral-500">Sipariş, ürün ve sistem ayarları</p>
+            <button
+              type="button"
+              onClick={() => setSidebarOpen(true)}
+              aria-label="Menüyü aç"
+              className="-ml-1 rounded-lg p-2 text-asta-navy hover:bg-neutral-100 lg:hidden"
+            >
+              <Menu className="h-6 w-6" strokeWidth={1.75} />
+            </button>
+            <Store className="hidden h-8 w-8 text-brand sm:block" strokeWidth={1.25} aria-hidden />
+            <div className="min-w-0">
+              <h1 className="text-base font-bold text-asta-navy sm:text-lg">Yönetici paneli</h1>
+              <p className="hidden text-xs text-neutral-500 sm:block">
+                Sipariş, ürün ve sistem ayarları
+              </p>
             </div>
           </div>
         </header>
-        <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+        <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
           <Outlet />
         </main>
       </div>

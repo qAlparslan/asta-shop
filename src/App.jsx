@@ -7,6 +7,7 @@ import Navbar from './components/Navbar.jsx';
 import CookieConsentBanner from './components/CookieConsentBanner.jsx';
 import CartToast from './components/CartToast.jsx';
 import SiteFooter from './components/SiteFooter.jsx';
+import WhatsAppFloat from './components/WhatsAppFloat.jsx';
 import HomePage from './pages/HomePage.jsx';
 import ProductsPage from './pages/ProductsPage.jsx';
 import ProductDetailPage from './pages/ProductDetailPage.jsx';
@@ -108,6 +109,7 @@ function StorefrontShell() {
         <CookieConsentBanner />
         <CartToast />
         <SiteFooter />
+        <WhatsAppFloat />
       </div>
     </SiteSettingsProvider>
   );

@@ -47,10 +47,12 @@ if ! command -v pm2 >/dev/null 2>&1; then
     echo '  export PATH="/www/server/nodejs/v20.15.0/bin:$PATH"'
     exit 1
 fi
-if pm2 describe astaticaret-api >/dev/null 2>&1; then
-    pm2 restart astaticaret-api --update-env
+# Çalışan süreç adı (gerçek kurulumda: asta-backend). Gerekirse PM2_APP ile geçici değiştir.
+PM2_APP="${PM2_APP:-asta-backend}"
+if pm2 describe "$PM2_APP" >/dev/null 2>&1; then
+    pm2 restart "$PM2_APP" --update-env
 else
-    pm2 start server.js --name astaticaret-api --cwd "$ROOT/backend"
+    pm2 start server.js --name "$PM2_APP" --cwd "$ROOT/backend"
 fi
 pm2 save
 
@@ -59,7 +61,7 @@ sleep 5
 if curl -sf "http://127.0.0.1:${PORT:-5000}/api/health" >/dev/null; then
     echo "    /api/health OK"
 else
-    echo "    UYARI: /api/health yanıt vermedi — pm2 logs astaticaret-api"
+    echo "    UYARI: /api/health yanıt vermedi — pm2 logs $PM2_APP"
 fi
 
 echo ""
