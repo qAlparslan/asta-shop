@@ -12,6 +12,7 @@
     "migrate:status": "sequelize-cli db:migrate:status",
     "repair:indexes": "node scripts/repair-mysql-indexes.js",
     "verify:sanitize": "node scripts/verify-html-sanitize.js",
+    "smtp:ping": "node scripts/smtp-ping.js",
     "postinstall": "node scripts/verify-html-sanitize.js"
   },
   "keywords": [],

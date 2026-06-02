@@ -18,6 +18,31 @@ describe('API smoke', () => {
         assert.ok(typeof res.body.uptime === 'number');
     });
 
+    test('GET /api/health/live', async () => {
+        const app = buildApp();
+        const res = await request(app).get('/api/health/live');
+        assert.equal(res.status, 200);
+        assert.equal(res.body.status, 'ok');
+    });
+
+    test('GET /api/health/detailed — token yok 401', async () => {
+        const app = buildApp();
+        const res = await request(app).get('/api/health/detailed');
+        assert.equal(res.status, 401);
+    });
+
+    test('POST /api/health/mail/ping — token yok 401', async () => {
+        const app = buildApp();
+        const res = await request(app).post('/api/health/mail/ping');
+        assert.equal(res.status, 401);
+    });
+
+    test('POST /api/health/mail/test — token yok 401', async () => {
+        const app = buildApp();
+        const res = await request(app).post('/api/health/mail/test').send({ to: 'test@example.com' });
+        assert.equal(res.status, 401);
+    });
+
     test('GET /api/legal/versions', async () => {
         const app = buildApp();
         const res = await request(app).get('/api/legal/versions');

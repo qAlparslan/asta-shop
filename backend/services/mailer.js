@@ -36,6 +36,12 @@ function readSmtpAuthFromEnv() {
     return { user, pass };
 }
 
+/** @returns {'smtp' | 'ethereal' | 'none'} */
+function getMailTransportMode() {
+    if (process.env.SMTP_HOST && String(process.env.SMTP_HOST).trim()) return 'smtp';
+    return 'ethereal';
+}
+
 function getTransporter() {
     if (transporterPromise) return transporterPromise;
 
@@ -248,11 +254,34 @@ function buildUnsubscribeUrl(token, source = 'user') {
     return `${getFrontendUrl()}/abonelikten-cik/${token}?src=${encodeURIComponent(source)}`;
 }
 
+/**
+ * SMTP bağlantı doğrulaması (mail göndermez). Ethereal modunda da transporter.verify çalışır.
+ * @returns {Promise<{ ok: boolean; mode: string; host?: string; port?: number; error?: string }>}
+ */
+async function verifySmtpConnection() {
+    const mode = getMailTransportMode();
+    try {
+        const transporter = await getTransporter();
+        await transporter.verify();
+        const host =
+            mode === 'smtp'
+                ? String(process.env.SMTP_HOST || '').trim()
+                : 'smtp.ethereal.email';
+        const port =
+            mode === 'smtp' ? parseInt(process.env.SMTP_PORT, 10) || 587 : 587;
+        return { ok: true, mode, host, port };
+    } catch (err) {
+        return { ok: false, mode, error: err.message };
+    }
+}
+
 module.exports = {
     sendMail,
     getMailMeta,
     getFrontendUrl,
     getBackendPublicUrl,
+    getMailTransportMode,
+    verifySmtpConnection,
     ensureUserUnsubscribeToken,
     buildUnsubscribeUrl,
 };

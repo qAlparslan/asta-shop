@@ -36,13 +36,8 @@ function buildApp() {
     app.use(express.json());
     app.use(express.urlencoded({ extended: true }));
 
-    app.get('/api/health', (req, res) => {
-        res.status(200).json({
-            status: 'ok',
-            uptime: process.uptime(),
-            env: process.env.NODE_ENV || 'development',
-        });
-    });
+    const healthRoutes = require('./routes/healthRoutes');
+    app.use('/api/health', healthRoutes);
 
     const mailWebhookRoutes = require('./routes/mailWebhookRoutes');
     app.use('/api/webhooks/mail-feedback', mailWebhookRoutes);
