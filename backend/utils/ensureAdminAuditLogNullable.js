@@ -11,6 +11,18 @@ const sequelize = require('../config/database');
 async function ensureAdminAuditLogNullable() {
     const tableName = 'admin_audit_logs';
     try {
+        // Kolon zaten nullable mı? Öyleyse ALTER'ı hiç deneme — gereksiz ALTER, FK yüzünden
+        // her açılışta "used in a foreign key constraint" uyarısı basıyordu.
+        const [rows] = await sequelize.query(
+            `SELECT IS_NULLABLE FROM INFORMATION_SCHEMA.COLUMNS
+             WHERE TABLE_SCHEMA = DATABASE()
+               AND TABLE_NAME = '${tableName}'
+               AND COLUMN_NAME = 'adminUserId'`,
+        );
+        // Tablo/kolon henüz yoksa (ilk kurulum) sync zaten nullable oluşturur — sessizce geç.
+        if (!rows || rows.length === 0) return;
+        if (String(rows[0].IS_NULLABLE).toUpperCase() === 'YES') return;
+
         await sequelize.query(
             `ALTER TABLE \`${tableName}\` MODIFY COLUMN \`adminUserId\` CHAR(36) NULL DEFAULT NULL`,
         );
@@ -18,7 +30,9 @@ async function ensureAdminAuditLogNullable() {
     } catch (err) {
         // Zaten nullable veya tablo yok ise sessizce geç.
         if (/Unknown table|doesn't exist|ER_NO_SUCH_TABLE/i.test(String(err.message || ''))) return;
-        // MySQL bazen "nothing to alter" tarzı uyarı verir; gerçek hata varsa logla.
+        // FK nedeniyle MODIFY engellenirse: kolon zaten nullable; bu uyarı zararsız, yut.
+        if (/foreign key constraint/i.test(String(err.message || ''))) return;
+        // Gerçek/beklenmeyen hata varsa logla.
         console.warn(`   ⚠️ ${tableName}.adminUserId modify:`, err.message);
     }
 }

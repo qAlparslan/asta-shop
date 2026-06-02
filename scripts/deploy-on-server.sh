@@ -50,7 +50,7 @@ fi
 if pm2 describe astaticaret-api >/dev/null 2>&1; then
     pm2 restart astaticaret-api --update-env
 else
-    pm2 start backend/server.js --name astaticaret-api --cwd "$ROOT/backend"
+    pm2 start server.js --name astaticaret-api --cwd "$ROOT/backend"
 fi
 pm2 save
 
