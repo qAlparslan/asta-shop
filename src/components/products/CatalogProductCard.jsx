@@ -63,7 +63,7 @@ export default function CatalogProductCard({ brand, name, priceLabel: _ignored, 
   };
 
   return (
-    <article className="flex flex-col rounded-lg border border-neutral-200 bg-white p-5 text-center shadow-sm transition-shadow hover:shadow-card">
+    <article className="flex flex-col rounded-lg border border-neutral-200 bg-white p-3 text-center shadow-sm transition-shadow hover:shadow-card sm:p-5">
       <Link
         to={detailPath}
         className="group block text-inherit no-underline outline-none ring-brand ring-offset-2 focus-visible:rounded-md focus-visible:ring-2"
@@ -72,7 +72,7 @@ export default function CatalogProductCard({ brand, name, priceLabel: _ignored, 
           <img
             src={image || ''}
             alt={name || ''}
-            className="h-full w-full object-contain p-4 transition-transform group-hover:scale-[1.02]"
+            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
             loading="lazy"
           />
         </div>

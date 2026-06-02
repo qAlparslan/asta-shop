@@ -4,7 +4,7 @@ export default function ProductCard({ brand, title, rating, reviews, price, imag
   return (
     <article className="flex flex-col rounded-xl border border-neutral-200 bg-white p-4 shadow-card transition-shadow hover:shadow-md">
       <div className="relative mb-4 aspect-square overflow-hidden rounded-lg bg-neutral-50">
-        <img src={image} alt={title} className="h-full w-full object-contain p-4" loading="lazy" />
+        <img src={image} alt={title} className="h-full w-full object-cover" loading="lazy" />
         <button
           type="button"
           className="absolute right-2 top-2 rounded-full border border-neutral-200 bg-white p-2 text-neutral-400 shadow-sm transition-colors hover:border-brand hover:text-brand"

@@ -161,7 +161,7 @@ export default function ProductDetailPage() {
                   <img
                     src={mainImg}
                     alt={catalog.name}
-                    className="h-full max-h-[min(100vw,560px)] w-full object-contain p-8"
+                    className="h-full w-full object-cover"
                   />
                 ) : (
                   <span className="text-sm text-neutral-400">Görsel yok</span>
@@ -178,7 +178,7 @@ export default function ProductDetailPage() {
                         i === imgIdx ? 'border-asta-navy ring-2 ring-asta-navy/20' : 'border-neutral-200'
                       }`}
                     >
-                      <img src={u} alt="" className="h-full w-full object-contain" />
+                      <img src={u} alt="" className="h-full w-full object-cover" />
                     </button>
                   ))}
                 </div>
