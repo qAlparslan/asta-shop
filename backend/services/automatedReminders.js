@@ -200,10 +200,15 @@ async function tick() {
 
 function start() {
     if (timer) return;
-    const intervalMs = parseInt(process.env.AUTOMATED_REMINDER_INTERVAL_MS, 10) || (6 * 60 * 60 * 1000); // 6 saat
-    console.log(`🤖 Otomatik hatırlatma sistemi aktif (${Math.round(intervalMs / 60000)}dk aralık).`);
-    // Boot'ta 30sn sonra ilk turu yap
-    setTimeout(tick, 30_000);
+    // Varsayılan: günde bir kez. Çok sık mail riskine karşı geniş aralık.
+    const intervalMs = parseInt(process.env.AUTOMATED_REMINDER_INTERVAL_MS, 10) || (24 * 60 * 60 * 1000); // 24 saat
+    // Boot/deploy sırasındaki yeniden başlatma dalgalarında hemen mail atmasın diye ilk tur gecikmeli.
+    const bootDelayMs = parseInt(process.env.AUTOMATED_REMINDER_BOOT_DELAY_MS, 10) || (5 * 60 * 1000); // 5 dk
+    console.log(
+        `🤖 Otomatik hatırlatma sistemi aktif (${Math.round(intervalMs / 60000)}dk aralık, ` +
+        `ilk tur ${Math.round(bootDelayMs / 60000)}dk sonra).`,
+    );
+    setTimeout(tick, bootDelayMs);
     timer = setInterval(tick, intervalMs);
 }
 
