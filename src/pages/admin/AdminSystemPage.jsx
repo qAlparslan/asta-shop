@@ -17,7 +17,6 @@ import AdminCampaignPanel from './AdminCampaignPanel.jsx';
 import SkinFilterCatalogPanel from './SkinFilterCatalogPanel.jsx';
 import AdminHeroPanel from './AdminHeroPanel.jsx';
 import AdminLegalDocumentsPanel from './AdminLegalDocumentsPanel.jsx';
-import AutomatedEmailsPanel from './AutomatedEmailsPanel.jsx';
 
 const STORE_KEYS = [
   'storeName',
@@ -155,8 +154,6 @@ function SectionContent({ sectionId, settings, settingsLoading, setField, onSett
       );
     case 'kampanyalar':
       return <AdminCampaignPanel />;
-    case 'otomatik-mailler':
-      return <AutomatedEmailsPanel />;
     case 'hero':
       return <AdminHeroPanel />;
     case 'yasal-metinler':

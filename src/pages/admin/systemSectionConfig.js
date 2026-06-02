@@ -21,12 +21,6 @@ export const SYSTEM_SECTIONS = [
     hint: 'Toplu e-posta kampanyaları — kitle seçimi, A/B ve test gönderimi (ayrı: Kuponlar menüsü).',
   },
   {
-    id: 'otomatik-mailler',
-    label: 'Otomatik e-postalar',
-    hint:
-      'Tetikleyiciye bağlı otomatik mailler (kayıttan/son siparişten N gün sonra) — içerik, sıklık, başlangıç/bitiş ve aç-kapat.',
-  },
-  {
     id: 'yasal-metinler',
     label: 'Yasal metinler',
     hint:
