@@ -30,6 +30,14 @@ export default function SiteHeader() {
 
   const logoUrlRaw = typeof settings?.logoUrl === 'string' ? settings.logoUrl.trim() : '';
   const logoSrc = logoUrlRaw ? assetUrl(logoUrlRaw) : '';
+  const logoSizeKey = ['kucuk', 'orta', 'buyuk'].includes(settings?.logoSize)
+    ? settings.logoSize
+    : 'orta';
+  const logoSizeClass = {
+    kucuk: 'h-8 max-w-[110px] sm:h-9 sm:max-w-[140px] lg:h-10',
+    orta: 'h-10 max-w-[130px] sm:h-12 sm:max-w-[170px] lg:h-14',
+    buyuk: 'h-12 max-w-[150px] sm:h-14 sm:max-w-[210px] lg:h-16',
+  }[logoSizeKey];
   const storeName =
     typeof settings?.storeName === 'string' && settings.storeName.trim()
       ? settings.storeName.trim()
@@ -77,7 +85,7 @@ export default function SiteHeader() {
             <img
               src={logoSrc}
               alt={storeName}
-              className="h-9 w-auto max-w-[110px] shrink-0 object-contain sm:h-11 sm:max-w-[150px] lg:h-12"
+              className={`w-auto shrink-0 object-contain ${logoSizeClass}`}
             />
           ) : null}
           <span className="block">

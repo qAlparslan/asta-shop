@@ -5,6 +5,8 @@ const DEFAULTS = [
     { key: 'storeName', value: 'Asta Ticaret', type: 'string' },
     { key: 'storeTagline', value: 'Doğal, saf ve etik güzellik ürünleri', type: 'string' },
     { key: 'logoUrl', value: '', type: 'string' },
+    /** Navbar logo boyutu: kucuk | orta | buyuk */
+    { key: 'logoSize', value: 'orta', type: 'string' },
 
     // Kargo & Vergi
     { key: 'shippingFeeEnabled', value: 'true', type: 'boolean' },

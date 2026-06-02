@@ -21,6 +21,7 @@ import AdminLegalDocumentsPanel from './AdminLegalDocumentsPanel.jsx';
 const STORE_KEYS = [
   'storeName',
   'storeTagline',
+  'logoSize',
   'footerEmail',
   'footerPhone',
   'footerAddress',
@@ -366,6 +367,25 @@ function StoreInfoForm({ settings, settingsLoading, setField, onSettingsSaved })
               </button>
             ) : null}
           </div>
+        </div>
+
+        <div className="mt-5 border-t border-neutral-100 pt-4">
+          <label className="text-[11px] font-bold uppercase tracking-wide text-neutral-500">
+            Üst menüde logo boyutu
+          </label>
+          <select
+            className={`mt-2 max-w-[220px] ${inputClass}`}
+            value={['kucuk', 'orta', 'buyuk'].includes(String(val('logoSize'))) ? String(val('logoSize')) : 'orta'}
+            onChange={(e) => setField('logoSize', e.target.value)}
+            disabled={settingsLoading}
+          >
+            <option value="kucuk">Küçük</option>
+            <option value="orta">Orta</option>
+            <option value="buyuk">Büyük</option>
+          </select>
+          <p className="mt-1 text-xs text-neutral-500">
+            Navbardaki logonun yüksekliğini belirler. Değişiklik için aşağıdan “Kaydet”e basın.
+          </p>
         </div>
       </div>
 

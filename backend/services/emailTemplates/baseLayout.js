@@ -7,9 +7,9 @@ const T = require('./emailTheme');
  */
 function baseLayout({ title, content, storeName = 'Asta Ticaret', logoUrl = '' }) {
     const safeName = escapeHtml(storeName);
-    const logo = logoUrl
-        ? `<img src="${escapeHtml(logoUrl)}" alt="${safeName}" width="200" height="48" style="height:48px;max-height:48px;width:auto;max-width:200px;display:inline-block;border:0;outline:none;">`
-        : `<p style="margin:0;font-family:${T.fontDisplay};font-size:28px;font-weight:700;color:#1a2332;letter-spacing:-0.03em;line-height:1.1;">${safeName}</p>`;
+    // E-posta istemcileri görselleri sık engeller/yanlış gösterir; başlıkta her zaman
+    // şık serif mağaza adını kullanıyoruz (logoUrl parametresi geriye uyumluluk için duruyor).
+    void logoUrl;
 
     return `<!DOCTYPE html>
 <html lang="tr" xmlns="http://www.w3.org/1999/xhtml" xmlns:o="urn:schemas-microsoft-com:office:office">
@@ -35,8 +35,7 @@ function baseLayout({ title, content, storeName = 'Asta Ticaret', logoUrl = '' }
       <tr><td style="${T.stripNavy}">&nbsp;</td></tr>
       <tr><td style="${T.stripBrand}">&nbsp;</td></tr>
       <tr><td style="padding:26px 32px 20px;text-align:center;border-bottom:1px solid ${T.border};background:${T.surfaceSoft};background-color:#fafafa;">
-        ${logo}
-        <p style="margin:10px 0 0;font-size:11px;font-weight:600;letter-spacing:0.22em;text-transform:uppercase;color:${T.gold};font-family:${T.fontSans};">${safeName}</p>
+        <p style="margin:0;font-family:${T.fontDisplay};font-size:28px;font-weight:700;color:#1a2332;letter-spacing:-0.03em;line-height:1.1;">${safeName}</p>
       </td></tr>
       <tr><td style="padding:32px 32px 28px;mso-padding-alt:32px;">
         ${content}
