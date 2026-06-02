@@ -118,9 +118,12 @@ sequelize
     .then(() => {
         console.log('✅ MySQL Veritabanı bağlantısı BAŞARILI!');
         if (useAlterSync) {
-            console.log('⚠️  DB_SYNC_ALTER=true — Sequelize ALTER aktif (iş bitince .env\'de kapatın).');
+            console.log('⚠️  DB_SYNC_ALTER=true — Sequelize ALTER aktif (drop kapalı; iş bitince .env\'de kapatın).');
         }
-        return sequelize.sync(useAlterSync ? { alter: true } : {});
+        // ÖNEMLİ: alter açıkken bile `drop: false` — Sequelize'in mevcut sütunları
+        // (örn. barcode) silip verisini uçurmasını engeller. Şema eklemeleri zaten
+        // ensure*Columns yardımcılarıyla güvenli şekilde yapılıyor.
+        return sequelize.sync(useAlterSync ? { alter: { drop: false } } : {});
     })
     .then(() => ensureCouponColumns())
     .then(() => ensureProductColumns())
