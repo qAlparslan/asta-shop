@@ -42,7 +42,15 @@ async function main() {
         process.exit(1);
     }
 
-    const transporter = nodemailer.createTransport({ host, port, secure, auth: { user, pass } });
+    const transporter = nodemailer.createTransport({
+        host,
+        port,
+        secure,
+        auth: { user, pass },
+        connectionTimeout: 10000,
+        greetingTimeout: 10000,
+        socketTimeout: 20000,
+    });
 
     try {
         await transporter.verify();

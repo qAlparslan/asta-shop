@@ -53,6 +53,10 @@ function getTransporter() {
                 port: parseInt(process.env.SMTP_PORT, 10) || 587,
                 secure: String(process.env.SMTP_SECURE || '').toLowerCase() === 'true',
                 auth: smtpAuth.user ? { user: smtpAuth.user, pass: smtpAuth.pass } : undefined,
+                // Asılı kalan bağlantı yerine hızlı, temiz başarısızlık (blok/yanıtsızlıkta tekrar denemeye gerek kalmasın)
+                connectionTimeout: parseInt(process.env.SMTP_CONNECTION_TIMEOUT_MS, 10) || 10000,
+                greetingTimeout: parseInt(process.env.SMTP_GREETING_TIMEOUT_MS, 10) || 10000,
+                socketTimeout: parseInt(process.env.SMTP_SOCKET_TIMEOUT_MS, 10) || 20000,
             })
         );
     } else {
