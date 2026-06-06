@@ -4,6 +4,8 @@ import { ShoppingCart, ShieldCheck, Truck } from 'lucide-react';
 import { apiFetch } from '../api/client.js';
 import { mapApiProductToCatalog } from '../lib/productMap.js';
 import { formatTRY } from '../lib/formatTRY.js';
+import { resolveProductPricing, resolveVariantUnitPricing } from '../lib/productPricing.js';
+import ProductPriceDisplay from '../components/ProductPriceDisplay.jsx';
 import { useCart } from '../context/CartContext.jsx';
 import { useSiteSettings } from '../context/SiteSettingsContext.jsx';
 import StarRating from '../components/StarRating.jsx';
@@ -66,7 +68,21 @@ export default function ProductDetailPage() {
   }, [catalog?.name, storeLabel]);
 
   const variants = catalog?.variants ?? [];
-  const basePrice = catalog?.price ?? 0;
+
+  const basePricing = useMemo(() => {
+    if (!catalog) {
+      return { salePrice: 0, compareAtPrice: null, discountPercent: null, isOnSale: false };
+    }
+    if (catalog.isOnSale != null) {
+      return {
+        salePrice: catalog.price ?? 0,
+        compareAtPrice: catalog.compareAtPrice ?? null,
+        discountPercent: catalog.discountPercent ?? null,
+        isOnSale: Boolean(catalog.isOnSale),
+      };
+    }
+    return resolveProductPricing(raw ?? {});
+  }, [catalog, raw]);
 
   const defaultVariantId = useMemo(() => {
     if (!variants.length) return '';
@@ -78,9 +94,12 @@ export default function ProductDetailPage() {
   useEffect(() => setVariantId(defaultVariantId), [catalog?.id, defaultVariantId]);
 
   const selected = variants.find((v) => v.id === variantId);
-  const unitPrice = variants.length
-    ? basePrice + (selected ? selected.priceExtra : 0)
-    : basePrice;
+  const unitPricing = useMemo(() => {
+    const extra = selected ? selected.priceExtra : 0;
+    return resolveVariantUnitPricing(basePricing, extra);
+  }, [basePricing, selected]);
+
+  const unitPrice = unitPricing.salePrice;
 
   const canAdd =
     catalog &&
@@ -218,9 +237,9 @@ export default function ProductDetailPage() {
                 </div>
               ) : null}
 
-              <p className="mt-5 text-xl font-bold tabular-nums text-[#1a1a1a] sm:text-2xl">
-                {formatTRY(unitPrice)}
-              </p>
+              <div className="mt-5">
+                <ProductPriceDisplay pricing={unitPricing} size="lg" align="left" />
+              </div>
 
               {variants.length > 0 ? (
                 <div className="mt-6">

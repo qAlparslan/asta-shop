@@ -1,6 +1,7 @@
 import { mediaUrl } from './mediaUrl.js';
 import { normalizeSkinCatalogRows, skinCatalogTagsForSlug } from './skinFilterCatalog.js';
 import { parseMoneyTR, resolveVariantPriceExtra } from './parseMoney.js';
+import { resolveProductPricing } from './productPricing.js';
 
 /** @param {unknown} raw */
 export function galleryPathsFromImages(raw) {
@@ -56,9 +57,8 @@ export function mapApiProductToCatalog(p, skinFilterRowsRaw) {
   const area = typeof p.area === 'string' ? p.area : 'genel';
   const skinSlugRaw = typeof p.skin_type === 'string' ? p.skin_type.trim() : '';
   const skinTypes = skinCatalogTagsForSlug(skinSlugRaw || 'tumu', skinRows);
-  const baseRaw = parseMoneyTR(p.price);
-  const price =
-    Number.isFinite(baseRaw) && baseRaw >= 0 ? Number(baseRaw.toFixed(2)) : 0;
+  const pricing = resolveProductPricing(p);
+  const price = pricing.salePrice;
 
   /** @returns {{ id: string; name: string; stock: number; priceExtra: number }[]} */
   const normalizeVariantsCatalog = () => {
@@ -105,6 +105,9 @@ export function mapApiProductToCatalog(p, skinFilterRowsRaw) {
     brand,
     name,
     price: Number.isFinite(price) ? price : 0,
+    compareAtPrice: pricing.compareAtPrice,
+    discountPercent: pricing.discountPercent,
+    isOnSale: pricing.isOnSale,
     image,
     gallery,
     categories,

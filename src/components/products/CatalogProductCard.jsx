@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { useCart } from '../../context/CartContext.jsx';
 import { storefrontProductPath } from '../../lib/productPaths.js';
 import { formatTRY } from '../../lib/formatTRY.js';
+import { resolveVariantUnitPricing } from '../../lib/productPricing.js';
+import ProductPriceDisplay from '../ProductPriceDisplay.jsx';
 import StarRating from '../StarRating.jsx';
 
 /**
@@ -16,7 +18,15 @@ export default function CatalogProductCard({ brand, name, priceLabel: _ignored, 
     return Array.isArray(v) ? v : [];
   }, [product?.variants]);
 
-  const basePrice = Number(product?.price) || 0;
+  const basePricing = useMemo(
+    () => ({
+      salePrice: Number(product?.price) || 0,
+      compareAtPrice: product?.compareAtPrice ?? null,
+      discountPercent: product?.discountPercent ?? null,
+      isOnSale: Boolean(product?.isOnSale),
+    }),
+    [product?.price, product?.compareAtPrice, product?.discountPercent, product?.isOnSale],
+  );
 
   const defaultVariantId = useMemo(() => {
     if (!variants.length) return '';
@@ -31,9 +41,12 @@ export default function CatalogProductCard({ brand, name, priceLabel: _ignored, 
   }, [product?.id, defaultVariantId]);
 
   const selected = variants.find((v) => v.id === variantId);
-  const unitPrice = variants.length
-    ? basePrice + (selected ? selected.priceExtra : 0)
-    : basePrice;
+  const unitPricing = useMemo(() => {
+    const extra = selected ? selected.priceExtra : 0;
+    return resolveVariantUnitPricing(basePricing, extra);
+  }, [basePricing, selected]);
+
+  const unitPrice = unitPricing.salePrice;
 
   const canAdd =
     product &&
@@ -123,7 +136,9 @@ export default function CatalogProductCard({ brand, name, priceLabel: _ignored, 
         </div>
       ) : null}
 
-      <p className="mt-2 text-base font-bold tabular-nums text-asta-navy">{formatTRY(unitPrice)}</p>
+      <div className="mt-2">
+        <ProductPriceDisplay pricing={unitPricing} size="sm" align="center" />
+      </div>
 
       <button
         type="button"
