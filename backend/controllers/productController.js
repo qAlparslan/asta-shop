@@ -5,6 +5,11 @@ const { logAdminAudit } = require('../services/auditService');
 const { sanitizeRichDescription, stripToPlainText } = require('../utils/htmlSanitize');
 const { normalizeVariantsForPersistence } = require('../utils/productVariants');
 const { applyMissingProductSeo, generateProductSeo } = require('../utils/productSeoGenerator');
+const {
+    attachReviewStatsToProducts,
+    attachReviewStatsToProduct,
+    getReviewStatsMap,
+} = require('../services/productReviewService');
 
 const SKIN_TYPE_VALUES = new Set(['hassas', 'kuru', 'yagli_karma', 'olgun', 'tumu']);
 
@@ -178,9 +183,11 @@ exports.getAllProducts = async (req, res) => {
             ...(limit ? { limit } : {}),
         });
 
+        const withStats = await attachReviewStatsToProducts(products);
+
         res.status(200).json({
             status: 'success',
-            data: { products },
+            data: { products: withStats },
         });
     } catch (err) {
         res.status(400).json({ status: 'fail', message: err.message });
@@ -212,8 +219,11 @@ exports.getProductById = async (req, res) => {
         if (!product) {
             return res.status(404).json({ status: 'fail', message: 'Aradığınız ürün bulunamadı.' });
         }
-        
-        res.status(200).json({ status: 'success', data: { product } });
+
+        const statsMap = await getReviewStatsMap([product.id]);
+        const withStats = attachReviewStatsToProduct(product, statsMap);
+
+        res.status(200).json({ status: 'success', data: { product: withStats } });
     } catch (err) {
         res.status(400).json({ status: 'fail', message: err.message });
     }
@@ -885,8 +895,11 @@ exports.getProductBySlug = async (req, res) => {
         if (!product) {
             return res.status(404).json({ status: 'fail', message: 'Ürün bulunamadı.' });
         }
-        
-        res.status(200).json({ status: 'success', data: { product } });
+
+        const statsMap = await getReviewStatsMap([product.id]);
+        const withStats = attachReviewStatsToProduct(product, statsMap);
+
+        res.status(200).json({ status: 'success', data: { product: withStats } });
     } catch (err) {
         res.status(400).json({ status: 'fail', message: err.message });
     }
@@ -904,7 +917,10 @@ exports.getPublicProductById = async (req, res) => {
             return res.status(404).json({ status: 'fail', message: 'Ürün bulunamadı.' });
         }
 
-        res.status(200).json({ status: 'success', data: { product } });
+        const statsMap = await getReviewStatsMap([product.id]);
+        const withStats = attachReviewStatsToProduct(product, statsMap);
+
+        res.status(200).json({ status: 'success', data: { product: withStats } });
     } catch (err) {
         res.status(400).json({ status: 'fail', message: err.message });
     }

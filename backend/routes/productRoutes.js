@@ -29,6 +29,31 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage: storage });
 
+const reviewsDir = path.join(__dirname, '..', 'uploads', 'reviews');
+if (!fs.existsSync(reviewsDir)) {
+    fs.mkdirSync(reviewsDir, { recursive: true });
+}
+
+const reviewImageStorage = multer.diskStorage({
+    destination: (_req, _file, cb) => cb(null, reviewsDir),
+    filename: (_req, file, cb) => {
+        const ext = (path.extname(file.originalname) || '.jpg').toLowerCase();
+        cb(null, `review-${Date.now()}-${Math.random().toString(36).slice(2, 8)}${ext}`);
+    },
+});
+
+const reviewUpload = multer({
+    storage: reviewImageStorage,
+    limits: { fileSize: 5 * 1024 * 1024, files: 4 },
+    fileFilter: (_req, file, cb) => {
+        if (/^image\/(jpeg|png|webp|gif)$/i.test(file.mimetype)) {
+            cb(null, true);
+        } else {
+            cb(new Error('Yorum fotoğrafları yalnızca JPEG, PNG, WEBP veya GIF olabilir.'));
+        }
+    },
+});
+
 // CSV içe aktarma için bellek tabanlı küçük yükleyici (5MB)
 const csvUpload = multer({
     storage: multer.memoryStorage(),
@@ -55,10 +80,16 @@ router.post(
 router.get('/slug/:slug', productController.getProductBySlug); // BİZİM EKLENTİMİZ
 router.get('/id/:id', productController.getPublicProductById);
 router.get('/:id/reviews', productEngagementController.listReviews);
+router.get(
+    '/:id/reviews/eligibility',
+    authMiddleware.optionalProtect,
+    productEngagementController.reviewEligibility,
+);
 router.post(
     '/:id/reviews',
     rateLimits.productReviewPostLimiter,
-    authMiddleware.optionalProtect,
+    authMiddleware.protect,
+    reviewUpload.array('images', 4),
     productEngagementController.createReview
 );
 router.post(

@@ -52,6 +52,7 @@ const ensureConsentEventTermsColumn = require('./utils/ensureConsentEventTermsCo
 const ensureEmailDeliveryFeedbackTable = require('./utils/ensureEmailDeliveryFeedbackTable');
 const ensureProductReviewApprovedColumn = require('./utils/ensureProductReviewApprovedColumn');
 const ensureProductReviewNotifyEmailColumn = require('./utils/ensureProductReviewNotifyEmailColumn');
+const ensureProductReviewImagesColumn = require('./utils/ensureProductReviewImagesColumn');
 const ensureHomeHeroColumns = require('./utils/ensureHomeHeroColumns');
 const ensureAdminAuditLogNullable = require('./utils/ensureAdminAuditLogNullable');
 const seedCategories = require('./utils/seedCategories');
@@ -139,6 +140,7 @@ sequelize
     .then(() => ensureEmailDeliveryFeedbackTable())
     .then(() => ensureProductReviewApprovedColumn())
     .then(() => ensureProductReviewNotifyEmailColumn())
+    .then(() => ensureProductReviewImagesColumn())
     .then(() => ensureHomeHeroColumns())
     .then(() => ensureAdminAuditLogNullable())
     .then(() => migrateLegacyStockToWarehouses())

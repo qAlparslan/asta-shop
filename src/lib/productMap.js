@@ -93,6 +93,11 @@ export function mapApiProductToCatalog(p, skinFilterRowsRaw) {
   const gallery = galleryPathsFromImages(p.images);
 
   const tagRaw = typeof p.tag === 'string' ? p.tag.trim() : '';
+  const reviewCount = Math.max(0, Math.floor(Number(p.reviewCount) || 0));
+  const averageRating =
+    reviewCount > 0
+      ? Math.min(5, Math.max(0, Math.round(Number(p.averageRating) * 10) / 10))
+      : 0;
 
   return {
     id,
@@ -108,5 +113,7 @@ export function mapApiProductToCatalog(p, skinFilterRowsRaw) {
     area,
     variants,
     tag: tagRaw,
+    reviewCount,
+    averageRating,
   };
 }

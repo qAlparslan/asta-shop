@@ -30,6 +30,11 @@ const ProductReview = sequelize.define(
             type: DataTypes.TEXT,
             allowNull: false,
         },
+        images: {
+            type: DataTypes.JSON,
+            allowNull: true,
+            defaultValue: [],
+        },
         approved: {
             type: DataTypes.BOOLEAN,
             allowNull: false,

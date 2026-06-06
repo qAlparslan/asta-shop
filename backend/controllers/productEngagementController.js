@@ -2,6 +2,11 @@ const Product = require('../models/Product');
 const ProductReview = require('../models/ProductReview');
 const ProductStockAlert = require('../models/ProductStockAlert');
 const User = require('../models/User');
+const {
+    userPurchasedProduct,
+    getReviewStats,
+    serializeReview,
+} = require('../services/productReviewService');
 
 exports.listReviews = async (req, res) => {
     try {
@@ -11,18 +16,69 @@ exports.listReviews = async (req, res) => {
             return res.status(404).json({ status: 'fail', message: 'Ürün bulunamadı.' });
         }
 
-        const reviews = await ProductReview.findAll({
-            attributes: {
-                exclude: ['notifyEmail'],
-            },
-            where: { productId, approved: true },
-            order: [['createdAt', 'DESC']],
-            limit: 80,
-        });
+        const [reviews, stats] = await Promise.all([
+            ProductReview.findAll({
+                attributes: { exclude: ['notifyEmail'] },
+                where: { productId, approved: true },
+                order: [['createdAt', 'DESC']],
+                limit: 80,
+            }),
+            getReviewStats(productId),
+        ]);
 
         res.status(200).json({
             status: 'success',
-            data: { reviews },
+            data: {
+                reviews: reviews.map(serializeReview),
+                stats,
+            },
+        });
+    } catch (err) {
+        res.status(400).json({ status: 'fail', message: err.message });
+    }
+};
+
+exports.reviewEligibility = async (req, res) => {
+    try {
+        const productId = req.params.id;
+        const product = await Product.findByPk(productId);
+        if (!product || !product.is_active) {
+            return res.status(404).json({ status: 'fail', message: 'Ürün bulunamadı.' });
+        }
+
+        if (!req.user?.id) {
+            return res.status(200).json({
+                status: 'success',
+                data: {
+                    canReview: false,
+                    purchased: false,
+                    hasReview: false,
+                    reason: 'login_required',
+                },
+            });
+        }
+
+        const [purchased, existing] = await Promise.all([
+            userPurchasedProduct(req.user.id, productId),
+            ProductReview.findOne({
+                where: { productId, userId: req.user.id },
+                attributes: ['id', 'approved', 'rating', 'createdAt'],
+            }),
+        ]);
+
+        let reason = null;
+        if (!purchased) reason = 'not_purchased';
+        else if (existing) reason = 'already_reviewed';
+
+        res.status(200).json({
+            status: 'success',
+            data: {
+                canReview: purchased && !existing,
+                purchased,
+                hasReview: Boolean(existing),
+                existingReview: existing ? serializeReview(existing) : null,
+                reason,
+            },
         });
     } catch (err) {
         res.status(400).json({ status: 'fail', message: err.message });
@@ -37,6 +93,31 @@ exports.createReview = async (req, res) => {
             return res.status(404).json({ status: 'fail', message: 'Ürün bulunamadı veya satışta değil.' });
         }
 
+        if (!req.user?.id) {
+            return res.status(401).json({ status: 'fail', message: 'Yorum yapmak için giriş yapmalısınız.' });
+        }
+
+        const u = await User.findByPk(req.user.id);
+        if (!u) {
+            return res.status(401).json({ status: 'fail', message: 'Geçersiz oturum.' });
+        }
+
+        const purchased = await userPurchasedProduct(u.id, productId);
+        if (!purchased) {
+            return res.status(403).json({
+                status: 'fail',
+                message: 'Bu ürüne yorum yapabilmek için önce satın almış olmanız gerekir.',
+            });
+        }
+
+        const existing = await ProductReview.findOne({ where: { productId, userId: u.id } });
+        if (existing) {
+            return res.status(400).json({
+                status: 'fail',
+                message: 'Bu ürün için zaten bir yorumunuz var.',
+            });
+        }
+
         let rating = Math.floor(Number(req.body.rating));
         if (!Number.isFinite(rating) || rating < 1 || rating > 5) {
             return res.status(400).json({ status: 'fail', message: 'Geçersiz puan (1–5).' });
@@ -45,63 +126,31 @@ exports.createReview = async (req, res) => {
         const rawBody = typeof req.body.body === 'string' ? req.body.body : req.body.comment;
         const body = String(rawBody || '').trim();
         if (body.length < 4) {
-            return res.status(400).json({ status: 'fail', message: 'Yorum çok kısa.' });
+            return res.status(400).json({ status: 'fail', message: 'Yorum en az 4 karakter olmalı.' });
         }
         if (body.length > 4000) {
             return res.status(400).json({ status: 'fail', message: 'Yorum çok uzun.' });
         }
 
-        let userId = null;
-        let authorName;
+        const files = Array.isArray(req.files) ? req.files.slice(0, 4) : [];
+        const images = files.map((f) => `/uploads/reviews/${f.filename}`);
 
-        if (req.user?.id) {
-            const u = await User.findByPk(req.user.id);
-            if (!u) {
-                return res.status(401).json({ status: 'fail', message: 'Geçersiz oturum.' });
-            }
-            userId = u.id;
-            authorName = (u.fullName && String(u.fullName).trim()) || u.email || 'Üye';
-        } else {
-            authorName = String(req.body.authorName || req.body.guestName || '').trim();
-            if (authorName.length < 2) {
-                return res.status(400).json({ status: 'fail', message: 'Misafir yorumlar için görünür ad gereklidir.' });
-            }
-            if (authorName.length > 120) {
-                return res.status(400).json({ status: 'fail', message: 'Ad çok uzun.' });
-            }
-        }
-
-        let notifyEmail = null;
-        if (!userId) {
-            const rawN = String(req.body.notifyEmail || '').trim().toLowerCase();
-            if (rawN) {
-                if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(rawN)) {
-                    return res.status(400).json({
-                        status: 'fail',
-                        message: 'Bildirim e-postası geçersiz.',
-                    });
-                }
-                notifyEmail = rawN;
-            }
-        }
+        const authorName = (u.fullName && String(u.fullName).trim()) || u.email || 'Üye';
 
         const review = await ProductReview.create({
             productId,
-            userId,
+            userId: u.id,
             authorName,
             rating,
             body,
-            notifyEmail,
-            approved: false,
+            images,
+            approved: true,
         });
-
-        const safeReview = review.toJSON();
-        delete safeReview.notifyEmail;
 
         res.status(201).json({
             status: 'success',
-            message: 'Yorumunuz alındı; yönetici onayından sonra yayınlanacaktır.',
-            data: { review: safeReview },
+            message: 'Yorumunuz yayınlandı. Teşekkür ederiz.',
+            data: { review: serializeReview(review) },
         });
     } catch (err) {
         res.status(400).json({ status: 'fail', message: err.message });

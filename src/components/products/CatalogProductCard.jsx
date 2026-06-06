@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useCart } from '../../context/CartContext.jsx';
 import { storefrontProductPath } from '../../lib/productPaths.js';
 import { formatTRY } from '../../lib/formatTRY.js';
+import StarRating from '../StarRating.jsx';
 
 /**
  * Katalog grid kartı — product verildiğinde Sepete ekler (isteğe bağlı seçenek + fiyat).
@@ -80,6 +81,12 @@ export default function CatalogProductCard({ brand, name, priceLabel: _ignored, 
         <h3 className="mt-2 line-clamp-2 min-h-[2.75rem] text-sm font-bold leading-snug text-asta-navy sm:text-[15px]">
           {name}
         </h3>
+        {product?.reviewCount > 0 ? (
+          <div className="mt-2 flex items-center justify-center gap-1.5">
+            <StarRating value={product.averageRating} size="sm" />
+            <span className="text-xs text-neutral-500">({product.reviewCount})</span>
+          </div>
+        ) : null}
       </Link>
       {variants.length > 0 && (
         <div className="mt-3 text-left">

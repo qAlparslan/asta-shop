@@ -1,0 +1,293 @@
+import { useCallback, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { X } from 'lucide-react';
+import { apiFetch } from '../../api/client.js';
+import { mediaUrl } from '../../lib/mediaUrl.js';
+import StarRating from '../StarRating.jsx';
+
+function formatReviewDate(iso) {
+  if (!iso) return '';
+  try {
+    return new Date(iso).toLocaleDateString('tr-TR', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+  } catch {
+    return '';
+  }
+}
+
+function ReviewImageLightbox({ src, alt, onClose }) {
+  if (!src) return null;
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
+      role="dialog"
+      aria-modal="true"
+      onClick={onClose}
+    >
+      <button
+        type="button"
+        onClick={onClose}
+        className="absolute right-4 top-4 rounded-full bg-white/10 p-2 text-white hover:bg-white/20"
+        aria-label="Kapat"
+      >
+        <X className="h-6 w-6" />
+      </button>
+      <img
+        src={src}
+        alt={alt}
+        className="max-h-[90vh] max-w-full rounded-lg object-contain shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      />
+    </div>
+  );
+}
+
+/**
+ * @param {{ productId: string; initialStats?: { reviewCount?: number; averageRating?: number } }} props
+ */
+export default function ProductReviewsSection({ productId, initialStats }) {
+  const [reviews, setReviews] = useState([]);
+  const [stats, setStats] = useState({
+    reviewCount: initialStats?.reviewCount ?? 0,
+    averageRating: initialStats?.averageRating ?? 0,
+  });
+  const [loading, setLoading] = useState(true);
+  const [loadErr, setLoadErr] = useState('');
+
+  const [eligibility, setEligibility] = useState(null);
+  const [rating, setRating] = useState(5);
+  const [body, setBody] = useState('');
+  const [files, setFiles] = useState(/** @type {File[]} */ ([]));
+  const [previews, setPreviews] = useState(/** @type {string[]} */ ([]));
+  const [submitting, setSubmitting] = useState(false);
+  const [formMsg, setFormMsg] = useState('');
+  const [formErr, setFormErr] = useState('');
+  const [lightboxSrc, setLightboxSrc] = useState('');
+
+  const loadReviews = useCallback(() => {
+    if (!productId) return Promise.resolve();
+    setLoading(true);
+    setLoadErr('');
+    return apiFetch(`/api/products/${encodeURIComponent(productId)}/reviews`, { skipAuth: true })
+      .then((res) => {
+        setReviews(Array.isArray(res?.data?.reviews) ? res.data.reviews : []);
+        if (res?.data?.stats) setStats(res.data.stats);
+      })
+      .catch((e) => setLoadErr(e.message || 'Yorumlar yüklenemedi.'))
+      .finally(() => setLoading(false));
+  }, [productId]);
+
+  const loadEligibility = useCallback(() => {
+    if (!productId) return Promise.resolve();
+    return apiFetch(`/api/products/${encodeURIComponent(productId)}/reviews/eligibility`)
+      .then((res) => setEligibility(res?.data ?? null))
+      .catch(() => setEligibility(null));
+  }, [productId]);
+
+  useEffect(() => {
+    loadReviews();
+    loadEligibility();
+  }, [loadReviews, loadEligibility]);
+
+  useEffect(() => {
+    const urls = files.map((f) => URL.createObjectURL(f));
+    setPreviews(urls);
+    return () => urls.forEach((u) => URL.revokeObjectURL(u));
+  }, [files]);
+
+  const onPickFiles = (e) => {
+    const picked = Array.from(e.target.files || []).slice(0, 4);
+    e.target.value = '';
+    setFiles(picked);
+  };
+
+  const removeFile = (idx) => {
+    setFiles((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  const submitReview = async (e) => {
+    e.preventDefault();
+    setFormMsg('');
+    setFormErr('');
+    if (!eligibility?.canReview) {
+      setFormErr('Bu ürüne yorum yapma yetkiniz yok.');
+      return;
+    }
+    if (rating < 1 || rating > 5) {
+      setFormErr('Lütfen 1–5 arası puan verin.');
+      return;
+    }
+    if (body.trim().length < 4) {
+      setFormErr('Yorum en az 4 karakter olmalı.');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const fd = new FormData();
+      fd.append('rating', String(rating));
+      fd.append('body', body.trim());
+      files.forEach((f) => fd.append('images', f));
+
+      await apiFetch(`/api/products/${encodeURIComponent(productId)}/reviews`, {
+        method: 'POST',
+        body: fd,
+      });
+
+      setFormMsg('Yorumunuz yayınlandı. Teşekkür ederiz.');
+      setBody('');
+      setRating(5);
+      setFiles([]);
+      await Promise.all([loadReviews(), loadEligibility()]);
+    } catch (ex) {
+      setFormErr(typeof ex.message === 'string' ? ex.message : 'Yorum gönderilemedi.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const reviewCount = Math.max(0, Number(stats.reviewCount) || 0);
+
+  return (
+    <div className="space-y-6">
+      {reviewCount > 0 ? (
+        <div className="flex flex-wrap items-center gap-3">
+          <StarRating value={stats.averageRating} size="md" />
+          <span className="text-sm font-semibold text-asta-navy">
+            {Number(stats.averageRating).toFixed(1)}
+          </span>
+          <span className="text-sm text-neutral-500">({reviewCount} yorum)</span>
+        </div>
+      ) : (
+        <p className="text-sm text-neutral-500">Bu ürün için henüz yorum yok.</p>
+      )}
+
+      {loading ? <p className="text-sm text-neutral-500">Yorumlar yükleniyor…</p> : null}
+      {loadErr ? <p className="text-sm text-red-600">{loadErr}</p> : null}
+
+      {!loading && reviews.length > 0 ? (
+        <ul className="space-y-5">
+          {reviews.map((r) => (
+            <li key={r.id} className="rounded-xl border border-neutral-100 bg-neutral-50/50 p-4">
+              <div className="flex flex-wrap items-center gap-2">
+                <StarRating value={r.rating} size="sm" />
+                <span className="text-sm font-semibold text-asta-navy">{r.authorName}</span>
+                <span className="text-xs text-neutral-400">{formatReviewDate(r.createdAt)}</span>
+              </div>
+              <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-neutral-700">{r.body}</p>
+              {Array.isArray(r.images) && r.images.length > 0 ? (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {r.images.map((imgPath) => {
+                    const src = mediaUrl(imgPath);
+                    return (
+                      <button
+                        key={imgPath}
+                        type="button"
+                        onClick={() => setLightboxSrc(src)}
+                        className="h-16 w-16 overflow-hidden rounded-lg border border-neutral-200 bg-white transition hover:ring-2 hover:ring-brand/30"
+                      >
+                        <img src={src} alt="" className="h-full w-full object-cover" />
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : null}
+            </li>
+          ))}
+        </ul>
+      ) : null}
+
+      <div className="rounded-xl border border-neutral-200 bg-white p-4 sm:p-5">
+        <h3 className="text-sm font-bold text-asta-navy">Yorum yaz</h3>
+        {eligibility?.canReview ? (
+          <form onSubmit={submitReview} className="mt-4 space-y-4">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Puanınız</p>
+              <StarRating
+                value={rating}
+                size="md"
+                interactive
+                onChange={setRating}
+                className="mt-2"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
+                Yorumunuz
+              </label>
+              <textarea
+                rows={4}
+                value={body}
+                onChange={(ev) => setBody(ev.target.value)}
+                maxLength={4000}
+                className="mt-2 w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm outline-none ring-brand focus:border-brand/40 focus:ring-2"
+                placeholder="Ürün deneyiminizi paylaşın…"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
+                Fotoğraf (en fazla 4)
+              </label>
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                multiple
+                onChange={onPickFiles}
+                className="mt-2 block w-full text-sm text-neutral-600 file:mr-3 file:rounded-md file:border-0 file:bg-neutral-100 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-asta-navy"
+              />
+              {previews.length > 0 ? (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {previews.map((src, i) => (
+                    <div key={src} className="relative">
+                      <img src={src} alt="" className="h-16 w-16 rounded-lg border object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => removeFile(i)}
+                        className="absolute -right-1 -top-1 rounded-full bg-red-600 p-0.5 text-white"
+                        aria-label="Fotoğrafı kaldır"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+            {formErr ? <p className="text-sm text-red-600">{formErr}</p> : null}
+            {formMsg ? <p className="text-sm text-green-700">{formMsg}</p> : null}
+            <button
+              type="submit"
+              disabled={submitting}
+              className="rounded-lg bg-brand px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-hover disabled:opacity-60"
+            >
+              {submitting ? 'Gönderiliyor…' : 'Yorumu gönder'}
+            </button>
+          </form>
+        ) : eligibility?.hasReview ? (
+          <p className="mt-3 text-sm text-neutral-600">Bu ürün için zaten yorum yaptınız.</p>
+        ) : eligibility?.reason === 'login_required' ? (
+          <p className="mt-3 text-sm text-neutral-600">
+            Yorum yapmak için{' '}
+            <Link to="/giris" className="font-semibold text-brand hover:underline">
+              giriş yapın
+            </Link>
+            . Yalnızca ürünü satın alan üyeler yorum bırakabilir.
+          </p>
+        ) : eligibility?.reason === 'not_purchased' ? (
+          <p className="mt-3 text-sm text-neutral-600">
+            Yorum yapabilmek için bu ürünü satın almış olmanız gerekir.
+          </p>
+        ) : (
+          <p className="mt-3 text-sm text-neutral-600">Şu anda yorum yapılamıyor.</p>
+        )}
+      </div>
+
+      {lightboxSrc ? (
+        <ReviewImageLightbox src={lightboxSrc} alt="Yorum fotoğrafı" onClose={() => setLightboxSrc('')} />
+      ) : null}
+    </div>
+  );
+}
