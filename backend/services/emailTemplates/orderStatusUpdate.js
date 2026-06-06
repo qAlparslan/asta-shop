@@ -1,6 +1,11 @@
 const baseLayout = require('./baseLayout');
 const { escapeHtml, shortOrderId, firstNameFromOrder } = require('./_utils');
-const { renderCtaButton, renderOrderSummaryBox } = require('./_orderBlocks');
+const {
+    renderCtaButton,
+    renderOrderSummaryBox,
+    renderOrderItemsSection,
+    renderDeliveryCard,
+} = require('./_orderBlocks');
 const { buildPublicTrackingUrl } = require('../../utils/trackingLink');
 const T = require('./emailTheme');
 
@@ -22,7 +27,8 @@ const STATUS_COPY = {
     },
     'teslim-edildi': {
         title: 'Siparişiniz teslim edildi',
-        message: 'Paketiniz teslim edildi. Bizi tercih ettiğiniz için teşekkür ederiz!',
+        message:
+            'Paketiniz başarıyla teslim edildi. Aşağıda siparişinizdeki ürünleri ve teslimat bilgilerinizi bulabilirsiniz. Bizi tercih ettiğiniz için teşekkür ederiz!',
         pillBg: '#ecfdf3',
         pillColor: T.success,
         border: '#bbf7d0',
@@ -47,6 +53,7 @@ module.exports = function orderStatusUpdateTemplate({ order, newStatus, storeNam
 
     const firstName = firstNameFromOrder(order);
     const orderShort = shortOrderId(order.id);
+    const items = Array.isArray(order.items) ? order.items : [];
     const base = String(frontendUrl || '').replace(/\/$/, '');
     const ordersUrl = base ? `${base}/hesabim/siparisler` : '';
 
@@ -68,6 +75,18 @@ module.exports = function orderStatusUpdateTemplate({ order, newStatus, storeNam
     </div>`
             : '';
 
+    const deliveredDetailsBlock =
+        newStatus === 'teslim-edildi'
+            ? `
+    ${renderOrderItemsSection(items, order.totalAmount)}
+    ${renderDeliveryCard(order)}
+    <div style="${T.cardNeutral} margin-top:16px;">
+      <p style="margin:0;font-size:13px;line-height:1.65;color:${T.textSecondary};font-family:${T.fontSans};">
+        Ürünlerimizi beğendiyseniz değerlendirme bırakarak diğer müşterilere yardımcı olabilirsiniz.
+      </p>
+    </div>`
+            : '';
+
     const content = `
     <p style="margin:0 0 4px;font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:${T.gold};font-family:${T.fontSans};">
       Sipariş durumu
@@ -82,7 +101,13 @@ module.exports = function orderStatusUpdateTemplate({ order, newStatus, storeNam
       ${escapeHtml(copy.message)}
     </p>
     ${trackingBlock}
-    ${renderOrderSummaryBox(orderShort, order.totalAmount)}
+    ${renderOrderSummaryBox(
+        orderShort,
+        order.totalAmount,
+        '',
+        newStatus === 'teslim-edildi' ? { hideTotal: true } : {},
+    )}
+    ${deliveredDetailsBlock}
     ${newStatus !== 'kargolandi' ? renderCtaButton('Siparişlerime git', ordersUrl) : ''}
     <div style="${T.cardNeutral} margin-top:16px;">
       <p style="margin:0;font-size:13px;line-height:1.65;color:${T.textSecondary};font-family:${T.fontSans};">

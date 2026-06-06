@@ -25,8 +25,22 @@ const sampleOrder = {
     trackingNumber: '1234567890',
     carrier: null,
     items: JSON.stringify([
-        { name: 'Örnek Ürün A', quantity: 2, price: 149.95 },
-        { name: 'Örnek Ürün B', quantity: 1, price: 200 },
+        {
+            name: 'Örnek Nemlendirici Krem',
+            quantity: 2,
+            price: 149.95,
+            variantName: '50 ml',
+            area: 'yuz',
+            purpose: 'nemlendirici',
+        },
+        {
+            name: 'Örnek Temizleyici Jel',
+            quantity: 1,
+            price: 200,
+            variantName: '200 ml',
+            area: 'yuz',
+            purpose: 'temizleyici',
+        },
     ]),
 };
 
