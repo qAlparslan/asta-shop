@@ -326,8 +326,8 @@ function StoreInfoForm({ settings, settingsLoading, setField, onSettingsSaved })
       <div className="rounded-xl border border-neutral-200 bg-white p-4 sm:p-5">
         <h4 className="text-sm font-semibold text-asta-navy">Mağaza logosu</h4>
         <p className="mt-1 text-xs leading-relaxed text-neutral-600">
-          Üst menüde mağaza adının (ASTA TİCARET) yanında görünür. PNG, JPG, WEBP veya SVG; en fazla 3 MB.
-          Şeffaf arka planlı PNG/SVG önerilir.
+          Yalnızca üst menüde (navbar) mağaza adının yanında görünür; tarayıcı sekmesindeki küçük ikon
+          bu logodan etkilenmez. PNG, JPG, WEBP veya SVG; en fazla 3 MB. Şeffaf arka planlı PNG/SVG önerilir.
         </p>
         <div className="mt-4 flex flex-wrap items-center gap-4">
           <div className="flex h-16 min-w-[160px] items-center justify-center rounded-lg border border-dashed border-neutral-300 bg-neutral-50 px-4">

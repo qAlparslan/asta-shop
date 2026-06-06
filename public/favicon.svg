@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="ASTA Ticaret">
+  <rect width="32" height="32" rx="7" fill="#1a2332"/>
+  <path
+    d="M16 7 24 25h-3.5l-1.7-4H13.2l-1.7 4H8L16 7zm-1.2 11h2.4L16 14.2 14.8 18z"
+    fill="#9f2133"
+  />
+</svg>
