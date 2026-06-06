@@ -1,9 +1,14 @@
 import { formatTRY } from '../lib/formatTRY.js';
 
 /**
- * @param {{ pricing: { salePrice: number; compareAtPrice?: number | null; discountPercent?: number | null; isOnSale?: boolean }; size?: 'sm' | 'md' | 'lg'; align?: 'left' | 'center' }} props
+ * @param {{ pricing: { salePrice: number; compareAtPrice?: number | null; discountPercent?: number | null; isOnSale?: boolean }; size?: 'sm' | 'md' | 'lg'; align?: 'left' | 'center'; showDiscountBadge?: boolean }} props
  */
-export default function ProductPriceDisplay({ pricing, size = 'md', align = 'center' }) {
+export default function ProductPriceDisplay({
+  pricing,
+  size = 'md',
+  align = 'center',
+  showDiscountBadge = true,
+}) {
   const alignClass = align === 'left' ? 'justify-start' : 'justify-center';
   const saleClass =
     size === 'lg'
@@ -26,7 +31,7 @@ export default function ProductPriceDisplay({ pricing, size = 'md', align = 'cen
         {formatTRY(pricing.compareAtPrice)}
       </span>
       <span className={`tabular-nums text-brand ${saleClass}`}>{formatTRY(pricing.salePrice)}</span>
-      {pricing.discountPercent != null && pricing.discountPercent > 0 ? (
+      {showDiscountBadge && pricing.discountPercent != null && pricing.discountPercent > 0 ? (
         <span className="rounded-md bg-brand/10 px-2 py-0.5 text-[11px] font-bold text-brand sm:text-xs">
           %{pricing.discountPercent}
         </span>

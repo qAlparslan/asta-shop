@@ -4,6 +4,7 @@ import { useCart } from '../../context/CartContext.jsx';
 import { storefrontProductPath } from '../../lib/productPaths.js';
 import { formatTRY } from '../../lib/formatTRY.js';
 import { resolveVariantUnitPricing } from '../../lib/productPricing.js';
+import DiscountRosetteBadge from '../DiscountRosetteBadge.jsx';
 import ProductPriceDisplay from '../ProductPriceDisplay.jsx';
 import StarRating from '../StarRating.jsx';
 
@@ -98,11 +99,18 @@ export default function CatalogProductCard({ brand, name, priceLabel: _ignored, 
         {brand}
       </p>
 
-      <h3 className="mt-1 line-clamp-2 h-[2.5rem] px-0.5 text-sm font-bold leading-5 text-asta-navy sm:text-[15px]">
-        <Link to={detailPath} className="hover:text-brand">
-          {name}
-        </Link>
-      </h3>
+      <div className="relative mt-1 min-h-[2.5rem] px-0.5">
+        <h3 className="line-clamp-2 pr-9 text-sm font-bold leading-5 text-asta-navy sm:pr-10 sm:text-[15px]">
+          <Link to={detailPath} className="hover:text-brand">
+            {name}
+          </Link>
+        </h3>
+        {unitPricing.isOnSale && unitPricing.discountPercent != null && unitPricing.discountPercent > 0 ? (
+          <div className="absolute -right-0.5 top-0 sm:right-0">
+            <DiscountRosetteBadge percent={unitPricing.discountPercent} size="sm" />
+          </div>
+        ) : null}
+      </div>
 
       <div
         className="mt-1 flex h-4 items-center justify-center gap-1"
@@ -137,7 +145,7 @@ export default function CatalogProductCard({ brand, name, priceLabel: _ignored, 
       ) : null}
 
       <div className="mt-2">
-        <ProductPriceDisplay pricing={unitPricing} size="sm" align="center" />
+        <ProductPriceDisplay pricing={unitPricing} size="sm" align="center" showDiscountBadge={false} />
       </div>
 
       <button
