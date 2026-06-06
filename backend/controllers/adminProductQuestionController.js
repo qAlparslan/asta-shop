@@ -78,3 +78,36 @@ exports.answer = async (req, res) => {
         res.status(400).json({ status: 'fail', message: err.message });
     }
 };
+
+/** Admin: soruyu kalıcı sil */
+exports.remove = async (req, res) => {
+    try {
+        const question = await ProductQuestion.findByPk(req.params.id);
+        if (!question) {
+            return res.status(404).json({ status: 'fail', message: 'Soru bulunamadı.' });
+        }
+
+        const meta = {
+            productId: question.productId,
+            authorName: question.authorName,
+        };
+
+        await question.destroy();
+
+        await logAdminAudit({
+            req,
+            adminUser: req.user,
+            action: 'product_question.delete',
+            entityType: 'product_question',
+            entityId: req.params.id,
+            meta,
+        });
+
+        res.status(200).json({
+            status: 'success',
+            message: 'Soru silindi.',
+        });
+    } catch (err) {
+        res.status(400).json({ status: 'fail', message: err.message });
+    }
+};
