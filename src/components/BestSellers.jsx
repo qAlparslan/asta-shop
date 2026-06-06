@@ -77,7 +77,7 @@ export default function BestSellers() {
         )}
 
         {!loading && products.length > 0 && (
-          <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-8 grid items-stretch gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {products.map((p) => (
               <CatalogProductCard
                 key={p.id}
