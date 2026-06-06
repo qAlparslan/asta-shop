@@ -204,6 +204,15 @@ export default function ProductReviewsSection({ productId, initialStats }) {
         <h3 className="text-sm font-bold text-asta-navy">Yorum yaz</h3>
         {eligibility?.canReview ? (
           <form onSubmit={submitReview} className="mt-4 space-y-4">
+            {eligibility.reviewCount > 0 && eligibility.remainingReviews > 0 ? (
+              <p className="text-xs text-neutral-500">
+                Yeni siparişiniz için yorum yazabilirsiniz
+                {eligibility.remainingReviews > 1
+                  ? ` (${eligibility.remainingReviews} hak kaldı)`
+                  : ''}
+                .
+              </p>
+            ) : null}
             <div>
               <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Puanınız</p>
               <StarRating
@@ -266,8 +275,11 @@ export default function ProductReviewsSection({ productId, initialStats }) {
               {submitting ? 'Gönderiliyor…' : 'Yorumu gönder'}
             </button>
           </form>
-        ) : eligibility?.hasReview ? (
-          <p className="mt-3 text-sm text-neutral-600">Bu ürün için zaten yorum yaptınız.</p>
+        ) : eligibility?.reason === 'all_reviews_used' ? (
+          <p className="mt-3 text-sm text-neutral-600">
+            Bu ürün için mevcut siparişlerinize ait yorum hakkınızı kullandınız. Aynı ürünü tekrar
+            satın aldığınızda yeni yorum yazabilirsiniz.
+          </p>
         ) : eligibility?.reason === 'login_required' ? (
           <p className="mt-3 text-sm text-neutral-600">
             Yorum yapmak için{' '}

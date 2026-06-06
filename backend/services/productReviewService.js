@@ -25,18 +25,48 @@ function orderContainsProduct(items, productId) {
     });
 }
 
-async function userPurchasedProduct(userId, productId) {
-    if (!userId || !productId) return false;
+async function getUserQualifyingOrdersForProduct(userId, productId) {
+    if (!userId || !productId) return [];
     const orders = await Order.findAll({
         where: {
             userId,
             status: { [Op.in]: PURCHASE_STATUSES },
         },
-        attributes: ['items'],
-        limit: 200,
+        attributes: ['id', 'items', 'createdAt'],
         order: [['createdAt', 'DESC']],
     });
-    return orders.some((o) => orderContainsProduct(o.items, productId));
+    return orders.filter((o) => orderContainsProduct(o.items, productId));
+}
+
+/** Kaç ayrı siparişte bu ürün satın alınmış (her sipariş = 1 yorum hakkı). */
+async function countUserProductPurchases(userId, productId) {
+    const orders = await getUserQualifyingOrdersForProduct(userId, productId);
+    return orders.length;
+}
+
+async function countUserProductReviews(userId, productId) {
+    if (!userId || !productId) return 0;
+    return ProductReview.count({ where: { productId, userId } });
+}
+
+async function getUserProductReviewAllowance(userId, productId) {
+    const [purchaseCount, reviewCount] = await Promise.all([
+        countUserProductPurchases(userId, productId),
+        countUserProductReviews(userId, productId),
+    ]);
+    const remainingReviews = Math.max(0, purchaseCount - reviewCount);
+    return {
+        purchaseCount,
+        reviewCount,
+        remainingReviews,
+        canReview: remainingReviews > 0,
+        purchased: purchaseCount > 0,
+    };
+}
+
+async function userPurchasedProduct(userId, productId) {
+    const n = await countUserProductPurchases(userId, productId);
+    return n > 0;
 }
 
 async function getReviewStatsMap(productIds) {
@@ -113,6 +143,9 @@ function serializeReview(review) {
 module.exports = {
     PURCHASE_STATUSES,
     userPurchasedProduct,
+    countUserProductPurchases,
+    countUserProductReviews,
+    getUserProductReviewAllowance,
     getReviewStatsMap,
     getReviewStats,
     attachReviewStatsToProduct,

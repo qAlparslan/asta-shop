@@ -3,7 +3,7 @@ const ProductReview = require('../models/ProductReview');
 const ProductStockAlert = require('../models/ProductStockAlert');
 const User = require('../models/User');
 const {
-    userPurchasedProduct,
+    getUserProductReviewAllowance,
     getReviewStats,
     serializeReview,
 } = require('../services/productReviewService');
@@ -58,25 +58,21 @@ exports.reviewEligibility = async (req, res) => {
             });
         }
 
-        const [purchased, existing] = await Promise.all([
-            userPurchasedProduct(req.user.id, productId),
-            ProductReview.findOne({
-                where: { productId, userId: req.user.id },
-                attributes: ['id', 'approved', 'rating', 'createdAt'],
-            }),
-        ]);
+        const allowance = await getUserProductReviewAllowance(req.user.id, productId);
 
         let reason = null;
-        if (!purchased) reason = 'not_purchased';
-        else if (existing) reason = 'already_reviewed';
+        if (!allowance.purchased) reason = 'not_purchased';
+        else if (!allowance.canReview) reason = 'all_reviews_used';
 
         res.status(200).json({
             status: 'success',
             data: {
-                canReview: purchased && !existing,
-                purchased,
-                hasReview: Boolean(existing),
-                existingReview: existing ? serializeReview(existing) : null,
+                canReview: allowance.canReview,
+                purchased: allowance.purchased,
+                purchaseCount: allowance.purchaseCount,
+                reviewCount: allowance.reviewCount,
+                remainingReviews: allowance.remainingReviews,
+                hasReview: allowance.reviewCount > 0,
                 reason,
             },
         });
@@ -102,19 +98,18 @@ exports.createReview = async (req, res) => {
             return res.status(401).json({ status: 'fail', message: 'Geçersiz oturum.' });
         }
 
-        const purchased = await userPurchasedProduct(u.id, productId);
-        if (!purchased) {
+        const allowance = await getUserProductReviewAllowance(u.id, productId);
+        if (!allowance.purchased) {
             return res.status(403).json({
                 status: 'fail',
                 message: 'Bu ürüne yorum yapabilmek için önce satın almış olmanız gerekir.',
             });
         }
-
-        const existing = await ProductReview.findOne({ where: { productId, userId: u.id } });
-        if (existing) {
+        if (!allowance.canReview) {
             return res.status(400).json({
                 status: 'fail',
-                message: 'Bu ürün için zaten bir yorumunuz var.',
+                message:
+                    'Bu ürün için mevcut siparişlerinize ait yorum hakkınızı kullandınız. Yeni bir sipariş verdikten sonra tekrar yorum yapabilirsiniz.',
             });
         }
 
