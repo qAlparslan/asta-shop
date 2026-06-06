@@ -169,6 +169,8 @@ async function notifyCartHoldersOfDiscount(product, discountPercent) {
     const pct = Math.max(1, Math.min(99, Math.floor(Number(discountPercent)) || 0));
     if (!isProductOnSale(product)) return;
 
+    const salePrice = parseMoney(product.price);
+
     const holds = await ProductCartHold.findAll({
         where: {
             productId: product.id,
@@ -178,6 +180,8 @@ async function notifyCartHoldersOfDiscount(product, discountPercent) {
             [Op.or]: [
                 { notifiedDiscountPercent: null },
                 { notifiedDiscountPercent: { [Op.lt]: pct } },
+                { notifiedSalePrice: null },
+                { notifiedSalePrice: { [Op.gt]: salePrice } },
             ],
         },
     });
@@ -198,7 +202,7 @@ async function notifyCartHoldersOfDiscount(product, discountPercent) {
         if (!to || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) continue;
         const dedupeKey = `${to}::${product.id}`;
         if (emailed.has(dedupeKey)) {
-            await hold.update({ notifiedDiscountPercent: pct });
+            await hold.update({ notifiedDiscountPercent: pct, notifiedSalePrice: salePrice });
             continue;
         }
         emailed.add(dedupeKey);
@@ -229,7 +233,10 @@ async function notifyCartHoldersOfDiscount(product, discountPercent) {
                 type: 'cartDiscountAlert',
                 relatedId: hold.id,
             });
-            await hold.update({ notifiedDiscountPercent: pct });
+            await hold.update({
+                notifiedDiscountPercent: pct,
+                notifiedSalePrice: salePrice,
+            });
         } catch (err) {
             console.error('[cart-discount-mail]', err.message || err);
         }
@@ -250,7 +257,14 @@ async function maybeNotifyCartHoldersAfterDiscount(productId, beforePlain = null
 
     const beforePct = beforePlain ? getActiveDiscountPercent(beforePlain) : 0;
     const beforeOnSale = beforePlain ? isProductOnSale(beforePlain) : false;
-    if (beforeOnSale && pct <= beforePct) return;
+    const beforeSalePrice = beforePlain ? parseMoney(beforePlain.price) : null;
+    const afterSalePrice = parseMoney(product.price);
+    const betterDeal =
+        beforeOnSale &&
+        beforeSalePrice != null &&
+        afterSalePrice < beforeSalePrice - 0.004;
+
+    if (beforeOnSale && pct <= beforePct && !betterDeal) return;
 
     await notifyCartHoldersOfDiscount(product, pct);
 }

@@ -25,6 +25,20 @@ async function ensureProductCartHoldTable() {
     } catch (err) {
         console.warn('   ⚠️ product_cart_holds:', err.message || err);
     }
+
+    try {
+        await sequelize.query(`
+            ALTER TABLE \`product_cart_holds\`
+            ADD COLUMN \`notifiedSalePrice\` DECIMAL(10,2) NULL
+            AFTER \`notifiedDiscountPercent\`
+        `);
+        console.log('   ➕ product_cart_holds.notifiedSalePrice kolonu eklendi.');
+    } catch (err) {
+        const m = String(err.message || '');
+        if (/Duplicate column|already exists/i.test(m)) return;
+        if (/Unknown table/i.test(m)) return;
+        console.warn('   ⚠️ product_cart_holds.notifiedSalePrice:', m);
+    }
 }
 
 module.exports = ensureProductCartHoldTable;

@@ -10,7 +10,10 @@ const {
     attachReviewStatsToProduct,
     getReviewStatsMap,
 } = require('../services/productReviewService');
-const { buildPlannedDiscountUpdate } = require('../services/productDiscountService');
+const {
+    buildPlannedDiscountUpdate,
+    applyDiscountFieldsToProductUpdate,
+} = require('../services/productDiscountService');
 const {
     getCartStatsMap,
     maybeNotifyCartHoldersAfterDiscount,
@@ -316,6 +319,10 @@ exports.createProduct = async (req, res) => {
         applyProductTextAndVariantsSanitize(productData);
         normalizeProductSkinTypeAndLegacyFilters(productData);
         normalizeProductOptionalNumbers(productData);
+        applyDiscountFieldsToProductUpdate(
+            { price: productData.price, original_price: productData.original_price },
+            productData,
+        );
 
         const slugAfter = String(productData.slug || '').trim();
         if (slugAfter) {
@@ -325,6 +332,12 @@ exports.createProduct = async (req, res) => {
 
         const newProduct = await Product.create(productData);
         await setMainWarehouseQuantity(newProduct.id, Number(newProduct.stock) || 0, null);
+
+        setImmediate(() =>
+            maybeNotifyCartHoldersAfterDiscount(newProduct.id, null).catch((err) =>
+                console.error('[cart-discount-notify]', err.message || err),
+            ),
+        );
 
         await logAdminAudit({
             req,
@@ -401,6 +414,7 @@ exports.updateProduct = async (req, res) => {
         applyProductTextAndVariantsSanitize(updateData);
         normalizeProductSkinTypeAndLegacyFilters(updateData);
         normalizeProductOptionalNumbers(updateData);
+        applyDiscountFieldsToProductUpdate(product, updateData);
 
         if (
             Object.prototype.hasOwnProperty.call(updateData, 'slug') &&

@@ -81,6 +81,89 @@ function buildPlannedDiscountUpdate(product, { pct, startAt, endAt = null }) {
     return payload;
 }
 
+/**
+ * Ürün kaydı / güncelleme gövdesinde planlı veya manuel indirimi tek yerde uygular.
+ * @param {{ price?: unknown; original_price?: unknown }} product Mevcut kayıt
+ * @param {Record<string, unknown>} updateData
+ */
+function applyDiscountFieldsToProductUpdate(product, updateData) {
+    if (!updateData || typeof updateData !== 'object') return updateData;
+
+    const hasDiscountPercent = Object.prototype.hasOwnProperty.call(updateData, 'discountPercent');
+    const planPct = parseInt(String(updateData.discountPercent ?? ''), 10);
+    const hasPlan =
+        hasDiscountPercent && Number.isFinite(planPct) && planPct >= 1 && planPct <= 99;
+
+    const hasIncomingPrice = Object.prototype.hasOwnProperty.call(updateData, 'price');
+    const hasIncomingOrig = Object.prototype.hasOwnProperty.call(updateData, 'original_price');
+
+    const incomingPrice = hasIncomingPrice
+        ? parseProductMoney(updateData.price)
+        : parseProductMoney(product.price);
+
+    let incomingOrig = null;
+    if (hasIncomingOrig) {
+        if (updateData.original_price === null || updateData.original_price === '') {
+            incomingOrig = null;
+        } else {
+            const n = parseProductMoney(updateData.original_price);
+            incomingOrig = n > 0 ? n : null;
+        }
+    } else {
+        const n = parseProductMoney(product.original_price);
+        incomingOrig = n > 0 ? n : null;
+    }
+
+    const manualSale =
+        incomingOrig != null && incomingOrig > incomingPrice + 0.004;
+
+    if (hasPlan && !manualSale) {
+        let startAt = updateData.discountStartsAt
+            ? new Date(updateData.discountStartsAt)
+            : new Date();
+        if (Number.isNaN(startAt.getTime())) startAt = new Date();
+        let endAt = null;
+        if (updateData.discountExpiresAt) {
+            const parsed = new Date(updateData.discountExpiresAt);
+            endAt = Number.isNaN(parsed.getTime()) ? null : parsed;
+        }
+        const planned = buildPlannedDiscountUpdate(product, {
+            pct: planPct,
+            startAt,
+            endAt,
+        });
+        Object.assign(updateData, planned);
+        return updateData;
+    }
+
+    if (manualSale && incomingOrig != null) {
+        const computedPct = Math.round(((incomingOrig - incomingPrice) / incomingOrig) * 100);
+        updateData.price = incomingPrice.toFixed(2);
+        updateData.original_price = incomingOrig.toFixed(2);
+        updateData.discountPercent = computedPct > 0 ? computedPct : null;
+        updateData.discountStartsAt = null;
+        updateData.discountExpiresAt = null;
+        return updateData;
+    }
+
+    if (hasDiscountPercent && !hasPlan) {
+        updateData.discountPercent = null;
+        updateData.discountStartsAt = null;
+        updateData.discountExpiresAt = null;
+    }
+
+    if (hasIncomingOrig && incomingOrig == null && hasIncomingPrice) {
+        updateData.original_price = null;
+        if (!hasPlan) {
+            updateData.discountPercent = null;
+            updateData.discountStartsAt = null;
+            updateData.discountExpiresAt = null;
+        }
+    }
+
+    return updateData;
+}
+
 async function runDiscountAutomationTick() {
     const now = new Date();
 
@@ -142,5 +225,6 @@ module.exports = {
     computeDiscountedPrice,
     isDiscountActiveNow,
     buildPlannedDiscountUpdate,
+    applyDiscountFieldsToProductUpdate,
     runDiscountAutomationTick,
 };

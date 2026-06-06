@@ -46,6 +46,10 @@ const ProductCartHold = sequelize.define(
             type: DataTypes.INTEGER,
             allowNull: true,
         },
+        notifiedSalePrice: {
+            type: DataTypes.DECIMAL(10, 2),
+            allowNull: true,
+        },
     },
     {
         tableName: 'product_cart_holds',

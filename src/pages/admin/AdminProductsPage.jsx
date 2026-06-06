@@ -1299,6 +1299,15 @@ function ProductEditorOverlay({ mode, product, onClose, onSaved }) {
       return;
     }
 
+    const Dcheck = priceDiscounted.trim() === '' ? NaN : parseDecimalInput(priceDiscounted);
+    const Lcheck = parseDecimalInput(priceList);
+    if (!usePlan && Number.isFinite(Dcheck) && Dcheck >= 0) {
+      if (!Number.isFinite(Lcheck) || Lcheck <= Dcheck) {
+        setErr('İndirimli fiyat için liste fiyatı, indirimli fiyattan yüksek olmalıdır.');
+        return;
+      }
+    }
+
     const fd = new FormData();
     fd.append('name', name.trim());
     fd.append('description', description.trim());
@@ -1319,6 +1328,10 @@ function ProductEditorOverlay({ mode, product, onClose, onSaved }) {
       fd.append('discountPercent', String(planInt));
       fd.append('discountStartsAt', plannedDiscStartIso);
       fd.append('discountExpiresAt', plannedDiscEndIso ?? '');
+    } else {
+      fd.append('discountPercent', '');
+      fd.append('discountStartsAt', '');
+      fd.append('discountExpiresAt', '');
     }
 
     if (mode === 'edit' && product) {
