@@ -98,7 +98,7 @@ export default function CatalogProductCard({ brand, name, priceLabel: _ignored, 
         unitPricing.discountPercent != null &&
         unitPricing.discountPercent > 0 ? (
           <span
-            className="pointer-events-none absolute right-1.5 top-1.5 z-10 rounded-md bg-brand/10 px-2 py-1 text-[11px] font-bold leading-none text-brand sm:right-2 sm:top-2 sm:px-2.5 sm:py-1.5 sm:text-xs"
+            className="pointer-events-none absolute right-2 top-2 z-10 rounded-lg bg-brand/10 px-3 py-1.5 text-xs font-bold leading-none text-brand sm:right-2.5 sm:top-2.5 sm:px-3.5 sm:py-2 sm:text-sm"
             aria-label={`%${unitPricing.discountPercent} indirim`}
           >
             %{unitPricing.discountPercent}
