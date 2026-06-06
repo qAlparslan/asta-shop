@@ -5,7 +5,6 @@ import {
   Clock,
   Download,
   Eye,
-  FileText,
   MapPin,
   RotateCcw,
   Search,
@@ -26,10 +25,16 @@ function formatTrDate(v) {
   if (!v) return '—';
   const d = v instanceof Date ? v : new Date(v);
   if (Number.isNaN(d.getTime())) return '—';
-  const day = String(d.getDate()).padStart(2, '0');
-  const mo = String(d.getMonth() + 1).padStart(2, '0');
-  const y = d.getFullYear();
-  return `${day}.${mo}.${y}`;
+  try {
+    return new Intl.DateTimeFormat('tr-TR', { dateStyle: 'short', timeStyle: 'short' }).format(d);
+  } catch {
+    const day = String(d.getDate()).padStart(2, '0');
+    const mo = String(d.getMonth() + 1).padStart(2, '0');
+    const y = d.getFullYear();
+    const h = String(d.getHours()).padStart(2, '0');
+    const min = String(d.getMinutes()).padStart(2, '0');
+    return `${day}.${mo}.${y} ${h}:${min}`;
+  }
 }
 
 /** @param {string} status */
@@ -71,18 +76,6 @@ const QUICK_STATUS_OPTIONS = [
   { value: 'teslim-edildi', label: 'Teslim edildi', icon: CheckCircle2 },
   { value: 'iptal-edildi', label: 'İptal et', icon: XCircle },
 ];
-
-/** @param {{ wantsElectronicInvoice?: boolean }} o */
-function electronicInvoiceCellLabel(o) {
-    if (!o?.wantsElectronicInvoice) return '—';
-    return 'Talep';
-}
-
-/** @param {{ wantsElectronicInvoice?: boolean }} o */
-function electronicInvoiceTone(o) {
-    if (!o?.wantsElectronicInvoice) return 'text-neutral-400 font-medium';
-    return 'text-amber-800 font-semibold';
-}
 
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState([]);
@@ -310,13 +303,12 @@ export default function AdminOrdersPage() {
 
       <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-card">
         <div className="overflow-x-auto">
-          <table className="min-w-[960px] w-full divide-y divide-neutral-100 text-left text-sm">
+          <table className="min-w-[880px] w-full divide-y divide-neutral-100 text-left text-sm">
             <thead>
               <tr className="text-[11px] font-bold uppercase tracking-wider text-neutral-500">
                 <th className="px-5 py-3.5">Sipariş no</th>
                 <th className="px-5 py-3.5">Müşteri</th>
-                <th className="px-5 py-3.5 whitespace-nowrap">E-fatura</th>
-                <th className="px-5 py-3.5">Tarih</th>
+                <th className="px-5 py-3.5 whitespace-nowrap">Tarih</th>
                 <th className="px-5 py-3.5 text-right">Tutar</th>
                 <th className="px-5 py-3.5">Durum</th>
                 <th className="px-5 py-3.5 text-right">İşlem</th>
@@ -325,14 +317,14 @@ export default function AdminOrdersPage() {
             <tbody className="divide-y divide-neutral-100 bg-white">
               {loading && (
                 <tr>
-                  <td colSpan={7} className="px-5 py-14 text-center text-neutral-500">
+                  <td colSpan={6} className="px-5 py-14 text-center text-neutral-500">
                     Yükleniyor…
                   </td>
                 </tr>
               )}
               {!loading && filtered.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="px-5 py-14 text-center text-neutral-500">
+                  <td colSpan={6} className="px-5 py-14 text-center text-neutral-500">
                     Kayıt yok.
                   </td>
                 </tr>
@@ -347,10 +339,7 @@ export default function AdminOrdersPage() {
                     <p className="mt-0.5 text-xs text-neutral-500">{o.email}</p>
                     <p className="mt-0.5 text-xs text-neutral-500">{o.phone || '—'}</p>
                   </td>
-                  <td className="whitespace-nowrap px-5 py-4 align-top text-xs tabular-nums">
-                    <span className={electronicInvoiceTone(o)}>{electronicInvoiceCellLabel(o)}</span>
-                  </td>
-                  <td className="px-5 py-4 align-top tabular-nums text-neutral-600">
+                  <td className="whitespace-nowrap px-5 py-4 align-top tabular-nums text-neutral-600">
                     {formatTrDate(o.createdAt)}
                   </td>
                   <td className="px-5 py-4 align-top text-right text-sm font-semibold tabular-nums text-brand">
@@ -448,45 +437,6 @@ export default function AdminOrdersPage() {
                   Teslimat adresi
                 </div>
                 <p className="whitespace-pre-wrap text-sm leading-relaxed text-neutral-800">{detailOrder.address}</p>
-              </section>
-
-              <section className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
-                <div className="mb-3 flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-neutral-500">
-                  <FileText className="h-4 w-4 text-brand" strokeWidth={1.75} />
-                  Fatura bilgileri
-                </div>
-                <div className="grid gap-3 text-sm">
-                  <p>
-                    <span className="text-xs text-neutral-500">Kurumsal fatura talebi</span>{' '}
-                    <span className={`inline-block ${electronicInvoiceTone(detailOrder)} ml-2`}>
-                      {electronicInvoiceCellLabel(detailOrder)}
-                    </span>
-                  </p>
-                  {detailOrder.wantsElectronicInvoice ? (
-                    <>
-                      <p>
-                        <span className="text-xs text-neutral-500">VKN / TCKN</span>
-                        <span className="mt-1 block font-mono tabular-nums font-medium">
-                          {detailOrder.invoiceTaxNumber || '—'}
-                        </span>
-                      </p>
-                      <p>
-                        <span className="text-xs text-neutral-500">Ünvan</span>
-                        <span className="mt-1 block font-medium">{detailOrder.invoiceCompanyTitle || '—'}</span>
-                      </p>
-                      {detailOrder.invoiceTaxOffice ? (
-                        <p>
-                          <span className="text-xs text-neutral-500">Vergi dairesi</span>
-                          <span className="mt-1 block">{detailOrder.invoiceTaxOffice}</span>
-                        </p>
-                      ) : null}
-                    </>
-                  ) : (
-                    <p className="text-xs leading-relaxed text-neutral-600">
-                      Müşteri kurumsal fatura talebinde bulunmadı.
-                    </p>
-                  )}
-                </div>
               </section>
 
               <section className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
