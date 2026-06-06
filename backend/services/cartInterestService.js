@@ -224,7 +224,7 @@ async function notifyCartHoldersOfDiscount(product, discountPercent) {
         try {
             await sendMail({
                 to,
-                subject: `${meta.storeName}: Sepetinizdeki ürün %${pct} indirime girdi`,
+                subject: `${meta.storeName}: Kaçırmayın! Sepetinizdeki ürün %${pct} indirimde`,
                 html,
                 type: 'cartDiscountAlert',
                 relatedId: hold.id,
