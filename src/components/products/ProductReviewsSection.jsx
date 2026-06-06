@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { X } from 'lucide-react';
 import { apiFetch } from '../../api/client.js';
+import { maskReviewerName } from '../../lib/maskReviewerName.js';
 import { mediaUrl } from '../../lib/mediaUrl.js';
 import StarRating from '../StarRating.jsx';
 
@@ -297,7 +298,7 @@ export default function ProductReviewsSection({ productId, initialStats }) {
             <li key={r.id} className="rounded-xl border border-neutral-100 bg-neutral-50/60 p-4 sm:p-5">
               <div className="flex flex-wrap items-center gap-2">
                 <StarRating value={r.rating} size="sm" />
-                <span className="text-sm font-semibold text-asta-navy">{r.authorName}</span>
+                <span className="text-sm font-semibold text-asta-navy">{maskReviewerName(r.authorName)}</span>
                 <span className="text-xs text-neutral-400">{formatReviewDate(r.createdAt)}</span>
               </div>
               <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-neutral-700">{r.body}</p>
