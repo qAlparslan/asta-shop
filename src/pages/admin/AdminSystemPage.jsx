@@ -11,6 +11,7 @@ import {
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { apiFetch } from '../../api/client.js';
 import { assetUrl } from '../../config/api.js';
+import { applyFaviconFromLogo } from '../../lib/siteFavicon.js';
 import { inputClass } from '../../lib/formStyles.js';
 import { SYSTEM_SECTION_IDS, SYSTEM_SECTIONS } from './systemSectionConfig.js';
 import AdminCampaignPanel from './AdminCampaignPanel.jsx';
@@ -195,7 +196,8 @@ function StoreInfoForm({ settings, settingsLoading, setField, onSettingsSaved })
       const url = res?.data?.url || '';
       if (!url) throw new Error('Sunucu logo adresini döndürmedi.');
       setField('logoUrl', url);
-      setMsg('Logo yüklendi ve kaydedildi. Mağazada görmek için sayfayı yenileyin.');
+      applyFaviconFromLogo(url);
+      setMsg('Logo yüklendi. Üst menü ve tarayıcı sekmesinde görünür.');
     } catch (ex) {
       setError(typeof ex.message === 'string' ? ex.message : 'Logo yüklenemedi.');
     } finally {
@@ -211,6 +213,7 @@ function StoreInfoForm({ settings, settingsLoading, setField, onSettingsSaved })
     try {
       await apiFetch('/api/settings', { method: 'PUT', body: { settings: { logoUrl: '' } } });
       setField('logoUrl', '');
+      applyFaviconFromLogo('');
       setMsg('Logo kaldırıldı.');
     } catch (ex) {
       setError(typeof ex.message === 'string' ? ex.message : 'Logo kaldırılamadı.');
@@ -326,8 +329,8 @@ function StoreInfoForm({ settings, settingsLoading, setField, onSettingsSaved })
       <div className="rounded-xl border border-neutral-200 bg-white p-4 sm:p-5">
         <h4 className="text-sm font-semibold text-asta-navy">Mağaza logosu</h4>
         <p className="mt-1 text-xs leading-relaxed text-neutral-600">
-          Yalnızca üst menüde (navbar) mağaza adının yanında görünür; tarayıcı sekmesindeki küçük ikon
-          bu logodan etkilenmez. PNG, JPG, WEBP veya SVG; en fazla 3 MB. Şeffaf arka planlı PNG/SVG önerilir.
+          Üst menüde (navbar) ve tarayıcı sekmesindeki küçük ikonda görünür. PNG, JPG, WEBP veya SVG;
+          en fazla 3 MB. Şeffaf arka planlı PNG/SVG önerilir.
         </p>
         <div className="mt-4 flex flex-wrap items-center gap-4">
           <div className="flex h-16 min-w-[160px] items-center justify-center rounded-lg border border-dashed border-neutral-300 bg-neutral-50 px-4">

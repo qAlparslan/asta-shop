@@ -67,3 +67,8 @@ fi
 echo ""
 echo "Deploy tamam. Site kökü (Nginx) şu olmalı:"
 echo "  $ROOT/dist"
+echo ""
+echo "Sekme ikonu (panel logosu) için Nginx'e ekleyin (aaPanel site config):"
+echo "  location = /favicon.ico {"
+echo "    proxy_pass http://127.0.0.1:${PORT:-5000}/favicon.ico;"
+echo "  }"

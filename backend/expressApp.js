@@ -47,6 +47,9 @@ function buildApp() {
 
     app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
+    const faviconController = require('./controllers/faviconController');
+    app.get('/favicon.ico', faviconController.serveFavicon);
+
     const authRoutes = require('./routes/authRoutes');
     const productRoutes = require('./routes/productRoutes');
     const orderRoutes = require('./routes/orderRoutes');
