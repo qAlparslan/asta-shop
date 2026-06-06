@@ -6,7 +6,7 @@ import { formatTRY } from '../../lib/formatTRY.js';
 import StarRating from '../StarRating.jsx';
 
 /**
- * Katalog grid kartı — eşit yükseklik; sepete ekle butonu altta hizalı.
+ * Katalog kartı: marka → ad (2 satır) → yıldız → fiyat → sepete ekle
  * @param {{ brand?: string; name?: string; priceLabel?: string; image?: string; product?: Record<string, unknown> | null }} props
  */
 export default function CatalogProductCard({ brand, name, priceLabel: _ignored, image, product }) {
@@ -66,12 +66,12 @@ export default function CatalogProductCard({ brand, name, priceLabel: _ignored, 
   };
 
   return (
-    <article className="flex h-full flex-col rounded-lg border border-neutral-200 bg-white p-3 text-center shadow-sm transition-shadow hover:shadow-card sm:p-4">
+    <article className="flex flex-col rounded-lg border border-neutral-200 bg-white p-3 text-center shadow-sm transition-shadow hover:shadow-card sm:p-4">
       <Link
         to={detailPath}
-        className="group block shrink-0 text-inherit no-underline outline-none ring-brand ring-offset-2 focus-visible:rounded-md focus-visible:ring-2"
+        className="group block shrink-0 overflow-hidden rounded-md bg-neutral-50 outline-none ring-brand ring-offset-2 focus-visible:ring-2"
       >
-        <div className="mb-3 aspect-square overflow-hidden rounded-md bg-neutral-50">
+        <div className="aspect-square">
           <img
             src={image || ''}
             alt={name || ''}
@@ -79,61 +79,61 @@ export default function CatalogProductCard({ brand, name, priceLabel: _ignored, 
             loading="lazy"
           />
         </div>
-        <p className="min-h-[1rem] truncate text-[11px] font-medium uppercase tracking-wide text-neutral-500">
-          {brand}
-        </p>
-        <h3 className="mt-1 line-clamp-2 min-h-[2.5rem] text-sm font-bold leading-snug text-asta-navy sm:min-h-[2.75rem] sm:text-[15px]">
-          {name}
-        </h3>
-        <div
-          className="mt-1 flex min-h-[1.25rem] items-center justify-center gap-1.5"
-          aria-label={reviewCount > 0 ? `${averageRating.toFixed(1)} puan, ${reviewCount} yorum` : undefined}
-        >
-          {reviewCount > 0 ? (
-            <>
-              <StarRating value={averageRating} size="sm" />
-              <span className="text-xs text-neutral-500">({reviewCount})</span>
-            </>
-          ) : null}
-        </div>
       </Link>
 
-      <div className="mt-2 min-h-[4.5rem] text-left">
-        {variants.length > 0 ? (
+      <p className="mt-2 truncate text-[10px] font-medium uppercase tracking-wide text-neutral-500 sm:text-[11px]">
+        {brand}
+      </p>
+
+      <h3 className="mt-1 line-clamp-2 h-[2.5rem] px-0.5 text-sm font-bold leading-5 text-asta-navy sm:text-[15px]">
+        <Link to={detailPath} className="hover:text-brand">
+          {name}
+        </Link>
+      </h3>
+
+      <div
+        className="mt-1 flex h-4 items-center justify-center gap-1"
+        aria-label={reviewCount > 0 ? `${averageRating.toFixed(1)} puan, ${reviewCount} yorum` : undefined}
+      >
+        {reviewCount > 0 ? (
           <>
-            <label className="block text-[10px] font-bold uppercase tracking-wide text-neutral-500">
-              Seçenek
-            </label>
-            <select
-              value={variantId}
-              onChange={(ev) => setVariantId(ev.target.value)}
-              className="mt-1 w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-xs font-medium text-asta-navy outline-none ring-brand ring-offset-1 focus:border-brand/40 focus:ring-2"
-            >
-              {variants.map((v) => (
-                <option key={v.id} value={v.id} disabled={v.stock < 1}>
-                  {v.name}
-                  {v.stock < 1 ? ' — stok yok' : v.priceExtra > 0 ? ` (+${formatTRY(v.priceExtra)})` : ''}
-                </option>
-              ))}
-            </select>
+            <StarRating value={averageRating} size="sm" />
+            <span className="text-[11px] text-neutral-500">({reviewCount})</span>
           </>
         ) : null}
       </div>
 
-      <div className="mt-auto pt-2">
-        <p className="min-h-[1.5rem] text-base font-bold tabular-nums text-asta-navy">
-          {formatTRY(unitPrice)}
-        </p>
-        <button
-          type="button"
-          onClick={handleAdd}
-          disabled={!canAdd}
-          aria-disabled={!canAdd}
-          className="mt-3 w-full rounded-md bg-brand py-3 text-xs font-bold uppercase tracking-wide text-white transition-colors hover:bg-brand-hover disabled:cursor-not-allowed disabled:bg-neutral-300 disabled:text-neutral-500"
-        >
-          Sepete ekle
-        </button>
-      </div>
+      {variants.length > 0 ? (
+        <div className="mt-2 text-left">
+          <label className="block text-[10px] font-bold uppercase tracking-wide text-neutral-500">
+            Seçenek
+          </label>
+          <select
+            value={variantId}
+            onChange={(ev) => setVariantId(ev.target.value)}
+            className="mt-1 w-full rounded-md border border-neutral-200 bg-white px-2 py-1.5 text-xs font-medium text-asta-navy outline-none ring-brand ring-offset-1 focus:border-brand/40 focus:ring-2"
+          >
+            {variants.map((v) => (
+              <option key={v.id} value={v.id} disabled={v.stock < 1}>
+                {v.name}
+                {v.stock < 1 ? ' — stok yok' : v.priceExtra > 0 ? ` (+${formatTRY(v.priceExtra)})` : ''}
+              </option>
+            ))}
+          </select>
+        </div>
+      ) : null}
+
+      <p className="mt-2 text-base font-bold tabular-nums text-asta-navy">{formatTRY(unitPrice)}</p>
+
+      <button
+        type="button"
+        onClick={handleAdd}
+        disabled={!canAdd}
+        aria-disabled={!canAdd}
+        className="mt-2 w-full rounded-md bg-brand py-2.5 text-xs font-bold uppercase tracking-wide text-white transition-colors hover:bg-brand-hover disabled:cursor-not-allowed disabled:bg-neutral-300 disabled:text-neutral-500"
+      >
+        Sepete ekle
+      </button>
     </article>
   );
 }
