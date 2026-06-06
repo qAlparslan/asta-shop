@@ -4,7 +4,6 @@ import { useCart } from '../../context/CartContext.jsx';
 import { storefrontProductPath } from '../../lib/productPaths.js';
 import { formatTRY } from '../../lib/formatTRY.js';
 import { resolveVariantUnitPricing } from '../../lib/productPricing.js';
-import DiscountRosetteBadge from '../DiscountRosetteBadge.jsx';
 import ProductPriceDisplay from '../ProductPriceDisplay.jsx';
 import StarRating from '../StarRating.jsx';
 
@@ -81,36 +80,41 @@ export default function CatalogProductCard({ brand, name, priceLabel: _ignored, 
 
   return (
     <article className="flex flex-col rounded-lg border border-neutral-200 bg-white p-3 text-center shadow-sm transition-shadow hover:shadow-card sm:p-4">
-      <Link
-        to={detailPath}
-        className="group block shrink-0 overflow-hidden rounded-md bg-neutral-50 outline-none ring-brand ring-offset-2 focus-visible:ring-2"
-      >
-        <div className="aspect-square">
-          <img
-            src={image || ''}
-            alt={name || ''}
-            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-            loading="lazy"
-          />
-        </div>
-      </Link>
+      <div className="relative shrink-0">
+        <Link
+          to={detailPath}
+          className="group block overflow-hidden rounded-md bg-neutral-50 outline-none ring-brand ring-offset-2 focus-visible:ring-2"
+        >
+          <div className="aspect-square">
+            <img
+              src={image || ''}
+              alt={name || ''}
+              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+              loading="lazy"
+            />
+          </div>
+        </Link>
+        {unitPricing.isOnSale &&
+        unitPricing.discountPercent != null &&
+        unitPricing.discountPercent > 0 ? (
+          <span
+            className="pointer-events-none absolute right-1.5 top-1.5 z-10 rounded-md bg-brand/10 px-2 py-1 text-[11px] font-bold leading-none text-brand sm:right-2 sm:top-2 sm:px-2.5 sm:py-1.5 sm:text-xs"
+            aria-label={`%${unitPricing.discountPercent} indirim`}
+          >
+            %{unitPricing.discountPercent}
+          </span>
+        ) : null}
+      </div>
 
       <p className="mt-2 truncate text-[10px] font-medium uppercase tracking-wide text-neutral-500 sm:text-[11px]">
         {brand}
       </p>
 
-      <div className="relative mt-1 min-h-[2.5rem] px-0.5">
-        <h3 className="line-clamp-2 pr-9 text-sm font-bold leading-5 text-asta-navy sm:pr-10 sm:text-[15px]">
-          <Link to={detailPath} className="hover:text-brand">
-            {name}
-          </Link>
-        </h3>
-        {unitPricing.isOnSale && unitPricing.discountPercent != null && unitPricing.discountPercent > 0 ? (
-          <div className="absolute -right-0.5 top-0 sm:right-0">
-            <DiscountRosetteBadge percent={unitPricing.discountPercent} size="sm" />
-          </div>
-        ) : null}
-      </div>
+      <h3 className="mt-1 line-clamp-2 h-[2.5rem] px-0.5 text-sm font-bold leading-5 text-asta-navy sm:text-[15px]">
+        <Link to={detailPath} className="hover:text-brand">
+          {name}
+        </Link>
+      </h3>
 
       <div
         className="mt-1 flex h-4 items-center justify-center gap-1"
