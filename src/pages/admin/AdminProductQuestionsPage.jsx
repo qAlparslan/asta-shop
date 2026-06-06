@@ -55,6 +55,31 @@ export default function AdminProductQuestionsPage() {
     load();
   }, [load]);
 
+  const deleteQuestion = async (id) => {
+    if (
+      !window.confirm(
+        'Bu soru kalıcı olarak silinecek ve ürün sayfasında görünmez. Devam edilsin mi?',
+      )
+    ) {
+      return;
+    }
+    setBusyId(id);
+    setError('');
+    try {
+      await apiFetch(`/api/admin/product-questions/${id}`, { method: 'DELETE' });
+      setDraftAnswers((prev) => {
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      });
+      await load();
+    } catch (e) {
+      setError(e.message || 'Soru silinemedi.');
+    } finally {
+      setBusyId('');
+    }
+  };
+
   const submitAnswer = async (id) => {
     const answer = String(draftAnswers[id] || '').trim();
     if (answer.length < 2) {
@@ -82,7 +107,8 @@ export default function AdminProductQuestionsPage() {
         <p className="text-xs font-semibold uppercase tracking-wider text-brand">Mağaza</p>
         <h2 className="text-xl font-bold text-asta-navy">Müşteri soruları</h2>
         <p className="mt-1 text-sm text-neutral-600">
-          Ürün sayfasından gelen soruları yanıtlayın. Cevaplanan sorular müşterilere görünür olur.
+          Ürün sayfasından gelen soruları yanıtlayın veya silin. Cevaplanan sorular müşterilere görünür
+          olur.
         </p>
       </div>
 
@@ -153,6 +179,16 @@ export default function AdminProductQuestionsPage() {
                       </p>
                     ) : null}
                     <p className="mt-1 text-xs text-neutral-400">Soru tarihi: {formatDate(q.createdAt)}</p>
+                  </div>
+                  <div className="flex shrink-0 flex-wrap gap-2">
+                    <button
+                      type="button"
+                      disabled={busyId === q.id}
+                      onClick={() => deleteQuestion(q.id)}
+                      className="rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-50 disabled:opacity-50"
+                    >
+                      Sil
+                    </button>
                   </div>
                 </div>
 
