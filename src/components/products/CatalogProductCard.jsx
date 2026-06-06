@@ -49,6 +49,8 @@ export default function CatalogProductCard({ brand, name, priceLabel: _ignored, 
     variants.length && selected ? `${product.name} (${selected.name})` : product?.name || name;
 
   const detailPath = product ? storefrontProductPath(product) : '/urunler';
+  const reviewCount = Math.max(0, Number(product?.reviewCount) || 0);
+  const averageRating = reviewCount > 0 ? Number(product?.averageRating) || 0 : 0;
 
   const handleAdd = () => {
     if (!product || typeof product.id !== 'string') return;
@@ -81,10 +83,10 @@ export default function CatalogProductCard({ brand, name, priceLabel: _ignored, 
         <h3 className="mt-2 line-clamp-2 min-h-[2.75rem] text-sm font-bold leading-snug text-asta-navy sm:text-[15px]">
           {name}
         </h3>
-        {product?.reviewCount > 0 ? (
-          <div className="mt-2 flex items-center justify-center gap-1.5">
-            <StarRating value={product.averageRating} size="sm" />
-            <span className="text-xs text-neutral-500">({product.reviewCount})</span>
+        {reviewCount > 0 ? (
+          <div className="mt-2 flex items-center justify-center gap-1.5" aria-label={`${averageRating.toFixed(1)} puan, ${reviewCount} yorum`}>
+            <StarRating value={averageRating} size="sm" />
+            <span className="text-xs text-neutral-500">({reviewCount})</span>
           </div>
         ) : null}
       </Link>

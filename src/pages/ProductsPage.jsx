@@ -217,15 +217,7 @@ export default function ProductsPage() {
                 name={p.name}
                 priceLabel={formatTRY(p.price)}
                 image={p.image || placeholderSvg}
-                product={{
-                  id: p.id,
-                  slug: p.slug,
-                  brand: p.brand,
-                  name: p.name,
-                  price: p.price,
-                  image: p.image || placeholderSvg,
-                  variants: p.variants,
-                }}
+                product={p}
               />
             ))}
           </div>

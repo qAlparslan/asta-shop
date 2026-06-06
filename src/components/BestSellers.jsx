@@ -85,15 +85,7 @@ export default function BestSellers() {
                 name={p.name}
                 priceLabel={formatTRY(p.price)}
                 image={p.image || PLACEHOLDER_IMG}
-                product={{
-                  id: p.id,
-                  slug: p.slug,
-                  brand: p.brand,
-                  name: p.name,
-                  price: p.price,
-                  image: p.image || PLACEHOLDER_IMG,
-                  variants: p.variants,
-                }}
+                product={p}
               />
             ))}
           </div>

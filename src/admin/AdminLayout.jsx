@@ -8,6 +8,7 @@ import {
   SlidersHorizontal,
   ChevronDown,
   Users,
+  MessageSquare,
   LogOut,
   Store,
   ExternalLink,
@@ -119,6 +120,13 @@ export default function AdminLayout() {
           >
             <TicketPercent className="h-4 w-4 shrink-0" strokeWidth={1.75} />
             Kuponlar
+          </NavLink>
+          <NavLink
+            to="/admin/yorumlar"
+            className={({ isActive }) => `${linkBase} ${isActive ? linkActive : linkIdle}`}
+          >
+            <MessageSquare className="h-4 w-4 shrink-0" strokeWidth={1.75} />
+            Yorumlar
           </NavLink>
           <NavLink
             to="/admin/kullanicilar"

@@ -34,6 +34,7 @@ import AdminProductsPage from './pages/admin/AdminProductsPage.jsx';
 import AdminCouponsPage from './pages/admin/AdminCouponsPage.jsx';
 import AdminSystemPage, { AdminSystemSectionRedirect } from './pages/admin/AdminSystemPage.jsx';
 import AdminUsersPage from './pages/admin/AdminUsersPage.jsx';
+import AdminProductReviewsPage from './pages/admin/AdminProductReviewsPage.jsx';
 import { apiFetch } from './api/client.js';
 import { useAuth } from './context/AuthContext.jsx';
 import SiteBranding from './components/SiteBranding.jsx';
@@ -129,6 +130,7 @@ export default function App() {
               <Route path="siparisler" element={<AdminOrdersPage />} />
               <Route path="urunler" element={<AdminProductsPage />} />
               <Route path="kuponlar" element={<AdminCouponsPage />} />
+              <Route path="yorumlar" element={<AdminProductReviewsPage />} />
               <Route path="kullanicilar" element={<AdminUsersPage />} />
               <Route path="sistem" element={<AdminSystemSectionRedirect />} />
               <Route path="sistem/:bolum" element={<AdminSystemPage />} />
