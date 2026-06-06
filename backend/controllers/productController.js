@@ -10,6 +10,7 @@ const {
     attachReviewStatsToProduct,
     getReviewStatsMap,
 } = require('../services/productReviewService');
+const { buildPlannedDiscountUpdate } = require('../services/productDiscountService');
 
 const SKIN_TYPE_VALUES = new Set(['hassas', 'kuru', 'yagli_karma', 'olgun', 'tumu']);
 
@@ -557,15 +558,14 @@ exports.bulkActions = async (req, res) => {
 
             const products = await Product.findAll({ where: { id: ids } });
 
-            for (let p of products) {
-                const base = parseFloat(p.original_price) > 0 ? parseFloat(p.original_price) : parseFloat(p.price);
-                const originalPrice = Number.isFinite(base) && base > 0 ? base : parseFloat(p.price);
-                await p.update({
-                    original_price: originalPrice.toFixed(2),
-                    discountPercent: pct,
-                    discountStartsAt: startAt,
-                    discountExpiresAt: endAt || null,
-                });
+            for (const p of products) {
+                await p.update(
+                    buildPlannedDiscountUpdate(p, {
+                        pct,
+                        startAt,
+                        endAt: endAt || null,
+                    }),
+                );
             }
         }
 

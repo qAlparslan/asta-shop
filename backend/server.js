@@ -59,51 +59,13 @@ const seedCategories = require('./utils/seedCategories');
 const seedSiteSettings = require('./utils/seedSiteSettings');
 const seedHomeHeroSlides = require('./utils/seedHomeHeroSlides');
 const { migrateLegacyStockToWarehouses } = require('./services/inventoryService');
-const { Op } = require('sequelize');
+const { runDiscountAutomationTick } = require('./services/productDiscountService');
 
 /** İndirim motoru için */
 function startDiscountAutomationInterval() {
-    setInterval(async () => {
-        const now = new Date();
+    const tick = async () => {
         try {
-            const toStart = await Product.findAll({
-                where: {
-                    discountStartsAt: { [Op.lte]: now },
-                    discountPercent: { [Op.gt]: 0 },
-                    original_price: { [Op.not]: null },
-                    price: { [Op.eq]: sequelize.col('original_price') },
-                },
-            });
-
-            for (const p of toStart) {
-                const currentOriginal = parseFloat(p.original_price);
-                const discountPercent = parseInt(p.discountPercent, 10);
-
-                const newPrice = currentOriginal - (currentOriginal * discountPercent) / 100;
-
-                await p.update({ price: newPrice.toFixed(2) });
-                console.log(
-                    `[OTOMATİK SİSTEM]: ${p.name} için %${discountPercent} indirim uygulandı. Yeni Fiyat: ${newPrice.toFixed(2)}₺`,
-                );
-            }
-
-            const toEnd = await Product.findAll({
-                where: {
-                    discountExpiresAt: { [Op.lte]: now },
-                    original_price: { [Op.not]: null },
-                },
-            });
-
-            for (const p of toEnd) {
-                await p.update({
-                    price: p.original_price,
-                    original_price: null,
-                    discountPercent: null,
-                    discountStartsAt: null,
-                    discountExpiresAt: null,
-                });
-                console.log(`[OTOMATİK SİSTEM]: ${p.name} ürününün indirim süresi bitti. Eski fiyatına döndürüldü.`);
-            }
+            await runDiscountAutomationTick();
         } catch (err) {
             const code = err.parent?.code || err.original?.code;
             console.error('[İNDİRİM MOTORU]', err.parent?.sqlMessage || err.original?.sqlMessage || err.message);
@@ -111,7 +73,9 @@ function startDiscountAutomationInterval() {
                 console.error('→ MySQL bağlantısı yok (servis kapalı olabilir).');
             }
         }
-    }, 60000);
+    };
+    tick();
+    setInterval(tick, 60000);
 }
 
 sequelize
