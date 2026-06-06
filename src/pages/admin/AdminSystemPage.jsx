@@ -35,16 +35,9 @@ const STORE_KEYS = [
   'companyTaxOffice',
   'companyTaxNumber',
   'companyRegisteredAddress',
-  'footerTrustShowPaymentCards',
-  'footerTrustVisaUrl',
-  'footerTrustMastercardUrl',
-  'footerTrustTroyUrl',
-  'footerTrustSslUrl',
-  'footerTrustCarrierUrl',
-  'footerTrustCarrierLabel',
 ];
 
-const STORE_BOOLEAN_KEYS = new Set(['footerTrustShowPaymentCards']);
+const STORE_BOOLEAN_KEYS = new Set();
 const SHIP_KEYS = [
   'shippingFeeEnabled',
   'standardShippingFee',
@@ -254,8 +247,8 @@ function StoreInfoForm({ settings, settingsLoading, setField, onSettingsSaved })
       <div>
         <h3 className="text-lg font-semibold text-asta-navy">Mağaza bilgileri</h3>
         <p className="mt-1 text-sm text-neutral-600">
-          Mağaza adı, iletişim, yasal şirket bildirimi (iletişim sayfası), alt bilgi güven görselleri ve sosyal
-          bağlantılar bu ekrandan yönetilir.
+          Mağaza adı, iletişim, yasal şirket bildirimi (iletişim sayfası) ve sosyal bağlantılar bu ekrandan
+          yönetilir.
         </p>
       </div>
 
@@ -445,100 +438,6 @@ function StoreInfoForm({ settings, settingsLoading, setField, onSettingsSaved })
               className={`mt-2 ${inputClass}`}
               value={String(val('companyRegisteredAddress') ?? '')}
               onChange={(e) => setField('companyRegisteredAddress', e.target.value)}
-              disabled={settingsLoading}
-            />
-          </div>
-        </div>
-      </div>
-
-      <div className="rounded-xl border border-neutral-200 bg-neutral-50/80 p-4 sm:p-5">
-        <h4 className="text-sm font-semibold text-asta-navy">Alt bilgi — ödeme, SSL ve kargo görselleri</h4>
-        <p className="mt-1 text-xs leading-relaxed text-neutral-600">
-          Visa / Mastercard / Troy için adres boş bırakılırsa yerleşik görseller kullanılır. SSL ve kargo rozeti için
-          tam adres veya yüklemiş olduğunuz göreli yol (
-          <code className="rounded bg-neutral-200/70 px-1">/uploads/...</code>) girebilirsiniz.
-        </p>
-        <label className="mt-4 flex cursor-pointer items-center gap-2 text-sm text-neutral-800">
-          <input
-            type="checkbox"
-            checked={val('footerTrustShowPaymentCards') !== false && val('footerTrustShowPaymentCards') !== 'false'}
-            onChange={(e) => setField('footerTrustShowPaymentCards', e.target.checked)}
-            disabled={settingsLoading}
-            className="h-4 w-4 rounded border-neutral-300 text-brand"
-          />
-          Visa, Mastercard ve Troy logolarını göster
-        </label>
-        <div className="mt-4 grid gap-4 sm:grid-cols-2">
-          <div>
-            <label className="text-[11px] font-bold uppercase tracking-wide text-neutral-500">Visa görsel URL</label>
-            <input
-              type="url"
-              className={`mt-2 ${inputClass}`}
-              placeholder="/payments/visa.svg veya tam https adresi"
-              value={String(val('footerTrustVisaUrl') ?? '')}
-              onChange={(e) => setField('footerTrustVisaUrl', e.target.value)}
-              disabled={settingsLoading}
-            />
-          </div>
-          <div>
-            <label className="text-[11px] font-bold uppercase tracking-wide text-neutral-500">
-              Mastercard görsel URL
-            </label>
-            <input
-              type="url"
-              className={`mt-2 ${inputClass}`}
-              placeholder="/payments/mastercard.svg veya tam https adresi"
-              value={String(val('footerTrustMastercardUrl') ?? '')}
-              onChange={(e) => setField('footerTrustMastercardUrl', e.target.value)}
-              disabled={settingsLoading}
-            />
-          </div>
-          <div className="sm:col-span-2">
-            <label className="text-[11px] font-bold uppercase tracking-wide text-neutral-500">Troy görsel URL</label>
-            <input
-              type="url"
-              className={`mt-2 ${inputClass}`}
-              placeholder="/payments/troy.png veya tam https adresi"
-              value={String(val('footerTrustTroyUrl') ?? '')}
-              onChange={(e) => setField('footerTrustTroyUrl', e.target.value)}
-              disabled={settingsLoading}
-            />
-          </div>
-          <div className="sm:col-span-2">
-            <label className="text-[11px] font-bold uppercase tracking-wide text-neutral-500">
-              Güvenli alışveriş / SSL rozeti görsel URL
-            </label>
-            <input
-              type="url"
-              className={`mt-2 ${inputClass}`}
-              placeholder="Boş ise metin rozeti görünür (256‑bit SSL)"
-              value={String(val('footerTrustSslUrl') ?? '')}
-              onChange={(e) => setField('footerTrustSslUrl', e.target.value)}
-              disabled={settingsLoading}
-            />
-          </div>
-          <div>
-            <label className="text-[11px] font-bold uppercase tracking-wide text-neutral-500">
-              Kargo ortağı logo URL
-            </label>
-            <input
-              type="url"
-              className={`mt-2 ${inputClass}`}
-              placeholder="/uploads/kargo-logo.png …"
-              value={String(val('footerTrustCarrierUrl') ?? '')}
-              onChange={(e) => setField('footerTrustCarrierUrl', e.target.value)}
-              disabled={settingsLoading}
-            />
-          </div>
-          <div>
-            <label className="text-[11px] font-bold uppercase tracking-wide text-neutral-500">
-              Kargo logosu alt metni
-            </label>
-            <input
-              className={`mt-2 ${inputClass}`}
-              placeholder="Anlaşmalı kargo: Yurtiçi …"
-              value={String(val('footerTrustCarrierLabel') ?? '')}
-              onChange={(e) => setField('footerTrustCarrierLabel', e.target.value)}
               disabled={settingsLoading}
             />
           </div>
