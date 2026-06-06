@@ -158,6 +158,7 @@ export default function ProductDetailPage() {
         {loading ? (
           <p className="text-center text-sm text-neutral-500">Ürün yükleniyor…</p>
         ) : !catalog ? null : (
+          <>
           <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(320px,480px)] lg:gap-14">
             <div>
               <div className="flex aspect-square items-center justify-center overflow-hidden rounded-2xl border border-neutral-100 bg-neutral-50">
@@ -187,57 +188,6 @@ export default function ProductDetailPage() {
                   ))}
                 </div>
               ) : null}
-
-              <div className="mt-10 border-t border-neutral-100 pt-8">
-                <div className="flex gap-1 border-b border-neutral-200">
-                  <button
-                    type="button"
-                    onClick={() => setDetailTab('description')}
-                    className={`rounded-t-lg px-4 py-2.5 text-sm font-semibold transition ${
-                      detailTab === 'description'
-                        ? 'border border-b-0 border-neutral-200 bg-white text-asta-navy'
-                        : 'text-neutral-500 hover:text-asta-navy'
-                    }`}
-                  >
-                    Ürün açıklaması
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setDetailTab('reviews')}
-                    className={`rounded-t-lg px-4 py-2.5 text-sm font-semibold transition ${
-                      detailTab === 'reviews'
-                        ? 'border border-b-0 border-neutral-200 bg-white text-asta-navy'
-                        : 'text-neutral-500 hover:text-asta-navy'
-                    }`}
-                  >
-                    Yorumlar
-                    {catalog.reviewCount > 0 ? ` (${catalog.reviewCount})` : ''}
-                  </button>
-                </div>
-
-                <div className="rounded-b-xl border border-t-0 border-neutral-200 bg-white p-4 sm:p-6">
-                  {detailTab === 'description' ? (
-                    descHtml ? (
-                      <div
-                        className="product-detail-html max-w-none text-sm leading-relaxed text-neutral-700 [&_a]:text-brand [&_a]:underline [&_b]:font-semibold [&_blockquote]:border-l-4 [&_blockquote]:border-neutral-200 [&_blockquote]:pl-4 [&_blockquote]:italic [&_em]:italic [&_h1]:mb-3 [&_h1]:text-xl [&_h1]:font-bold [&_h1]:text-asta-navy [&_h2]:mb-3 [&_h2]:text-lg [&_h2]:font-bold [&_h2]:text-asta-navy [&_h3]:mb-2 [&_h3]:text-base [&_h3]:font-bold [&_h3]:text-asta-navy [&_i]:italic [&_li]:my-1 [&_ol]:my-3 [&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:marker:text-neutral-500 [&_p+p]:mt-4 [&_s]:line-through [&_strong]:font-semibold [&_u]:underline [&_ul]:my-3 [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:marker:text-neutral-500"
-                        dangerouslySetInnerHTML={{ __html: descHtml }}
-                      />
-                    ) : (
-                      <p className="text-sm text-neutral-500">
-                        Bu ürün için ayrıntılı açıklama henüz eklenmemiş.
-                      </p>
-                    )
-                  ) : (
-                    <ProductReviewsSection
-                      productId={catalog.id}
-                      initialStats={{
-                        reviewCount: catalog.reviewCount,
-                        averageRating: catalog.averageRating,
-                      }}
-                    />
-                  )}
-                </div>
-              </div>
             </div>
 
             <div className="lg:pt-2">
@@ -330,6 +280,58 @@ export default function ProductDetailPage() {
               </div>
             </div>
           </div>
+
+          <div className="mt-10 w-full border-t border-neutral-100 pt-8 lg:mt-12">
+            <div className="flex gap-1 border-b border-neutral-200">
+              <button
+                type="button"
+                onClick={() => setDetailTab('description')}
+                className={`rounded-t-lg px-4 py-2.5 text-sm font-semibold transition sm:px-6 ${
+                  detailTab === 'description'
+                    ? 'border border-b-0 border-neutral-200 bg-white text-asta-navy'
+                    : 'text-neutral-500 hover:text-asta-navy'
+                }`}
+              >
+                Ürün açıklaması
+              </button>
+              <button
+                type="button"
+                onClick={() => setDetailTab('reviews')}
+                className={`rounded-t-lg px-4 py-2.5 text-sm font-semibold transition sm:px-6 ${
+                  detailTab === 'reviews'
+                    ? 'border border-b-0 border-neutral-200 bg-white text-asta-navy'
+                    : 'text-neutral-500 hover:text-asta-navy'
+                }`}
+              >
+                Yorumlar
+                {catalog.reviewCount > 0 ? ` (${catalog.reviewCount})` : ''}
+              </button>
+            </div>
+
+            <div className="w-full rounded-b-xl border border-t-0 border-neutral-200 bg-white p-4 sm:p-6 lg:p-8">
+              {detailTab === 'description' ? (
+                descHtml ? (
+                  <div
+                    className="product-detail-html w-full max-w-none text-sm leading-relaxed text-neutral-700 [&_a]:text-brand [&_a]:underline [&_b]:font-semibold [&_blockquote]:border-l-4 [&_blockquote]:border-neutral-200 [&_blockquote]:pl-4 [&_blockquote]:italic [&_em]:italic [&_h1]:mb-3 [&_h1]:text-xl [&_h1]:font-bold [&_h1]:text-asta-navy [&_h2]:mb-3 [&_h2]:text-lg [&_h2]:font-bold [&_h2]:text-asta-navy [&_h3]:mb-2 [&_h3]:text-base [&_h3]:font-bold [&_h3]:text-asta-navy [&_i]:italic [&_li]:my-1 [&_ol]:my-3 [&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:marker:text-neutral-500 [&_p+p]:mt-4 [&_s]:line-through [&_strong]:font-semibold [&_u]:underline [&_ul]:my-3 [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:marker:text-neutral-500"
+                    dangerouslySetInnerHTML={{ __html: descHtml }}
+                  />
+                ) : (
+                  <p className="text-sm text-neutral-500">
+                    Bu ürün için ayrıntılı açıklama henüz eklenmemiş.
+                  </p>
+                )
+              ) : (
+                <ProductReviewsSection
+                  productId={catalog.id}
+                  initialStats={{
+                    reviewCount: catalog.reviewCount,
+                    averageRating: catalog.averageRating,
+                  }}
+                />
+              )}
+            </div>
+          </div>
+          </>
         )}
       </div>
     </main>
