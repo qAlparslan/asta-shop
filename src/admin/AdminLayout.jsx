@@ -2,6 +2,7 @@ import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import {
   LayoutDashboard,
+  LineChart,
   Package,
   ShoppingCart,
   TicketPercent,
@@ -100,6 +101,13 @@ export default function AdminLayout() {
           >
             <LayoutDashboard className="h-4 w-4 shrink-0" strokeWidth={1.75} />
             Özet
+          </NavLink>
+          <NavLink
+            to="/admin/ozet-v2"
+            className={({ isActive }) => `${linkBase} ${isActive ? linkActive : linkIdle}`}
+          >
+            <LineChart className="h-4 w-4 shrink-0" strokeWidth={1.75} />
+            Özet V2
           </NavLink>
           <NavLink
             to="/admin/siparisler"

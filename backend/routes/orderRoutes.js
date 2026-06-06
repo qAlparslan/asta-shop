@@ -18,6 +18,7 @@ router.get('/me', authMiddleware.protect, orderController.listMyOrders);
 router.use(authMiddleware.protect);
 router.use(authMiddleware.restrictTo('admin'));
 
+router.get('/stats/v2', orderController.getDashboardStatsV2);
 router.get('/stats', orderController.getDashboardStats);
 router.get('/export/csv', orderController.exportOrdersCsv);
 router.get('/', orderController.getAllOrders);

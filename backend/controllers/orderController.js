@@ -13,6 +13,7 @@ const {
     deductOrderInventory,
 } = require('../services/orderInventory');
 const { logAdminAudit } = require('../services/auditService');
+const { buildDashboardStatsV2 } = require('../services/dashboardStatsV2Service');
 
 /** Stoğun düşürülmüş (commit edilmiş) sayıldığı durumlar. */
 const COMMITTED_STATUSES = new Set(['hazirlaniyor', 'kargolandi', 'teslim-edildi']);
@@ -263,6 +264,16 @@ exports.getDashboardStats = async (req, res) => {
                 revenueTrend,
             },
         });
+    } catch (err) {
+        res.status(400).json({ status: 'fail', message: err.message });
+    }
+};
+
+// 2b. ADMIN DASHBOARD İSTATİSTİKLERİ V2
+exports.getDashboardStatsV2 = async (req, res) => {
+    try {
+        const data = await buildDashboardStatsV2(req.query.time || 'monthly');
+        res.status(200).json({ status: 'success', data });
     } catch (err) {
         res.status(400).json({ status: 'fail', message: err.message });
     }

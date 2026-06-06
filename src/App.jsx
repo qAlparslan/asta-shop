@@ -29,6 +29,7 @@ import MyOrdersPage from './pages/account/MyOrdersPage.jsx';
 import RequireAdmin from './admin/RequireAdmin.jsx';
 import AdminLayout from './admin/AdminLayout.jsx';
 import AdminDashboardPage from './pages/admin/AdminDashboardPage.jsx';
+import AdminDashboardV2Page from './pages/admin/AdminDashboardV2Page.jsx';
 import AdminOrdersPage from './pages/admin/AdminOrdersPage.jsx';
 import AdminProductsPage from './pages/admin/AdminProductsPage.jsx';
 import AdminCouponsPage from './pages/admin/AdminCouponsPage.jsx';
@@ -128,6 +129,7 @@ export default function App() {
           <Routes>
             <Route path="/admin" element={<RequireAdmin><AdminLayout /></RequireAdmin>}>
               <Route index element={<AdminDashboardPage />} />
+              <Route path="ozet-v2" element={<AdminDashboardV2Page />} />
               <Route path="siparisler" element={<AdminOrdersPage />} />
               <Route path="urunler" element={<AdminProductsPage />} />
               <Route path="kuponlar" element={<AdminCouponsPage />} />
