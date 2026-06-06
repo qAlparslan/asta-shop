@@ -254,14 +254,14 @@ export default function ProductReviewsSection({ productId, initialStats }) {
           <button
             type="button"
             onClick={() => setStarFilter(null)}
-            className={`shrink-0 rounded-lg border px-3 py-2 text-left transition ${
+            className={`inline-flex shrink-0 items-center gap-2 rounded-lg border px-3 py-2 transition ${
               starFilter === null
                 ? 'border-brand bg-brand/5 ring-1 ring-brand/20'
                 : 'border-neutral-200 bg-white hover:border-neutral-300'
             }`}
           >
-            <span className="text-xs font-bold text-brand">Tümü</span>
-            <p className="mt-0.5 text-[11px] text-neutral-500">{reviewCount}</p>
+            <span className="whitespace-nowrap text-xs font-bold text-brand">Tümü</span>
+            <span className="text-[11px] tabular-nums text-neutral-500">{reviewCount}</span>
           </button>
           {[5, 4, 3, 2, 1].map((stars) => {
             const count = ratingCounts[stars] || 0;
@@ -272,17 +272,15 @@ export default function ProductReviewsSection({ productId, initialStats }) {
                 key={stars}
                 type="button"
                 onClick={() => setStarFilter(active ? null : stars)}
-                className={`shrink-0 rounded-lg border px-3 py-2 text-left transition ${
+                className={`inline-flex shrink-0 items-center gap-2 rounded-lg border px-3 py-2 transition ${
                   active
                     ? 'border-brand bg-brand/5 ring-1 ring-brand/20'
                     : 'border-neutral-200 bg-white hover:border-neutral-300'
                 }`}
               >
-                <span className="text-xs font-bold text-brand">{stars} Yıldız</span>
-                <div className="mt-1">
-                  <StarRating value={stars} size="sm" />
-                </div>
-                <p className="mt-0.5 text-[11px] text-neutral-500">{count}</p>
+                <span className="whitespace-nowrap text-xs font-bold text-brand">{stars} Yıldız</span>
+                <StarRating value={stars} size="sm" />
+                <span className="text-[11px] tabular-nums text-neutral-500">{count}</span>
               </button>
             );
           })}
