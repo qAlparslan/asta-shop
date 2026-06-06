@@ -70,6 +70,7 @@ function buildApp() {
     const adminProductQuestionRoutes = require('./routes/adminProductQuestionRoutes');
     const contactRoutes = require('./routes/contactRoutes');
     const emailAutomationRoutes = require('./routes/emailAutomationRoutes');
+    const cartInterestRoutes = require('./routes/cartInterestRoutes');
 
     app.use('/api/inventory', inventoryRoutes);
     app.get('/sitemap.xml', sitemapController.serveSitemap);
@@ -81,6 +82,7 @@ function buildApp() {
     app.use('/api/admin/product-reviews', adminProductReviewRoutes);
     app.use('/api/admin/product-questions', adminProductQuestionRoutes);
 
+    app.use('/api/cart', cartInterestRoutes);
     app.use('/api/auth', authRoutes);
     app.use('/api/products', productRoutes);
     app.use('/api/orders', orderRoutes);

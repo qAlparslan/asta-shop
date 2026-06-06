@@ -62,6 +62,10 @@ async function ensureProductColumns() {
             sql: 'ALTER TABLE `products` ADD COLUMN `autoHiddenOutOfStock` TINYINT(1) NOT NULL DEFAULT 0',
         },
         { name: 'deletedAt', sql: 'ALTER TABLE `products` ADD COLUMN `deletedAt` DATETIME NULL' },
+        {
+            name: 'cartAddCount',
+            sql: 'ALTER TABLE `products` ADD COLUMN `cartAddCount` INT NOT NULL DEFAULT 0',
+        },
     ];
 
     for (const a of additions) {

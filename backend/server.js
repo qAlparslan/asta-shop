@@ -26,10 +26,12 @@ require('./models/HomeHeroSlide');
 const Product = require('./models/Product');
 const ProductReview = require('./models/ProductReview');
 const ProductQuestion = require('./models/ProductQuestion');
+const ProductCartHold = require('./models/ProductCartHold');
 require('./models/ProductStockAlert');
 
 ProductReview.belongsTo(Product, { foreignKey: 'productId', as: 'product' });
 ProductQuestion.belongsTo(Product, { foreignKey: 'productId', as: 'product' });
+ProductCartHold.belongsTo(Product, { foreignKey: 'productId', as: 'product' });
 
 AdminAuditLog.belongsTo(User, { foreignKey: 'adminUserId', as: 'admin' });
 
@@ -54,6 +56,7 @@ const ensureConsentEventTermsColumn = require('./utils/ensureConsentEventTermsCo
 const ensureEmailDeliveryFeedbackTable = require('./utils/ensureEmailDeliveryFeedbackTable');
 const ensureProductReviewApprovedColumn = require('./utils/ensureProductReviewApprovedColumn');
 const ensureProductQuestionsTable = require('./utils/ensureProductQuestionsTable');
+const ensureProductCartHoldTable = require('./utils/ensureProductCartHoldTable');
 const ensureProductReviewNotifyEmailColumn = require('./utils/ensureProductReviewNotifyEmailColumn');
 const ensureProductReviewImagesColumn = require('./utils/ensureProductReviewImagesColumn');
 const ensureHomeHeroColumns = require('./utils/ensureHomeHeroColumns');
@@ -109,6 +112,7 @@ sequelize
     .then(() => ensureProductReviewNotifyEmailColumn())
     .then(() => ensureProductReviewImagesColumn())
     .then(() => ensureProductQuestionsTable())
+    .then(() => ensureProductCartHoldTable())
     .then(() => ensureHomeHeroColumns())
     .then(() => ensureAdminAuditLogNullable())
     .then(() => migrateLegacyStockToWarehouses())

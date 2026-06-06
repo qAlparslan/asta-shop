@@ -248,6 +248,26 @@ const productQuestionPostLimiter = rateLimit({
 
 
 
+/** Sepet takibi (ekleme / senkron) */
+
+const cartTrackLimiter = rateLimit({
+
+    windowMs: 15 * 60 * 1000,
+
+    limit: parseInt(process.env.RATE_LIMIT_CART_TRACK_MAX || '120', 10),
+
+    standardHeaders: 'draft-7',
+
+    legacyHeaders: false,
+
+    keyGenerator: (req) => `cart-track:${clientIp(req)}`,
+
+    message: jsonMessage('Çok fazla sepet isteği. Lütfen bir süre sonra tekrar deneyin.'),
+
+});
+
+
+
 /** Stok bildirimi aboneliği */
 
 const productStockAlertPostLimiter = rateLimit({
@@ -309,6 +329,8 @@ module.exports = {
     productReviewPostLimiter,
 
     productQuestionPostLimiter,
+
+    cartTrackLimiter,
 
     productStockAlertPostLimiter,
 

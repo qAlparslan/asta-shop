@@ -805,6 +805,7 @@ export default function AdminProductsPage() {
                 <th className="px-4 py-3.5 font-sans">Kategori</th>
                 <th className="px-4 py-3.5 font-sans">Fiyat</th>
                 <th className="px-4 py-3.5 font-sans">Stok</th>
+                <th className="px-4 py-3.5 font-sans">Sepet</th>
                 <th className="px-4 py-3.5 font-sans">Barkod</th>
                 <th className="px-4 py-3.5 text-right font-sans">İşlem</th>
               </tr>
@@ -812,14 +813,14 @@ export default function AdminProductsPage() {
             <tbody className="divide-y divide-neutral-100 bg-white">
               {loading && (
                 <tr>
-                  <td colSpan={8} className="px-4 py-12 text-center text-neutral-500">
+                  <td colSpan={9} className="px-4 py-12 text-center text-neutral-500">
                     Yükleniyor…
                   </td>
                 </tr>
               )}
               {!loading && visible.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="px-4 py-12 text-center text-neutral-500">
+                  <td colSpan={9} className="px-4 py-12 text-center text-neutral-500">
                     {query.trim() ? 'Aramaya uygun ürün yok.' : 'Ürün yok.'}
                   </td>
                 </tr>
@@ -877,6 +878,17 @@ export default function AdminProductsPage() {
                       </div>
                     </td>
                     <td className="whitespace-nowrap px-4 py-4 tabular-nums text-neutral-800">{p.stock}</td>
+                    <td className="min-w-[140px] px-4 py-4 text-xs leading-relaxed text-neutral-700">
+                      <p>
+                        <span className="font-semibold text-asta-navy">
+                          {Math.max(0, Number(p.cartActiveHolderCount) || 0)}
+                        </span>{' '}
+                        kişinin sepetinde
+                      </p>
+                      <p className="mt-1 text-neutral-500">
+                        {Math.max(0, Number(p.cartAddCount) || 0)} kez sepete eklendi
+                      </p>
+                    </td>
                     <td className="whitespace-nowrap px-4 py-4 font-mono text-xs text-neutral-700">
                       {p.barcode ? p.barcode : <span className="text-neutral-400">—</span>}
                     </td>

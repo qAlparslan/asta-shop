@@ -56,6 +56,12 @@ const Product = sequelize.define('Product', {
         defaultValue: 0,
         validate: { min: 0 }
     },
+    cartAddCount: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 0,
+        validate: { min: 0 },
+    },
     area: {
         type: DataTypes.ENUM('yuz', 'vucut', 'goz', 'el', 'genel'),
         defaultValue: 'genel'

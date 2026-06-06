@@ -11,6 +11,11 @@ const {
     getReviewStatsMap,
 } = require('../services/productReviewService');
 const { buildPlannedDiscountUpdate } = require('../services/productDiscountService');
+const {
+    getCartStatsMap,
+    maybeNotifyCartHoldersAfterDiscount,
+    productToDiscountPlain,
+} = require('../services/cartInterestService');
 
 const SKIN_TYPE_VALUES = new Set(['hassas', 'kuru', 'yagli_karma', 'olgun', 'tumu']);
 
@@ -201,9 +206,20 @@ exports.getAllProductsAdmin = async (req, res) => {
         const products = await Product.findAll({
             order: [['createdAt', 'DESC']],
         });
+        const ids = products.map((p) => p.id);
+        const cartStatsMap = await getCartStatsMap(ids);
+        const enriched = products.map((p) => {
+            const plain = p.get ? p.get({ plain: true }) : p;
+            const stats = cartStatsMap[p.id] || { activeHolderCount: 0, cartAddCount: 0 };
+            return {
+                ...plain,
+                cartActiveHolderCount: stats.activeHolderCount,
+                cartAddCount: stats.cartAddCount,
+            };
+        });
         res.status(200).json({
             status: 'success',
-            data: { products },
+            data: { products: enriched },
         });
     } catch (err) {
         res.status(400).json({ status: 'fail', message: err.message });
@@ -400,6 +416,7 @@ exports.updateProduct = async (req, res) => {
         }
 
         const prevStock = Number(product.stock) || 0;
+        const beforeDiscount = productToDiscountPlain(product);
 
         await product.update(updateData);
         if (updateData.stock !== undefined) {
@@ -416,6 +433,12 @@ exports.updateProduct = async (req, res) => {
                 ),
             );
         }
+
+        setImmediate(() =>
+            maybeNotifyCartHoldersAfterDiscount(product.id, beforeDiscount).catch((err) =>
+                console.error('[cart-discount-notify]', err.message || err),
+            ),
+        );
 
         await logAdminAudit({
             req,
@@ -559,12 +582,19 @@ exports.bulkActions = async (req, res) => {
             const products = await Product.findAll({ where: { id: ids } });
 
             for (const p of products) {
+                const beforeDiscount = productToDiscountPlain(p);
                 await p.update(
                     buildPlannedDiscountUpdate(p, {
                         pct,
                         startAt,
                         endAt: endAt || null,
                     }),
+                );
+                await p.reload();
+                setImmediate(() =>
+                    maybeNotifyCartHoldersAfterDiscount(p.id, beforeDiscount).catch((err) =>
+                        console.error('[cart-discount-notify]', err.message || err),
+                    ),
                 );
             }
         }

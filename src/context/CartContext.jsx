@@ -1,4 +1,5 @@
-import { createContext, useCallback, useContext, useMemo, useState, useEffect } from 'react';
+import { createContext, useCallback, useContext, useMemo, useState, useEffect, useRef } from 'react';
+import { syncCartInterest, trackCartAdd } from '../lib/cartTrack.js';
 
 const STORAGE_KEY = 'asta-cart-v2';
 
@@ -101,9 +102,22 @@ export function CartProvider({ children }) {
   /** @type {[null | { line: CartLine; at: number }, Function]} */
   const [lastAdded, setLastAdded] = useState(null);
 
+  const syncTimerRef = useRef(null);
+
   useEffect(() => {
     if (typeof window === 'undefined') return;
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(lines));
+  }, [lines]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (syncTimerRef.current) window.clearTimeout(syncTimerRef.current);
+    syncTimerRef.current = window.setTimeout(() => {
+      syncCartInterest(lines.map((l) => l.productId));
+    }, 400);
+    return () => {
+      if (syncTimerRef.current) window.clearTimeout(syncTimerRef.current);
+    };
   }, [lines]);
 
   /**
@@ -134,6 +148,10 @@ export function CartProvider({ children }) {
       return next;
     });
     setLastAdded({ line: normalized, at: Date.now() });
+    trackCartAdd({
+      productId: normalized.productId,
+      variantId: normalized.variantId,
+    });
   }, []);
 
   const dismissLastAdded = useCallback(() => setLastAdded(null), []);

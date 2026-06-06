@@ -99,9 +99,20 @@ async function runDiscountAutomationTick() {
         const newPrice = computeDiscountedPrice(currentOriginal, discountPercent);
         if (newPrice == null) continue;
 
+        const beforeDiscount = {
+            price: p.price,
+            original_price: p.original_price,
+            discountPercent: p.discountPercent,
+        };
         await p.update({ price: newPrice.toFixed(2) });
         console.log(
             `[OTOMATİK SİSTEM]: ${p.name} için %${discountPercent} indirim uygulandı. Yeni Fiyat: ${newPrice.toFixed(2)}₺`,
+        );
+        const { maybeNotifyCartHoldersAfterDiscount } = require('./cartInterestService');
+        setImmediate(() =>
+            maybeNotifyCartHoldersAfterDiscount(p.id, beforeDiscount).catch((err) =>
+                console.error('[cart-discount-notify]', err.message || err),
+            ),
         );
     }
 
