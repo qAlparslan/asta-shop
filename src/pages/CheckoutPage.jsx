@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, useCallback, useRef } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -79,6 +79,8 @@ export default function CheckoutPage() {
   const [checkoutPayBusy, setCheckoutPayBusy] = useState(false);
   const [paytrIframeToken, setPaytrIframeToken] = useState('');
   const [paytrModalOpen, setPaytrModalOpen] = useState(false);
+  const [pendingOrderId, setPendingOrderId] = useState('');
+  const pendingOrderIdRef = useRef('');
   const [orderSubmitError, setOrderSubmitError] = useState('');
   /** Ön bilgilendirme / mesafeli satış sürüm kodları */
   const [legalCheckout, setLegalCheckout] = useState(null);
@@ -218,6 +220,8 @@ export default function CheckoutPage() {
       return;
     }
     setPaytrIframeToken('');
+    setPendingOrderId('');
+    pendingOrderIdRef.current = '';
     setCheckoutPayBusy(true);
 
     const ac = new AbortController();
@@ -235,6 +239,16 @@ export default function CheckoutPage() {
       const pt = typeof data.paytrIframeToken === 'string' ? data.paytrIframeToken.trim() : '';
       if (!pt) {
         throw new Error('PayTR iFrame token alınamadı.');
+      }
+      const oid =
+        typeof data.conversationId === 'string'
+          ? data.conversationId.trim()
+          : typeof data.orderId === 'string'
+            ? data.orderId.trim()
+            : '';
+      if (oid) {
+        setPendingOrderId(oid);
+        pendingOrderIdRef.current = oid;
       }
       setPaytrIframeToken(pt);
     } catch (err) {
@@ -297,16 +311,46 @@ export default function CheckoutPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paytrModalOpen]);
 
-  const closePaytrModal = () => {
+  const cancelPendingCheckoutOrder = useCallback(async (orderId) => {
+    const id = String(orderId || pendingOrderIdRef.current || '').trim();
+    if (!id) return;
+    try {
+      await apiFetch('/api/payments/cancel-pending', {
+        method: 'POST',
+        body: { orderId: id },
+      });
+    } catch {
+      /* ağ hatası — arka plan süpürücü yedek */
+    }
+    setPendingOrderId('');
+    pendingOrderIdRef.current = '';
+  }, []);
+
+  const closePaytrModal = async () => {
     if (typeof window !== 'undefined') {
       const ok = window.confirm(
-        'Ödeme penceresini kapatmak istediğinize emin misiniz? Ödeme yarıda kalırsa siparişiniz iptal edilecektir.',
+        'Ödeme penceresini kapatmak istediğinize emin misiniz? Siparişiniz iptal edilecek ve stok geri yüklenecektir.',
       );
       if (!ok) return;
     }
     setPaytrModalOpen(false);
     setPaytrIframeToken('');
+    await cancelPendingCheckoutOrder(pendingOrderIdRef.current);
   };
+
+  useEffect(() => {
+    if (!pendingOrderId || !paytrModalOpen) return undefined;
+    const onPageHide = () => {
+      const id = pendingOrderIdRef.current;
+      if (!id) return;
+      apiFetch('/api/payments/cancel-pending', {
+        method: 'POST',
+        body: { orderId: id },
+      }).catch(() => {});
+    };
+    window.addEventListener('pagehide', onPageHide);
+    return () => window.removeEventListener('pagehide', onPageHide);
+  }, [pendingOrderId, paytrModalOpen]);
 
   const nextFromStep1 = () => {
     if (!validateAddress()) return;

@@ -3,6 +3,7 @@ const authMiddleware = require('../middlewares/authMiddleware');
 const {
     createPaytrPaymentInitialize,
     handlePaytrNotification,
+    cancelPendingPayment,
 } = require('../controllers/paytrCheckoutPaymentController');
 
 const router = express.Router();
@@ -11,6 +12,7 @@ const router = express.Router();
  * Ödeme başlat (PayTR iFrame token).
  */
 router.post('/create-payment', authMiddleware.optionalProtect, createPaytrPaymentInitialize);
+router.post('/cancel-pending', authMiddleware.optionalProtect, cancelPendingPayment);
 
 /**
  * PayTR bildirim URL — panelden kayıt edilmelidir.

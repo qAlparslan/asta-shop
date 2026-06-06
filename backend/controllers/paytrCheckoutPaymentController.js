@@ -72,18 +72,28 @@ function paytrCallbackAbsoluteUrlHint() {
     return base ? `${base}/api/payments/paytr-notification` : '(BACKEND_PUBLIC_URL)/api/payments/paytr-notification';
 }
 
+/** @returns {Promise<'cancelled' | 'already_finalized' | 'not_found' | 'error'>} */
 async function cancelPendingOrderCleanup(orderId) {
     const tx = await sequelize.transaction();
     try {
         const pending = await Order.findByPk(orderId, { transaction: tx, lock: tx.LOCK.UPDATE });
-        if (pending && pending.status === 'odeme_bekleniyor') {
-            await releaseOrderInventory(pending, tx);
-            await pending.update({ status: 'iptal-edildi' }, { transaction: tx });
+        if (!pending) {
+            await tx.commit();
+            return 'not_found';
         }
+        if (pending.status !== 'odeme_bekleniyor') {
+            await tx.commit();
+            return 'already_finalized';
+        }
+        await releaseOrderInventory(pending, tx);
+        await pending.update({ status: 'iptal-edildi' }, { transaction: tx });
         await tx.commit();
+        console.log(`🚫 Ödeme bekleyen sipariş iptal + stok iade: ${pending.id}`);
+        return 'cancelled';
     } catch (e) {
         await tx.rollback();
         console.error('cancelPendingOrderCleanup (paytr)', orderId, e.message);
+        return 'error';
     }
 }
 
@@ -227,7 +237,7 @@ exports.createPaytrPaymentInitialize = async (req, res) => {
             user_phone: user_phone || '05000000000',
             merchant_ok_url: urls.merchant_ok_url.slice(0, 400),
             merchant_fail_url: urls.merchant_fail_url.slice(0, 400),
-            timeout_limit: String(Number(process.env.PENDING_ORDER_TIMEOUT_MINUTES || 30) || 30),
+            timeout_limit: String(Number(process.env.PENDING_ORDER_TIMEOUT_MINUTES || 15) || 15),
             currency,
             test_mode,
         };
@@ -448,5 +458,46 @@ exports.handlePaytrNotification = async (req, res) => {
     } catch (e) {
         console.error('handlePaytrNotification:', e.message);
         return sendFailPlain(500, 'server error');
+    }
+};
+
+/**
+ * POST /api/payments/cancel-pending — müşteri ödeme ekranından ayrıldığında.
+ */
+exports.cancelPendingPayment = async (req, res) => {
+    try {
+        const orderId = String(req.body?.orderId || '').trim();
+        if (!orderId) {
+            return res.status(400).json({ status: 'fail', message: 'orderId gerekli.' });
+        }
+
+        const order = await Order.findByPk(orderId);
+        if (!order) {
+            return res.status(404).json({ status: 'fail', message: 'Sipariş bulunamadı.' });
+        }
+
+        if (order.userId && req.user?.id && String(order.userId) !== String(req.user.id)) {
+            return res.status(403).json({ status: 'fail', message: 'Bu siparişi iptal etme yetkiniz yok.' });
+        }
+
+        const result = await cancelPendingOrderCleanup(orderId);
+        if (result === 'error') {
+            return res.status(500).json({ status: 'fail', message: 'Sipariş iptal edilemedi.' });
+        }
+        if (result === 'not_found') {
+            return res.status(404).json({ status: 'fail', message: 'Sipariş bulunamadı.' });
+        }
+
+        return res.status(200).json({
+            status: 'success',
+            message:
+                result === 'cancelled'
+                    ? 'Ödeme bekleyen sipariş iptal edildi, stok geri yüklendi.'
+                    : 'Sipariş zaten sonuçlandırılmış.',
+            data: { result },
+        });
+    } catch (err) {
+        console.error('cancelPendingPayment:', err.message);
+        return res.status(500).json({ status: 'fail', message: err.message || 'Sunucu hatası.' });
     }
 };

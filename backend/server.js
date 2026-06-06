@@ -133,14 +133,16 @@ sequelize
         } catch (e) {
             console.warn('automatedReminders başlatılamadı:', e.message);
         }
-        setInterval(async () => {
+        const runStalePendingSweep = async () => {
             try {
                 const { cancelStalePendingOrders } = require('./services/orderInventory');
-                await cancelStalePendingOrders(Number(process.env.PENDING_ORDER_TIMEOUT_MINUTES) || 30);
+                await cancelStalePendingOrders(Number(process.env.PENDING_ORDER_TIMEOUT_MINUTES) || 15);
             } catch (e) {
                 console.warn('stale order cleaner:', e.message);
             }
-        }, 5 * 60 * 1000);
+        };
+        runStalePendingSweep();
+        setInterval(runStalePendingSweep, 2 * 60 * 1000);
 
         app.listen(PORT, () => {
             console.log(`🚀 Sunucu ${PORT} portunda ayaklandı.`);
