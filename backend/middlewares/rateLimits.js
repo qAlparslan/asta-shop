@@ -228,6 +228,26 @@ const productReviewPostLimiter = rateLimit({
 
 
 
+/** Ürün sorusu oluşturma (IP bazlı) */
+
+const productQuestionPostLimiter = rateLimit({
+
+    windowMs: 15 * 60 * 1000,
+
+    limit: parseInt(process.env.RATE_LIMIT_PRODUCT_QUESTION_POST_MAX || '30', 10),
+
+    standardHeaders: 'draft-7',
+
+    legacyHeaders: false,
+
+    keyGenerator: (req) => `product-question:${clientIp(req)}`,
+
+    message: jsonMessage('Çok fazla soru gönderimi. Lütfen bir süre sonra tekrar deneyin.'),
+
+});
+
+
+
 /** Stok bildirimi aboneliği */
 
 const productStockAlertPostLimiter = rateLimit({
@@ -287,6 +307,8 @@ module.exports = {
     newsletterSubscribeLimiter,
 
     productReviewPostLimiter,
+
+    productQuestionPostLimiter,
 
     productStockAlertPostLimiter,
 

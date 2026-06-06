@@ -9,6 +9,7 @@ import {
   ChevronDown,
   Users,
   MessageSquare,
+  MessageCircleQuestion,
   LogOut,
   Store,
   ExternalLink,
@@ -127,6 +128,13 @@ export default function AdminLayout() {
           >
             <MessageSquare className="h-4 w-4 shrink-0" strokeWidth={1.75} />
             Yorumlar
+          </NavLink>
+          <NavLink
+            to="/admin/sorular"
+            className={({ isActive }) => `${linkBase} ${isActive ? linkActive : linkIdle}`}
+          >
+            <MessageCircleQuestion className="h-4 w-4 shrink-0" strokeWidth={1.75} />
+            Sorular
           </NavLink>
           <NavLink
             to="/admin/kullanicilar"

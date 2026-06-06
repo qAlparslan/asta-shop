@@ -1,5 +1,6 @@
 const Product = require('../models/Product');
 const ProductReview = require('../models/ProductReview');
+const ProductQuestion = require('../models/ProductQuestion');
 const ProductStockAlert = require('../models/ProductStockAlert');
 const User = require('../models/User');
 const {
@@ -7,6 +8,10 @@ const {
     getReviewStats,
     serializeReview,
 } = require('../services/productReviewService');
+const {
+    listPublicProductQuestions,
+    serializeQuestion,
+} = require('../services/productQuestionService');
 
 exports.listReviews = async (req, res) => {
     try {
@@ -146,6 +151,101 @@ exports.createReview = async (req, res) => {
             status: 'success',
             message: 'Yorumunuz yayınlandı. Teşekkür ederiz.',
             data: { review: serializeReview(review) },
+        });
+    } catch (err) {
+        res.status(400).json({ status: 'fail', message: err.message });
+    }
+};
+
+exports.listQuestions = async (req, res) => {
+    try {
+        const productId = req.params.id;
+        const product = await Product.findByPk(productId);
+        if (!product || !product.is_active) {
+            return res.status(404).json({ status: 'fail', message: 'Ürün bulunamadı.' });
+        }
+
+        const viewerUserId = req.user?.id || null;
+        const data = await listPublicProductQuestions(productId, viewerUserId);
+
+        res.status(200).json({
+            status: 'success',
+            data,
+        });
+    } catch (err) {
+        res.status(400).json({ status: 'fail', message: err.message });
+    }
+};
+
+exports.questionEligibility = async (req, res) => {
+    try {
+        const productId = req.params.id;
+        const product = await Product.findByPk(productId);
+        if (!product || !product.is_active) {
+            return res.status(404).json({ status: 'fail', message: 'Ürün bulunamadı.' });
+        }
+
+        if (!req.user?.id) {
+            return res.status(200).json({
+                status: 'success',
+                data: {
+                    canAsk: false,
+                    reason: 'login_required',
+                },
+            });
+        }
+
+        res.status(200).json({
+            status: 'success',
+            data: {
+                canAsk: true,
+                reason: null,
+            },
+        });
+    } catch (err) {
+        res.status(400).json({ status: 'fail', message: err.message });
+    }
+};
+
+exports.createQuestion = async (req, res) => {
+    try {
+        const productId = req.params.id;
+        const product = await Product.findByPk(productId);
+        if (!product || !product.is_active) {
+            return res.status(404).json({ status: 'fail', message: 'Ürün bulunamadı veya satışta değil.' });
+        }
+
+        if (!req.user?.id) {
+            return res.status(401).json({ status: 'fail', message: 'Soru sormak için giriş yapmalısınız.' });
+        }
+
+        const u = await User.findByPk(req.user.id);
+        if (!u) {
+            return res.status(401).json({ status: 'fail', message: 'Geçersiz oturum.' });
+        }
+
+        const rawQ = typeof req.body.question === 'string' ? req.body.question : req.body.body;
+        const question = String(rawQ || '').trim();
+        if (question.length < 4) {
+            return res.status(400).json({ status: 'fail', message: 'Soru en az 4 karakter olmalı.' });
+        }
+        if (question.length > 2000) {
+            return res.status(400).json({ status: 'fail', message: 'Soru çok uzun.' });
+        }
+
+        const authorName = (u.fullName && String(u.fullName).trim()) || u.email || 'Üye';
+
+        const row = await ProductQuestion.create({
+            productId,
+            userId: u.id,
+            authorName,
+            question,
+        });
+
+        res.status(201).json({
+            status: 'success',
+            message: 'Sorunuz alındı. Satıcı cevapladığında burada görünecek.',
+            data: { question: serializeQuestion(row) },
         });
     } catch (err) {
         res.status(400).json({ status: 'fail', message: err.message });

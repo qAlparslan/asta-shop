@@ -25,9 +25,11 @@ const AdminAuditLog = require('./models/AdminAuditLog');
 require('./models/HomeHeroSlide');
 const Product = require('./models/Product');
 const ProductReview = require('./models/ProductReview');
+const ProductQuestion = require('./models/ProductQuestion');
 require('./models/ProductStockAlert');
 
 ProductReview.belongsTo(Product, { foreignKey: 'productId', as: 'product' });
+ProductQuestion.belongsTo(Product, { foreignKey: 'productId', as: 'product' });
 
 AdminAuditLog.belongsTo(User, { foreignKey: 'adminUserId', as: 'admin' });
 
@@ -51,6 +53,7 @@ const ensureCategoryMetaColumns = require('./utils/ensureCategoryMetaColumns');
 const ensureConsentEventTermsColumn = require('./utils/ensureConsentEventTermsColumn');
 const ensureEmailDeliveryFeedbackTable = require('./utils/ensureEmailDeliveryFeedbackTable');
 const ensureProductReviewApprovedColumn = require('./utils/ensureProductReviewApprovedColumn');
+const ensureProductQuestionsTable = require('./utils/ensureProductQuestionsTable');
 const ensureProductReviewNotifyEmailColumn = require('./utils/ensureProductReviewNotifyEmailColumn');
 const ensureProductReviewImagesColumn = require('./utils/ensureProductReviewImagesColumn');
 const ensureHomeHeroColumns = require('./utils/ensureHomeHeroColumns');
@@ -105,6 +108,7 @@ sequelize
     .then(() => ensureProductReviewApprovedColumn())
     .then(() => ensureProductReviewNotifyEmailColumn())
     .then(() => ensureProductReviewImagesColumn())
+    .then(() => ensureProductQuestionsTable())
     .then(() => ensureHomeHeroColumns())
     .then(() => ensureAdminAuditLogNullable())
     .then(() => migrateLegacyStockToWarehouses())

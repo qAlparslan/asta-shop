@@ -92,6 +92,18 @@ router.post(
     reviewUpload.array('images', 4),
     productEngagementController.createReview
 );
+router.get('/:id/questions', authMiddleware.optionalProtect, productEngagementController.listQuestions);
+router.get(
+    '/:id/questions/eligibility',
+    authMiddleware.optionalProtect,
+    productEngagementController.questionEligibility,
+);
+router.post(
+    '/:id/questions',
+    rateLimits.productQuestionPostLimiter,
+    authMiddleware.protect,
+    productEngagementController.createQuestion,
+);
 router.post(
     '/:id/stock-alert',
     rateLimits.productStockAlertPostLimiter,

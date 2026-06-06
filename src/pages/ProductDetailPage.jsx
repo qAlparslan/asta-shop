@@ -10,6 +10,7 @@ import { useCart } from '../context/CartContext.jsx';
 import { useSiteSettings } from '../context/SiteSettingsContext.jsx';
 import StarRating from '../components/StarRating.jsx';
 import ProductReviewsSection from '../components/products/ProductReviewsSection.jsx';
+import ProductQuestionsSection from '../components/products/ProductQuestionsSection.jsx';
 
 const ACCENT = '#7d7d62';
 const BTN_BG = '#0f172a';
@@ -311,7 +312,7 @@ export default function ProductDetailPage() {
                     : 'text-neutral-500 hover:text-asta-navy'
                 }`}
               >
-                Ürün açıklaması
+                Ürün detayları
               </button>
               <button
                 type="button"
@@ -324,6 +325,17 @@ export default function ProductDetailPage() {
               >
                 Yorumlar
                 {catalog.reviewCount > 0 ? ` (${catalog.reviewCount})` : ''}
+              </button>
+              <button
+                type="button"
+                onClick={() => setDetailTab('questions')}
+                className={`rounded-t-lg px-4 py-2.5 text-sm font-semibold transition sm:px-6 ${
+                  detailTab === 'questions'
+                    ? 'border border-b-0 border-neutral-200 bg-white text-asta-navy'
+                    : 'text-neutral-500 hover:text-asta-navy'
+                }`}
+              >
+                Müşteri soruları
               </button>
             </div>
 
@@ -339,7 +351,7 @@ export default function ProductDetailPage() {
                     Bu ürün için ayrıntılı açıklama henüz eklenmemiş.
                   </p>
                 )
-              ) : (
+              ) : detailTab === 'reviews' ? (
                 <ProductReviewsSection
                   productId={catalog.id}
                   initialStats={{
@@ -347,6 +359,8 @@ export default function ProductDetailPage() {
                     averageRating: catalog.averageRating,
                   }}
                 />
+              ) : (
+                <ProductQuestionsSection productId={catalog.id} />
               )}
             </div>
           </div>
