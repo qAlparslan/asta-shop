@@ -36,7 +36,7 @@ import AdminSystemPage, { AdminSystemSectionRedirect } from './pages/admin/Admin
 import AdminUsersPage from './pages/admin/AdminUsersPage.jsx';
 import { apiFetch } from './api/client.js';
 import { useAuth } from './context/AuthContext.jsx';
-import SiteFavicon from './components/SiteFavicon.jsx';
+import SiteBranding from './components/SiteBranding.jsx';
 
 function StorefrontShell() {
   const { user, loading: authLoading } = useAuth();
@@ -120,7 +120,7 @@ function StorefrontShell() {
 export default function App() {
   return (
     <BrowserRouter>
-      <SiteFavicon />
+      <SiteBranding />
       <AuthProvider>
         <CartProvider>
           <Routes>

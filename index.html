@@ -3,13 +3,18 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ASTA TİCARET — Eucerin</title>
+    <title>ASTA TİCARET</title>
     <link rel="icon" href="/favicon.ico" sizes="32x32" />
     <script>
       fetch('/api/settings')
         .then(function (r) { return r.json(); })
         .then(function (res) {
-          var url = res && res.data && res.data.settings && res.data.settings.logoUrl;
+          var s = res && res.data && res.data.settings;
+          if (!s) return;
+          var name = (s.storeName && String(s.storeName).trim()) || 'ASTA TİCARET';
+          var tag = s.storeTagline && String(s.storeTagline).trim();
+          document.title = tag ? name + ' - ' + tag : name;
+          var url = s.logoUrl;
           if (!url || typeof url !== 'string') return;
           var link = document.querySelector('link[rel="icon"]');
           if (!link) {

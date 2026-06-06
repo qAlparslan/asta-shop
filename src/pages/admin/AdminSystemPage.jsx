@@ -12,6 +12,7 @@ import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { apiFetch } from '../../api/client.js';
 import { assetUrl } from '../../config/api.js';
 import { applyFaviconFromLogo } from '../../lib/siteFavicon.js';
+import { applySiteDocumentTitle } from '../../lib/siteDocumentTitle.js';
 import { inputClass } from '../../lib/formStyles.js';
 import { SYSTEM_SECTION_IDS, SYSTEM_SECTIONS } from './systemSectionConfig.js';
 import AdminCampaignPanel from './AdminCampaignPanel.jsx';
@@ -237,7 +238,9 @@ function StoreInfoForm({ settings, settingsLoading, setField, onSettingsSaved })
     }
     try {
       const res = await apiFetch('/api/settings', { method: 'PUT', body: { settings: payload } });
-      onSettingsSaved(res?.data?.settings);
+      const saved = res?.data?.settings ?? payload;
+      onSettingsSaved(saved);
+      applySiteDocumentTitle(saved);
       setMsg('Kaydedildi.');
     } catch (ex) {
       setError(typeof ex.message === 'string' ? ex.message : 'Kaydetme başarısız.');

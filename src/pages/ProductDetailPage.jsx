@@ -56,7 +56,7 @@ export default function ProductDetailPage() {
   useEffect(() => {
     if (!catalog?.name) return undefined;
     const prev = document.title;
-    const suffix = storeLabel ? ` — ${storeLabel}` : '';
+    const suffix = storeLabel ? ` - ${storeLabel}` : '';
     document.title = `${catalog.name}${suffix}`;
     return () => {
       document.title = prev;
