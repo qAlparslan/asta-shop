@@ -2,7 +2,7 @@
  * Kaydırmalı hero slaytları — görseller yatay kırpım (16:9) ile yüklenir.
  */
 
-const crop = 'auto=format&fit=crop&w=1600&h=900&q=80';
+const crop = 'auto=format&fit=crop&w=1024&h=576&q=75';
 
 export const heroSlides = [
   {

@@ -1,5 +1,5 @@
 import { BrowserRouter, Navigate, Route, Routes, Outlet, Link, useLocation } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { AuthProvider } from './context/AuthContext.jsx';
 import { CartProvider } from './context/CartContext.jsx';
 import { SiteSettingsProvider } from './context/SiteSettingsContext.jsx';
@@ -28,25 +28,43 @@ import AccountProfilePage from './pages/account/AccountProfilePage.jsx';
 import MyOrdersPage from './pages/account/MyOrdersPage.jsx';
 import RequireAdmin from './admin/RequireAdmin.jsx';
 import AdminLayout from './admin/AdminLayout.jsx';
-import AdminDashboardPage from './pages/admin/AdminDashboardPage.jsx';
-import AdminDashboardV2Page from './pages/admin/AdminDashboardV2Page.jsx';
-import AdminOrdersPage from './pages/admin/AdminOrdersPage.jsx';
-import AdminProductsPage from './pages/admin/AdminProductsPage.jsx';
-import AdminCouponsPage from './pages/admin/AdminCouponsPage.jsx';
-import AdminSystemPage, { AdminSystemSectionRedirect } from './pages/admin/AdminSystemPage.jsx';
-import AdminUsersPage from './pages/admin/AdminUsersPage.jsx';
-import AdminProductReviewsPage from './pages/admin/AdminProductReviewsPage.jsx';
-import AdminProductQuestionsPage from './pages/admin/AdminProductQuestionsPage.jsx';
+
+const AdminDashboardPage = lazy(() => import('./pages/admin/AdminDashboardPage.jsx'));
+const AdminDashboardV2Page = lazy(() => import('./pages/admin/AdminDashboardV2Page.jsx'));
+const AdminOrdersPage = lazy(() => import('./pages/admin/AdminOrdersPage.jsx'));
+const AdminProductsPage = lazy(() => import('./pages/admin/AdminProductsPage.jsx'));
+const AdminCouponsPage = lazy(() => import('./pages/admin/AdminCouponsPage.jsx'));
+const AdminSystemPage = lazy(() => import('./pages/admin/AdminSystemPage.jsx'));
+const AdminUsersPage = lazy(() => import('./pages/admin/AdminUsersPage.jsx'));
+const AdminProductReviewsPage = lazy(() => import('./pages/admin/AdminProductReviewsPage.jsx'));
+const AdminProductQuestionsPage = lazy(() => import('./pages/admin/AdminProductQuestionsPage.jsx'));
+
+function AdminRouteFallback() {
+  return (
+    <div className="flex min-h-[40vh] items-center justify-center text-sm text-neutral-500">
+      Panel yükleniyor…
+    </div>
+  );
+}
+
+function AdminSystemSectionRedirect() {
+  return <Navigate to="/admin/sistem/kategoriler" replace />;
+}
 import { apiFetch } from './api/client.js';
 import { useAuth } from './context/AuthContext.jsx';
 import SiteBranding from './components/SiteBranding.jsx';
 import StorefrontSeo from './components/StorefrontSeo.jsx';
 
 function StorefrontShell() {
-  const { user, loading: authLoading } = useAuth();
+  const { user } = useAuth();
   const location = useLocation();
   /** @type {[null | { settings: Record<string, unknown>; active: boolean; message: string }, Function]} */
-  const [boot, setBoot] = useState(null);
+  const [boot, setBoot] = useState({
+    settings: {},
+    active: false,
+    message: '',
+    loaded: false,
+  });
 
   useEffect(() => {
     apiFetch('/api/settings', { skipAuth: true })
@@ -57,18 +75,13 @@ function StorefrontShell() {
           settings: s,
           active,
           message: typeof s.maintenanceMessage === 'string' ? s.maintenanceMessage : '',
+          loaded: true,
         });
       })
-      .catch(() => setBoot({ settings: {}, active: false, message: '' }));
+      .catch(() =>
+        setBoot({ settings: {}, active: false, message: '', loaded: true }),
+      );
   }, []);
-
-  if (boot === null || authLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-neutral-100 font-sans text-sm text-neutral-500">
-        Yükleniyor…
-      </div>
-    );
-  }
 
   const maint = boot;
   const isAdmin = user?.role === 'admin';
@@ -80,7 +93,7 @@ function StorefrontShell() {
     path === '/sifre-unuttum' ||
     path.startsWith('/sifre-sifirla/');
 
-  if (maint.active && !isAdmin) {
+  if (maint.loaded && maint.active && !isAdmin) {
     if (storefrontAuthBypass) {
       return (
         <div className="min-h-screen bg-neutral-100 font-sans text-neutral-900 antialiased">
@@ -129,17 +142,87 @@ export default function App() {
       <AuthProvider>
         <CartProvider>
           <Routes>
-            <Route path="/admin" element={<RequireAdmin><AdminLayout /></RequireAdmin>}>
-              <Route index element={<AdminDashboardPage />} />
-              <Route path="ozet-v2" element={<AdminDashboardV2Page />} />
-              <Route path="siparisler" element={<AdminOrdersPage />} />
-              <Route path="urunler" element={<AdminProductsPage />} />
-              <Route path="kuponlar" element={<AdminCouponsPage />} />
-              <Route path="yorumlar" element={<AdminProductReviewsPage />} />
-              <Route path="sorular" element={<AdminProductQuestionsPage />} />
-              <Route path="kullanicilar" element={<AdminUsersPage />} />
+            <Route
+              path="/admin"
+              element={
+                <RequireAdmin>
+                  <AdminLayout />
+                </RequireAdmin>
+              }
+            >
+              <Route
+                index
+                element={
+                  <Suspense fallback={<AdminRouteFallback />}>
+                    <AdminDashboardPage />
+                  </Suspense>
+                }
+              />
+              <Route
+                path="ozet-v2"
+                element={
+                  <Suspense fallback={<AdminRouteFallback />}>
+                    <AdminDashboardV2Page />
+                  </Suspense>
+                }
+              />
+              <Route
+                path="siparisler"
+                element={
+                  <Suspense fallback={<AdminRouteFallback />}>
+                    <AdminOrdersPage />
+                  </Suspense>
+                }
+              />
+              <Route
+                path="urunler"
+                element={
+                  <Suspense fallback={<AdminRouteFallback />}>
+                    <AdminProductsPage />
+                  </Suspense>
+                }
+              />
+              <Route
+                path="kuponlar"
+                element={
+                  <Suspense fallback={<AdminRouteFallback />}>
+                    <AdminCouponsPage />
+                  </Suspense>
+                }
+              />
+              <Route
+                path="yorumlar"
+                element={
+                  <Suspense fallback={<AdminRouteFallback />}>
+                    <AdminProductReviewsPage />
+                  </Suspense>
+                }
+              />
+              <Route
+                path="sorular"
+                element={
+                  <Suspense fallback={<AdminRouteFallback />}>
+                    <AdminProductQuestionsPage />
+                  </Suspense>
+                }
+              />
+              <Route
+                path="kullanicilar"
+                element={
+                  <Suspense fallback={<AdminRouteFallback />}>
+                    <AdminUsersPage />
+                  </Suspense>
+                }
+              />
               <Route path="sistem" element={<AdminSystemSectionRedirect />} />
-              <Route path="sistem/:bolum" element={<AdminSystemPage />} />
+              <Route
+                path="sistem/:bolum"
+                element={
+                  <Suspense fallback={<AdminRouteFallback />}>
+                    <AdminSystemPage />
+                  </Suspense>
+                }
+              />
               <Route path="ayarlar" element={<Navigate to="/admin/sistem/kategoriler" replace />} />
             </Route>
 

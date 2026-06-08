@@ -9,6 +9,21 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 export default defineConfig({
   envDir: path.resolve(__dirname, 'backend'),
   plugins: [react()],
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('recharts')) return 'recharts';
+            if (id.includes('react-quill')) return 'react-quill';
+            if (id.includes('lucide-react')) return 'icons';
+            return 'vendor';
+          }
+          if (id.includes('/src/pages/admin/')) return 'admin';
+        },
+      },
+    },
+  },
   server: {
     port: 3001,
     open: true,

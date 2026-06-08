@@ -10,38 +10,20 @@
     <meta name="robots" content="index, follow" />
     <title>ASTA TİCARET</title>
     <link rel="icon" href="/favicon.ico" sizes="32x32" />
-    <script>
-      fetch('/api/settings')
-        .then(function (r) { return r.json(); })
-        .then(function (res) {
-          var s = res && res.data && res.data.settings;
-          if (!s) return;
-          var name = (s.storeName && String(s.storeName).trim()) || 'ASTA TİCARET';
-          var tag = s.storeTagline && String(s.storeTagline).trim();
-          document.title = tag ? name + ' - ' + tag : name;
-          var desc = tag
-            ? name + ' — ' + tag + '. Güvenilir online alışveriş, orijinal ürünler ve hızlı teslimat.'
-            : name + ' — doğal ve güvenilir güzellik ürünleri. Online mağazamızdan güvenle alışveriş yapın.';
-          var meta = document.querySelector('meta[name="description"]');
-          if (meta && desc) meta.setAttribute('content', desc);
-          var url = s.logoUrl;
-          if (!url || typeof url !== 'string') return;
-          var link = document.querySelector('link[rel="icon"]');
-          if (!link) {
-            link = document.createElement('link');
-            link.rel = 'icon';
-            document.head.appendChild(link);
-          }
-          link.href = url;
-        })
-        .catch(function () {});
-    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
+      rel="preload"
+      as="style"
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap"
-      rel="stylesheet"
+      onload="this.onload=null;this.rel='stylesheet'"
     />
+    <noscript>
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap"
+      />
+    </noscript>
   </head>
   <body>
     <div id="root"></div>

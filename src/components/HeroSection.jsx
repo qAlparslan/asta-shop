@@ -9,6 +9,7 @@ import {
   DEFAULT_HERO_TRUST_CARDS,
   getTrustPresetByKey,
 } from '../lib/heroTrustCards.js';
+import { buildResponsiveImage, preloadImage } from '../lib/optimizeImageUrl.js';
 
 const AUTO_MS = 6500;
 
@@ -67,16 +68,20 @@ function HeroCtaLink({ href, className, children }) {
 
 function SlideMedia({ slide, eager }) {
   if (slide.bgType === 'image' && slide.bgImageUrl) {
+    const responsive = buildResponsiveImage(slide.bgImageUrl);
     return (
       <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-card">
         <img
-          src={slide.bgImageUrl}
+          src={responsive.src || slide.bgImageUrl}
+          srcSet={responsive.srcSet || undefined}
+          sizes={responsive.sizes || undefined}
           alt={slide.imageAlt || slide.title}
           className="aspect-video w-full object-cover object-center"
-          width={1600}
-          height={900}
+          width={1024}
+          height={576}
+          decoding={eager ? 'sync' : 'async'}
           loading={eager ? 'eager' : 'lazy'}
-          fetchPriority={eager ? 'high' : 'auto'}
+          fetchPriority={eager ? 'high' : 'low'}
         />
       </div>
     );
@@ -193,6 +198,14 @@ export default function HeroSection() {
   useEffect(() => {
     setIndex((i) => Math.min(i, Math.max(0, count - 1)));
   }, [count]);
+
+  /** LCP: ilk slayt görselini önceden yükle */
+  useEffect(() => {
+    const first = slides[0];
+    if (first?.bgType === 'image' && first.bgImageUrl) {
+      preloadImage(first.bgImageUrl);
+    }
+  }, [slides]);
 
   const durationClass = reduceMotion ? 'duration-0' : 'duration-500 ease-out';
 

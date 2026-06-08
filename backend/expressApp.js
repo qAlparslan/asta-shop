@@ -45,7 +45,14 @@ function buildApp() {
     const paymentRoutes = require('./routes/paymentRoutes');
     app.use('/api/payments', paymentRoutes);
 
-    app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+    app.use(
+        '/uploads',
+        express.static(path.join(__dirname, 'uploads'), {
+            maxAge: process.env.NODE_ENV === 'production' ? '7d' : 0,
+            etag: true,
+            lastModified: true,
+        }),
+    );
 
     const faviconController = require('./controllers/faviconController');
     app.get('/favicon.ico', faviconController.serveFavicon);

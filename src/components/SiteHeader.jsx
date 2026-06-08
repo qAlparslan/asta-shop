@@ -85,6 +85,9 @@ export default function SiteHeader() {
             <img
               src={logoSrc}
               alt={storeName}
+              width={170}
+              height={56}
+              decoding="async"
               className={`w-auto shrink-0 object-contain ${logoSizeClass}`}
             />
           ) : null}
