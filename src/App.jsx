@@ -28,6 +28,10 @@ import AccountProfilePage from './pages/account/AccountProfilePage.jsx';
 import MyOrdersPage from './pages/account/MyOrdersPage.jsx';
 import RequireAdmin from './admin/RequireAdmin.jsx';
 import AdminLayout from './admin/AdminLayout.jsx';
+import { apiFetch } from './api/client.js';
+import { useAuth } from './context/AuthContext.jsx';
+import SiteBranding from './components/SiteBranding.jsx';
+import StorefrontSeo from './components/StorefrontSeo.jsx';
 
 const AdminDashboardPage = lazy(() => import('./pages/admin/AdminDashboardPage.jsx'));
 const AdminDashboardV2Page = lazy(() => import('./pages/admin/AdminDashboardV2Page.jsx'));
@@ -50,10 +54,6 @@ function AdminRouteFallback() {
 function AdminSystemSectionRedirect() {
   return <Navigate to="/admin/sistem/kategoriler" replace />;
 }
-import { apiFetch } from './api/client.js';
-import { useAuth } from './context/AuthContext.jsx';
-import SiteBranding from './components/SiteBranding.jsx';
-import StorefrontSeo from './components/StorefrontSeo.jsx';
 
 function StorefrontShell() {
   const { user } = useAuth();
