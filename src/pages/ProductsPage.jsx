@@ -6,10 +6,16 @@ import { enabledSkinFilterChoices, normalizeSkinCatalogRows } from '../lib/skinF
 import { formatTRY } from '../lib/formatTRY.js';
 import { apiFetch } from '../api/client.js';
 import { mapApiProductToCatalog } from '../lib/productMap.js';
+import PageSeo from '../components/PageSeo.jsx';
+import { buildCanonicalUrl } from '../lib/siteSeo.js';
+import { buildSiteDocumentTitle } from '../lib/siteDocumentTitle.js';
+import { useSiteSettings } from '../context/SiteSettingsContext.jsx';
 
 export default function ProductsPage() {
   const [searchParams] = useSearchParams();
+  const settings = useSiteSettings();
   const tagFilter = String(searchParams.get('tag') || '').trim();
+  const categoryFilter = String(searchParams.get('kategori') || '').trim();
 
   const [sortBy, setSortBy] = useState('recommended');
   const [categoryQuery, setCategoryQuery] = useState('');
@@ -121,7 +127,42 @@ export default function ProductsPage() {
   const placeholderSvg =
     "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Crect fill='%23f5f5f5' width='400' height='400'/%3E%3C/svg%3E";
 
+  const catalogSeo = useMemo(() => {
+    const storeTitle = buildSiteDocumentTitle(settings);
+    const storeName = String(settings?.storeName ?? '').trim() || 'Asta Ticaret';
+    let pageTitle = 'Tüm Ürünler';
+    let description = `${storeName} ürün kataloğu. Güzellik ve bakım ürünlerinde güvenilir online alışveriş.`;
+
+    if (tagFilter === 'cok-satan') {
+      pageTitle = 'Çok Satan Ürünler';
+      description = `${storeName} en çok satan güzellik ve bakım ürünleri. Müşteri favorileri ve kampanyalı seçenekler.`;
+    } else if (categoryFilter) {
+      pageTitle = `${categoryFilter} Ürünleri`;
+      description = `${categoryFilter} kategorisindeki ürünler — ${storeName} online mağaza.`;
+    }
+
+    const qs = new URLSearchParams();
+    if (tagFilter) qs.set('tag', tagFilter);
+    if (categoryFilter) qs.set('kategori', categoryFilter);
+    const path = qs.toString() ? `/urunler?${qs.toString()}` : '/urunler';
+
+    return {
+      title: `${pageTitle} | ${storeTitle}`,
+      description,
+      canonical: buildCanonicalUrl(path),
+    };
+  }, [settings, tagFilter, categoryFilter]);
+
   return (
+    <>
+      <PageSeo
+        title={catalogSeo.title}
+        description={catalogSeo.description}
+        canonical={catalogSeo.canonical}
+        ogType="website"
+        robots="index, follow"
+        siteName={String(settings?.storeName ?? '').trim() || 'Asta Ticaret'}
+      />
     <main className="border-b border-neutral-100 bg-white">
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:flex lg:gap-10 lg:px-8 lg:py-10">
         <aside className="mb-10 w-full shrink-0 lg:mb-0 lg:w-[280px] lg:sticky lg:top-6 lg:self-start">
@@ -230,5 +271,6 @@ export default function ProductsPage() {
         </div>
       </div>
     </main>
+    </>
   );
 }

@@ -67,11 +67,40 @@ function upsertJsonLd(data) {
 }
 
 /**
+ * @param {string} pathOrUrl
+ */
+export function toAbsoluteUrl(pathOrUrl) {
+  const raw = String(pathOrUrl || '').trim();
+  if (!raw) return '';
+  if (/^https?:\/\//i.test(raw)) return raw;
+  return buildCanonicalUrl(raw.startsWith('/') ? raw : `/${raw}`);
+}
+
+/**
+ * @param {Array<{ name: string; url: string }>} items
+ */
+export function buildBreadcrumbJsonLd(items) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: items.map((item, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      name: item.name,
+      item: item.url,
+    })),
+  };
+}
+
+/**
  * @param {{
  *   title?: string;
  *   description?: string;
  *   canonical?: string;
  *   ogType?: string;
+ *   ogImage?: string;
+ *   siteName?: string;
+ *   robots?: string;
  *   jsonLd?: Record<string, unknown> | Record<string, unknown>[] | null;
  * }} opts
  */
@@ -79,6 +108,7 @@ export function applyPageSeo(opts = {}) {
   if (opts.title) document.title = opts.title;
   if (opts.description != null) upsertMetaByName('description', opts.description);
   if (opts.canonical != null) upsertLink('canonical', opts.canonical);
+  if (opts.robots != null) upsertMetaByName('robots', opts.robots);
   if (opts.description != null) {
     upsertMetaByProperty('og:description', opts.description);
     upsertMetaByName('twitter:description', opts.description);
@@ -89,6 +119,14 @@ export function applyPageSeo(opts = {}) {
   }
   if (opts.canonical) upsertMetaByProperty('og:url', opts.canonical);
   if (opts.ogType) upsertMetaByProperty('og:type', opts.ogType);
+  if (opts.siteName) upsertMetaByProperty('og:site_name', opts.siteName);
+  upsertMetaByProperty('og:locale', 'tr_TR');
+  upsertMetaByName('twitter:card', opts.ogImage ? 'summary_large_image' : 'summary');
+  if (opts.ogImage) {
+    const abs = toAbsoluteUrl(opts.ogImage);
+    upsertMetaByProperty('og:image', abs);
+    upsertMetaByName('twitter:image', abs);
+  }
   if (Object.prototype.hasOwnProperty.call(opts, 'jsonLd')) upsertJsonLd(opts.jsonLd);
 }
 

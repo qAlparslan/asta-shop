@@ -2,9 +2,14 @@ import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ArrowLeft, FileText } from 'lucide-react';
 import { apiFetch, isAbortError } from '../api/client.js';
+import PageSeo from '../components/PageSeo.jsx';
+import { buildCanonicalUrl, excerptPlain } from '../lib/siteSeo.js';
+import { buildSiteDocumentTitle } from '../lib/siteDocumentTitle.js';
+import { useSiteSettings } from '../context/SiteSettingsContext.jsx';
 
 export default function LegalDocumentPage() {
   const { slug } = useParams();
+  const settings = useSiteSettings();
   const [doc, setDoc] = useState(null);
   const [error, setError] = useState('');
 
@@ -25,7 +30,26 @@ export default function LegalDocumentPage() {
     return () => ac.abort();
   }, [slug]);
 
+  const storeTitle = buildSiteDocumentTitle(settings);
+  const canonical = buildCanonicalUrl(`/yasal/${slug || ''}`);
+  const seoTitle = doc ? `${doc.title} | ${storeTitle}` : `Yasal metin | ${storeTitle}`;
+  const seoDesc = doc
+    ? excerptPlain(
+        (doc.sections?.[0]?.paragraphs || []).join(' '),
+        155,
+      ) || `${doc.title} — ${storeTitle}`
+    : `${storeTitle} yasal metinleri.`;
+
   return (
+    <>
+      <PageSeo
+        title={seoTitle}
+        description={seoDesc}
+        canonical={canonical}
+        ogType="article"
+        robots="index, follow"
+        siteName={String(settings?.storeName ?? '').trim() || 'Asta Ticaret'}
+      />
     <article className="border-b border-neutral-200 bg-neutral-50/80 py-10 sm:py-14">
       <div className="mx-auto max-w-3xl px-4 sm:px-6">
         <Link
@@ -89,5 +113,6 @@ export default function LegalDocumentPage() {
         )}
       </div>
     </article>
+    </>
   );
 }

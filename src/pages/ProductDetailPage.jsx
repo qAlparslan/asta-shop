@@ -12,7 +12,8 @@ import StarRating from '../components/StarRating.jsx';
 import ProductReviewsSection from '../components/products/ProductReviewsSection.jsx';
 import ProductQuestionsSection from '../components/products/ProductQuestionsSection.jsx';
 import PageSeo from '../components/PageSeo.jsx';
-import { buildCanonicalUrl, excerptPlain } from '../lib/siteSeo.js';
+import { buildBreadcrumbJsonLd, buildCanonicalUrl, excerptPlain, toAbsoluteUrl } from '../lib/siteSeo.js';
+import { assetUrl } from '../config/api.js';
 import { buildSiteDocumentTitle } from '../lib/siteDocumentTitle.js';
 
 const ACCENT = '#7d7d62';
@@ -22,8 +23,6 @@ export default function ProductDetailPage() {
   const { slug, productId } = useParams();
   const { addItem } = useCart();
   const site = useSiteSettings();
-  const storeLabel = String(site.storeName || '').trim() || '';
-
   const [raw, setRaw] = useState(null);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState('');
@@ -64,39 +63,73 @@ export default function ProductDetailPage() {
   const productSeo = useMemo(() => {
     if (!catalog?.name) return null;
     const storeTitle = buildSiteDocumentTitle(site);
+    const storeName = String(site?.storeName ?? '').trim() || 'Asta Ticaret';
+    const metaTitle =
+      (typeof raw?.meta_title === 'string' && raw.meta_title.trim()) || `${catalog.name} | ${storeTitle}`;
     const metaDesc =
       (typeof raw?.meta_description === 'string' && raw.meta_description.trim()) ||
       excerptPlain(raw?.description, 155) ||
-      `${catalog.name} — ${storeLabel || 'Asta Ticaret'} online mağazasında. Güvenilir alışveriş ve hızlı teslimat.`;
+      `${catalog.name} — ${storeName} online mağazasında. Güvenilir alışveriş ve hızlı teslimat.`;
     const path = catalog.slug ? `/urun/${catalog.slug}` : productId ? `/urun/p/${productId}` : '/urunler';
     const canonical = buildCanonicalUrl(path);
-    const image =
-      Array.isArray(catalog.images) && catalog.images[0]
-        ? String(catalog.images[0])
-        : undefined;
+    const imageRaw =
+      Array.isArray(catalog.images) && catalog.images[0] ? String(catalog.images[0]) : '';
+    const imageAbs = imageRaw ? toAbsoluteUrl(assetUrl(imageRaw) || imageRaw) : '';
+    const reviewCount = Math.max(0, Number(catalog.reviewCount) || 0);
+    const averageRating = reviewCount > 0 ? Number(catalog.averageRating) || 0 : 0;
+    const homeUrl = buildCanonicalUrl('/');
+    const productsUrl = buildCanonicalUrl('/urunler');
+
+    const productNode = {
+      '@type': 'Product',
+      name: catalog.name,
+      description: metaDesc,
+      sku: String(catalog.id || ''),
+      ...(catalog.brand ? { brand: { '@type': 'Brand', name: String(catalog.brand) } } : {}),
+      ...(imageAbs ? { image: [imageAbs] } : {}),
+      offers: {
+        '@type': 'Offer',
+        priceCurrency: 'TRY',
+        price: Number(catalog.price) || 0,
+        availability:
+          (catalog.stock ?? 0) > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+        url: canonical,
+        seller: { '@type': 'Organization', name: storeName },
+      },
+      ...(reviewCount > 0
+        ? {
+            aggregateRating: {
+              '@type': 'AggregateRating',
+              ratingValue: Math.round(averageRating * 10) / 10,
+              reviewCount,
+              bestRating: 5,
+              worstRating: 1,
+            },
+          }
+        : {}),
+    };
 
     return {
-      title: `${catalog.name} | ${storeTitle}`,
+      title: metaTitle,
       description: metaDesc,
       canonical,
       ogType: 'product',
+      ogImage: imageAbs,
+      siteName: storeName,
+      robots: 'index, follow',
       jsonLd: {
         '@context': 'https://schema.org',
-        '@type': 'Product',
-        name: catalog.name,
-        description: metaDesc,
-        ...(image ? { image } : {}),
-        offers: {
-          '@type': 'Offer',
-          priceCurrency: 'TRY',
-          price: Number(catalog.price) || 0,
-          availability:
-            (catalog.stock ?? 0) > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
-          url: canonical,
-        },
+        '@graph': [
+          productNode,
+          buildBreadcrumbJsonLd([
+            { name: 'Ana sayfa', url: homeUrl },
+            { name: 'Ürünler', url: productsUrl },
+            { name: catalog.name, url: canonical },
+          ]),
+        ],
       },
     };
-  }, [catalog, raw, site, productId, storeLabel]);
+  }, [catalog, raw, site, productId]);
 
   const variants = catalog?.variants ?? [];
 
@@ -198,6 +231,9 @@ export default function ProductDetailPage() {
           description={productSeo.description}
           canonical={productSeo.canonical}
           ogType={productSeo.ogType}
+          ogImage={productSeo.ogImage}
+          siteName={productSeo.siteName}
+          robots={productSeo.robots}
           jsonLd={productSeo.jsonLd}
         />
       ) : null}
@@ -243,7 +279,7 @@ export default function ProductDetailPage() {
                         i === imgIdx ? 'border-asta-navy ring-2 ring-asta-navy/20' : 'border-neutral-200'
                       }`}
                     >
-                      <img src={u} alt="" className="h-full w-full object-cover" />
+                      <img src={u} alt={`${catalog.name} görseli`} className="h-full w-full object-cover" />
                     </button>
                   ))}
                 </div>

@@ -42,6 +42,19 @@ exports.serveSitemap = async (req, res) => {
         pushUrl(`${base}/hakkimizda`, 'monthly', '0.6', null);
         pushUrl(`${base}/iletisim`, 'monthly', '0.6', null);
 
+        const legalSlugs = [
+            'gizlilik',
+            'kvkk',
+            'cerez',
+            'kullanim',
+            'on-bilgilendirme',
+            'mesafeli-satis',
+            'iade',
+        ];
+        for (const legalSlug of legalSlugs) {
+            pushUrl(`${base}/yasal/${legalSlug}`, 'monthly', '0.4', null);
+        }
+
         for (const p of products) {
             if (p.slug) {
                 pushUrl(`${base}/urun/${encodeURIComponent(p.slug)}`, 'weekly', '0.8', p.updatedAt);
