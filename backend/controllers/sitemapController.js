@@ -1,19 +1,13 @@
 const Product = require('../models/Product');
 const Category = require('../models/Category');
-const { getFrontendUrl } = require('../services/mailer');
+const { resolvePublicSiteBase } = require('../utils/publicSiteUrl');
 
 /**
  * Basit XML site haritası — ürün ve statik sayfalar.
  */
 exports.serveSitemap = async (req, res) => {
     try {
-        let base =
-            (process.env.FRONTEND_PUBLIC_URL || process.env.VITE_PUBLIC_SITE_URL || '').trim() ||
-            getFrontendUrl();
-        if (!base && process.env.NODE_ENV !== 'production') {
-            base = 'http://localhost:3001';
-        }
-        base = (base || '').replace(/\/$/, '');
+        const base = resolvePublicSiteBase();
         if (!base) {
             return res
                 .status(503)
@@ -44,7 +38,7 @@ exports.serveSitemap = async (req, res) => {
         };
 
         pushUrl(`${base}/`, 'daily', '1.0', new Date());
-        pushUrl(`${base}/magaza`, 'daily', '0.9', new Date());
+        pushUrl(`${base}/urunler`, 'daily', '0.9', new Date());
         pushUrl(`${base}/hakkimizda`, 'monthly', '0.6', null);
         pushUrl(`${base}/iletisim`, 'monthly', '0.6', null);
 
@@ -57,7 +51,7 @@ exports.serveSitemap = async (req, res) => {
         for (const c of categories) {
             if (c.name) {
                 const q = encodeURIComponent(c.name);
-                pushUrl(`${base}/magaza?kategori=${q}`, 'weekly', '0.7', c.updatedAt);
+                pushUrl(`${base}/urunler?kategori=${q}`, 'weekly', '0.7', c.updatedAt);
             }
         }
 

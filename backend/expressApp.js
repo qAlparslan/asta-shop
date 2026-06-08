@@ -61,6 +61,7 @@ function buildApp() {
     const campaignRoutes = require('./routes/campaignRoutes');
     const inventoryRoutes = require('./routes/inventoryRoutes');
     const sitemapController = require('./controllers/sitemapController');
+    const robotsController = require('./controllers/robotsController');
     const legalRoutes = require('./routes/legalRoutes');
     const consentRoutes = require('./routes/consentRoutes');
     const auditRoutes = require('./routes/auditRoutes');
@@ -73,6 +74,7 @@ function buildApp() {
     const cartInterestRoutes = require('./routes/cartInterestRoutes');
 
     app.use('/api/inventory', inventoryRoutes);
+    app.get('/robots.txt', robotsController.serveRobots);
     app.get('/sitemap.xml', sitemapController.serveSitemap);
 
     app.use('/api/legal', legalRoutes);

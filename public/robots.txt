@@ -1,4 +1,6 @@
 User-agent: *
 Allow: /
+Disallow: /admin
+Disallow: /hesabim
 
-Sitemap: /sitemap.xml
+Sitemap: https://astaticaret.com/sitemap.xml

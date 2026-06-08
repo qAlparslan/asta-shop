@@ -11,6 +11,9 @@ import { useSiteSettings } from '../context/SiteSettingsContext.jsx';
 import StarRating from '../components/StarRating.jsx';
 import ProductReviewsSection from '../components/products/ProductReviewsSection.jsx';
 import ProductQuestionsSection from '../components/products/ProductQuestionsSection.jsx';
+import PageSeo from '../components/PageSeo.jsx';
+import { buildCanonicalUrl, excerptPlain } from '../lib/siteSeo.js';
+import { buildSiteDocumentTitle } from '../lib/siteDocumentTitle.js';
 
 const ACCENT = '#7d7d62';
 const BTN_BG = '#0f172a';
@@ -58,15 +61,42 @@ export default function ProductDetailPage() {
     return () => ac.abort();
   }, [detailUrl]);
 
-  useEffect(() => {
-    if (!catalog?.name) return undefined;
-    const prev = document.title;
-    const suffix = storeLabel ? ` - ${storeLabel}` : '';
-    document.title = `${catalog.name}${suffix}`;
-    return () => {
-      document.title = prev;
+  const productSeo = useMemo(() => {
+    if (!catalog?.name) return null;
+    const storeTitle = buildSiteDocumentTitle(site);
+    const metaDesc =
+      (typeof raw?.meta_description === 'string' && raw.meta_description.trim()) ||
+      excerptPlain(raw?.description, 155) ||
+      `${catalog.name} — ${storeLabel || 'Asta Ticaret'} online mağazasında. Güvenilir alışveriş ve hızlı teslimat.`;
+    const path = catalog.slug ? `/urun/${catalog.slug}` : productId ? `/urun/p/${productId}` : '/urunler';
+    const canonical = buildCanonicalUrl(path);
+    const image =
+      Array.isArray(catalog.images) && catalog.images[0]
+        ? String(catalog.images[0])
+        : undefined;
+
+    return {
+      title: `${catalog.name} | ${storeTitle}`,
+      description: metaDesc,
+      canonical,
+      ogType: 'product',
+      jsonLd: {
+        '@context': 'https://schema.org',
+        '@type': 'Product',
+        name: catalog.name,
+        description: metaDesc,
+        ...(image ? { image } : {}),
+        offers: {
+          '@type': 'Offer',
+          priceCurrency: 'TRY',
+          price: Number(catalog.price) || 0,
+          availability:
+            (catalog.stock ?? 0) > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+          url: canonical,
+        },
+      },
     };
-  }, [catalog?.name, storeLabel]);
+  }, [catalog, raw, site, productId, storeLabel]);
 
   const variants = catalog?.variants ?? [];
 
@@ -161,6 +191,16 @@ export default function ProductDetailPage() {
     );
   }
   return (
+    <>
+      {productSeo ? (
+        <PageSeo
+          title={productSeo.title}
+          description={productSeo.description}
+          canonical={productSeo.canonical}
+          ogType={productSeo.ogType}
+          jsonLd={productSeo.jsonLd}
+        />
+      ) : null}
     <main className="border-b border-neutral-100 bg-white font-sans text-neutral-900">
       <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
         <nav className="mb-8 text-sm text-neutral-500">
@@ -368,5 +408,6 @@ export default function ProductDetailPage() {
         )}
       </div>
     </main>
+    </>
   );
 }

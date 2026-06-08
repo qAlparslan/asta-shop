@@ -40,6 +40,7 @@ import AdminProductQuestionsPage from './pages/admin/AdminProductQuestionsPage.j
 import { apiFetch } from './api/client.js';
 import { useAuth } from './context/AuthContext.jsx';
 import SiteBranding from './components/SiteBranding.jsx';
+import StorefrontSeo from './components/StorefrontSeo.jsx';
 
 function StorefrontShell() {
   const { user, loading: authLoading } = useAuth();
@@ -108,6 +109,7 @@ function StorefrontShell() {
 
   return (
     <SiteSettingsProvider value={maint.settings}>
+      <StorefrontSeo />
       <div className="min-h-screen bg-white font-sans text-neutral-900 antialiased">
         <Navbar />
         <Outlet />
