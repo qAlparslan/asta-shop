@@ -121,11 +121,21 @@ export default function ProductDetailPage() {
         '@context': 'https://schema.org',
         '@graph': [
           productNode,
-          buildBreadcrumbJsonLd([
-            { name: 'Ana sayfa', url: homeUrl },
-            { name: 'Ürünler', url: productsUrl },
-            { name: catalog.name, url: canonical },
-          ]),
+          buildBreadcrumbJsonLd(
+            [
+              { name: 'Ana sayfa', url: homeUrl },
+              { name: 'Ürünler', url: productsUrl },
+              ...(catalog.category
+                ? [
+                    {
+                      name: catalog.category,
+                      url: `${productsUrl}?kategori=${encodeURIComponent(catalog.category)}`,
+                    },
+                  ]
+                : []),
+              { name: catalog.name, url: canonical },
+            ],
+          ),
         ],
       },
     };
@@ -239,7 +249,7 @@ export default function ProductDetailPage() {
       ) : null}
     <main className="border-b border-neutral-100 bg-white font-sans text-neutral-900">
       <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
-        <nav className="mb-8 text-sm text-neutral-500">
+        <nav className="mb-8 text-sm text-neutral-500" aria-label="Konum">
           <Link to="/" className="hover:text-asta-navy">
             Ana sayfa
           </Link>
@@ -249,6 +259,27 @@ export default function ProductDetailPage() {
           <Link to="/urunler" className="hover:text-asta-navy">
             Ürünler
           </Link>
+          {catalog?.category ? (
+            <>
+              <span aria-hidden className="mx-2">
+                /
+              </span>
+              <Link
+                to={`/urunler?kategori=${encodeURIComponent(catalog.category)}`}
+                className="hover:text-asta-navy"
+              >
+                {catalog.category}
+              </Link>
+            </>
+          ) : null}
+          {catalog?.name ? (
+            <>
+              <span aria-hidden className="mx-2">
+                /
+              </span>
+              <span className="text-neutral-700">{catalog.name}</span>
+            </>
+          ) : null}
         </nav>
 
         {loading ? (

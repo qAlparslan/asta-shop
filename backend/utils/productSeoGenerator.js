@@ -73,7 +73,17 @@ function generateProductSeo(opts) {
 
     const brandChunk = slugifyPiece(brand, 48);
     const nameChunk = slugifyPiece(name, 168);
-    const slugParts = [brandChunk, nameChunk].filter(Boolean);
+    const nameLower = name.toLocaleLowerCase('tr-TR');
+    const brandLower = brand.toLocaleLowerCase('tr-TR');
+    const nameAlreadyHasBrand =
+        Boolean(brandLower) &&
+        (nameLower === brandLower ||
+            nameLower.startsWith(`${brandLower} `) ||
+            nameLower.startsWith(`${brandLower}-`) ||
+            (nameChunk && brandChunk && (nameChunk === brandChunk || nameChunk.startsWith(`${brandChunk}-`))));
+    const slugParts = nameAlreadyHasBrand
+        ? [nameChunk].filter(Boolean)
+        : [brandChunk, nameChunk].filter(Boolean);
     let slug = slugParts.join('-').replace(/^-+|-+$/g, '').replace(/-+/g, '-');
     if (!slug) slug = slugifyPiece(name || brand || siteLabel, 200);
     slug = slug.slice(0, 220);

@@ -62,6 +62,18 @@
         expires 7d;
     }
 
+    # Ürün sayfaları — Google ilk HTML'de title/description/schema görsün (SPA SEO)
+    location ^~ /urun/ {
+        proxy_pass http://127.0.0.1:5000/shell/urun/;
+        proxy_http_version 1.1;
+        proxy_set_header Host              $host;
+        proxy_set_header X-Real-IP         $remote_addr;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host  $host;
+        proxy_intercept_errors off;
+    }
+
     # dist içindeki JS/CSS/font — cache (PageSpeed "verimli önbellek" maddesi)
     location ~* \.(?:js|css|woff2?|ico)$ {
         expires 30d;
@@ -82,6 +94,23 @@
 > **Önemli:** Cache bloğu **ayrı bir dosyaya değil**, doğrudan `astaticaret.com` sitesinin Nginx config ekranına yazılır. `api.astaticaret.com` sitesinin config’ine bu cache satırlarını ekleme.
 
 Bu olmazsa `/urunler`, `/hesabim/siparisler` gibi URL’ler yenileyince 404 olur.
+
+### Backend `.env` (ürün SEO kabuğu)
+
+Sunucuda `backend/.env` içine dist yolunu ekleyin:
+
+```
+FRONTEND_DIST_PATH=/www/wwwroot/astaticaret.com/dist
+FRONTEND_PUBLIC_URL=https://astaticaret.com
+```
+
+Deploy sonrası test — çıktıda ürün adı görünmeli:
+
+```bash
+curl -s "https://astaticaret.com/urun/SLUG-BURAYA" | grep -i "<title>"
+```
+
+Yalnızca `ASTA TİCARET` görünüyorsa Nginx `/urun/` proxy'si veya `FRONTEND_DIST_PATH` eksiktir.
 
 ---
 

@@ -1,7 +1,7 @@
-const { resolvePublicSiteBase } = require('../utils/publicSiteUrl');
+const { resolvePublicSiteBaseFromRequest } = require('../utils/publicSiteUrl');
 
 exports.serveRobots = (req, res) => {
-    const base = resolvePublicSiteBase();
+    const base = resolvePublicSiteBaseFromRequest(req);
     const lines = ['User-agent: *', 'Allow: /', 'Disallow: /admin', 'Disallow: /hesabim', ''];
 
     if (base) {

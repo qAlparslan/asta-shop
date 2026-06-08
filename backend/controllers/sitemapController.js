@@ -1,13 +1,13 @@
 const Product = require('../models/Product');
 const Category = require('../models/Category');
-const { resolvePublicSiteBase } = require('../utils/publicSiteUrl');
+const { resolvePublicSiteBaseFromRequest } = require('../utils/publicSiteUrl');
 
 /**
  * Basit XML site haritası — ürün ve statik sayfalar.
  */
 exports.serveSitemap = async (req, res) => {
     try {
-        const base = resolvePublicSiteBase();
+        const base = resolvePublicSiteBaseFromRequest(req);
         if (!base) {
             return res
                 .status(503)
@@ -15,16 +15,20 @@ exports.serveSitemap = async (req, res) => {
                 .send('Site tabani URL tanimli degil (FRONTEND_PUBLIC_URL veya FRONTEND_ORIGINS).');
         }
 
-        const [products, categories] = await Promise.all([
-            Product.findAll({
-                where: { is_active: true },
-                attributes: ['slug', 'updatedAt'],
-            }),
-            Category.findAll({
+        const products = await Product.findAll({
+            where: { is_active: true },
+            attributes: ['slug', 'updatedAt'],
+        });
+
+        let categories = [];
+        try {
+            categories = await Category.findAll({
                 where: { isActive: true },
                 attributes: ['slug', 'name', 'updatedAt'],
-            }),
-        ]);
+            });
+        } catch (catErr) {
+            console.warn('sitemap categories:', catErr.message);
+        }
 
         const urlEntries = [];
 
@@ -77,6 +81,7 @@ ${urlEntries.join('\n')}
         res.send(xml);
     } catch (err) {
         console.error('sitemap:', err.message);
+        if (err.stack) console.error(err.stack);
         res.status(500).type('text/plain').send('Sitemap oluşturulamadı.');
     }
 };

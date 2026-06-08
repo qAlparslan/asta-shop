@@ -69,6 +69,7 @@ function buildApp() {
     const inventoryRoutes = require('./routes/inventoryRoutes');
     const sitemapController = require('./controllers/sitemapController');
     const robotsController = require('./controllers/robotsController');
+    const storefrontShellController = require('./controllers/storefrontShellController');
     const legalRoutes = require('./routes/legalRoutes');
     const consentRoutes = require('./routes/consentRoutes');
     const auditRoutes = require('./routes/auditRoutes');
@@ -83,6 +84,8 @@ function buildApp() {
     app.use('/api/inventory', inventoryRoutes);
     app.get('/robots.txt', robotsController.serveRobots);
     app.get('/sitemap.xml', sitemapController.serveSitemap);
+    app.get('/shell/urun/p/:id', storefrontShellController.serveProductById);
+    app.get('/shell/urun/:slug', storefrontShellController.serveProductBySlug);
 
     app.use('/api/legal', legalRoutes);
     app.use('/api/consent', consentRoutes);

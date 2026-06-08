@@ -11,4 +11,21 @@ function resolvePublicSiteBase() {
     return (base || '').replace(/\/$/, '');
 }
 
-module.exports = { resolvePublicSiteBase };
+/**
+ * İstekten kök URL türetir — FRONTEND_PUBLIC_URL yoksa proxy Host başlığını kullanır.
+ * @param {import('express').Request | null | undefined} req
+ */
+function resolvePublicSiteBaseFromRequest(req) {
+    let base = resolvePublicSiteBase();
+    if (base || !req) return base;
+    const host = String(req.get('x-forwarded-host') || req.get('host') || '')
+        .split(',')[0]
+        .trim();
+    const proto = String(req.get('x-forwarded-proto') || (req.secure ? 'https' : 'http'))
+        .split(',')[0]
+        .trim();
+    if (host) base = `${proto}://${host}`;
+    return (base || '').replace(/\/$/, '');
+}
+
+module.exports = { resolvePublicSiteBase, resolvePublicSiteBaseFromRequest };
