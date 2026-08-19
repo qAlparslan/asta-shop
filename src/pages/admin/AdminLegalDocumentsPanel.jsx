@@ -2,18 +2,15 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Plus, Save, Trash2 } from 'lucide-react';
 import { apiFetch } from '../../api/client.js';
 import { inputClass } from '../../lib/formStyles.js';
+import { LEGAL_DOCUMENT_LINKS, legalDocHref } from '../../lib/legalDocLinks.js';
 
 /** @typedef {{ heading: string; paragraphs: string[] }} LegalSectionDraft */
 
-const DOC_ORDER = Object.freeze([
-  { slug: 'gizlilik', label: 'Gizlilik politikası', hint: '/yasal/gizlilik' },
-  { slug: 'kvkk', label: 'KVKK aydınlatma', hint: '/yasal/kvkk' },
-  { slug: 'cerez', label: 'Çerez politikası', hint: '/yasal/cerez' },
-  { slug: 'kullanim', label: 'Kullanım koşulları', hint: '/yasal/kullanim' },
-  { slug: 'on-bilgilendirme', label: 'Ön bilgilendirme', hint: '/yasal/on-bilgilendirme' },
-  { slug: 'mesafeli-satis', label: 'Mesafeli satış', hint: '/yasal/mesafeli-satis' },
-  { slug: 'iade', label: 'İade politikası', hint: '/yasal/iade' },
-]);
+const DOC_ORDER = LEGAL_DOCUMENT_LINKS.map(({ slug, label }) => ({
+  slug,
+  label,
+  hint: legalDocHref(slug),
+}));
 
 /** @param {string[]} paras */
 function parasToArea(paras) {

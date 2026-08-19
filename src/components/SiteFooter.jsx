@@ -2,6 +2,7 @@ import { ShieldCheck } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import SocialLinksGroup from './SocialLinksGroup.jsx';
 import { useSiteSettings } from '../context/SiteSettingsContext.jsx';
+import { LEGAL_DOCUMENT_LINKS, legalDocHref } from '../lib/legalDocLinks.js';
 import { mediaUrl } from '../lib/mediaUrl.js';
 
 const footerLink = 'text-sm text-neutral-600 transition-colors hover:text-brand';
@@ -79,26 +80,13 @@ export default function SiteFooter() {
                   Hakkımızda
                 </Link>
               </li>
-              <li>
-                <Link to="/yasal/gizlilik" className={footerLink}>
-                  Gizlilik politikası
-                </Link>
-              </li>
-              <li>
-                <Link to="/yasal/kvkk" className={footerLink}>
-                  KVKK
-                </Link>
-              </li>
-              <li>
-                <Link to="/yasal/kullanim" className={footerLink}>
-                  Kullanım şartları
-                </Link>
-              </li>
-              <li>
-                <Link to="/yasal/cerez" className={footerLink}>
-                  Çerez politikası
-                </Link>
-              </li>
+              {LEGAL_DOCUMENT_LINKS.map(({ slug, label }) => (
+                <li key={slug}>
+                  <Link to={legalDocHref(slug)} className={footerLink}>
+                    {label}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
 
@@ -126,11 +114,6 @@ export default function SiteFooter() {
               <li>
                 <Link to="/hesabim" className={footerLink}>
                   Hesabım
-                </Link>
-              </li>
-              <li>
-                <Link to="/yasal/iade" className={footerLink}>
-                  İade koşulları
                 </Link>
               </li>
               <li>
@@ -222,12 +205,6 @@ export default function SiteFooter() {
             <span>
               © {year} {storeName}. Tüm hakları saklıdır.
             </span>
-            <Link to="/yasal/mesafeli-satis" className="hover:text-brand">
-              Mesafeli satış
-            </Link>
-            <Link to="/yasal/on-bilgilendirme" className="hover:text-brand">
-              Ön bilgilendirme
-            </Link>
           </div>
         </div>
       </div>
