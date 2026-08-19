@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import CatalogProductCard from '../components/products/CatalogProductCard.jsx';
-import { CATEGORY_OPTIONS, SORT_OPTIONS } from '../data/catalogMock.js';
+import { SORT_OPTIONS } from '../data/catalogMock.js';
 import { enabledSkinFilterChoices, normalizeSkinCatalogRows } from '../lib/skinFilterCatalog.js';
 import { formatTRY } from '../lib/formatTRY.js';
 import { apiFetch } from '../api/client.js';
@@ -22,6 +22,7 @@ export default function ProductsPage() {
   const [selectedCategories, setSelectedCategories] = useState(() => new Set());
   const [selectedSkinTypes, setSelectedSkinTypes] = useState(() => new Set());
   const [products, setProducts] = useState([]);
+  const [catalogCategories, setCatalogCategories] = useState([]);
   const [loadError, setLoadError] = useState('');
   const [loading, setLoading] = useState(true);
 
@@ -34,12 +35,15 @@ export default function ProductsPage() {
     Promise.all([
       apiFetch('/api/products', { skipAuth: true, signal: ac.signal }),
       apiFetch('/api/settings', { skipAuth: true, signal: ac.signal }),
+      apiFetch('/api/categories', { skipAuth: true, signal: ac.signal }),
     ])
-      .then(([pr, sr]) => {
+      .then(([pr, sr, cr]) => {
         const skinNorm = normalizeSkinCatalogRows(sr?.data?.settings?.skinFilterOptions);
         setSkinCatalogRows(skinNorm);
         const raw = Array.isArray(pr?.data?.products) ? pr.data.products : [];
         setProducts(raw.map((row) => mapApiProductToCatalog(row, skinNorm)));
+        const cats = Array.isArray(cr?.data?.categories) ? cr.data.categories : [];
+        setCatalogCategories(cats);
       })
       .catch((err) => {
         if (err.name !== 'AbortError') setLoadError(err.message || 'Ürünler yüklenemedi.');
@@ -54,10 +58,10 @@ export default function ProductsPage() {
   );
 
   const mergedCategoryOptions = useMemo(() => {
-    const set = new Set(CATEGORY_OPTIONS);
-    products.forEach((p) => p.categories.forEach((c) => set.add(c)));
-    return [...set].sort((a, b) => a.localeCompare(b, 'tr'));
-  }, [products]);
+    return catalogCategories
+      .map((c) => String(c?.name ?? '').trim())
+      .filter(Boolean);
+  }, [catalogCategories]);
 
   const filteredCategories = useMemo(() => {
     const q = categoryQuery.trim().toLowerCase();
@@ -209,7 +213,11 @@ export default function ProductsPage() {
                   </label>
                 ))}
                 {filteredCategories.length === 0 && (
-                  <p className="text-xs text-neutral-500">Sonuç yok.</p>
+                  <p className="text-xs text-neutral-500">
+                    {mergedCategoryOptions.length === 0
+                      ? 'Şu anda listelenecek kategori yok.'
+                      : 'Sonuç yok.'}
+                  </p>
                 )}
               </div>
             </fieldset>
@@ -265,7 +273,11 @@ export default function ProductsPage() {
 
           {!loading && visibleProducts.length === 0 && !loadError && (
             <p className="mt-12 rounded-lg border border-dashed border-neutral-300 bg-neutral-50 py-12 text-center text-neutral-600">
-              Seçtiğiniz filtrelere uygun ürün bulunamadı.
+              {products.length === 0
+                ? 'Henüz listelenecek ürün yok.'
+                : selectedCategories.size > 0 || selectedSkinTypes.size > 0 || tagFilter
+                  ? 'Seçtiğiniz filtrelere uygun ürün bulunamadı.'
+                  : 'Henüz listelenecek ürün yok.'}
             </p>
           )}
         </div>
