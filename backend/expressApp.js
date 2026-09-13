@@ -54,6 +54,9 @@ function buildApp() {
         }),
     );
 
+    const mediaController = require('./controllers/mediaController');
+    app.get('/api/media', mediaController.serveUpload);
+
     const faviconController = require('./controllers/faviconController');
     app.get('/favicon.ico', faviconController.serveFavicon);
 

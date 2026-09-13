@@ -30,16 +30,21 @@
     # --- Bunları server { } içine ekle (girintiler paneldeki gibi olabilir) ---
 
     # API + yüklemeler aynı domainden (CORS/gecikme azalır; VITE_API_ORIGIN bos birakilabilir)
-    location /api/ {
+    client_max_body_size 25m;
+
+    # ^~ şart: aaPanel `*.jpg|*.png` statik kuralı prefix `/api/` ve `/uploads/` üzerinde
+    # öncelik alır; resim GET'leri dist'te aranır ve 404 HTML döner (konsolda JS hatası yok).
+    location ^~ /api/ {
         proxy_pass http://127.0.0.1:5000;
         proxy_http_version 1.1;
         proxy_set_header Host              $host;
         proxy_set_header X-Real-IP         $remote_addr;
         proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
+        client_max_body_size 25m;
     }
 
-    location /uploads/ {
+    location ^~ /uploads/ {
         proxy_pass http://127.0.0.1:5000;
         proxy_set_header Host $host;
         expires 7d;

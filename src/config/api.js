@@ -23,5 +23,10 @@ export function assetUrl(path) {
   if (!path) return '';
   if (path.startsWith('http://') || path.startsWith('https://')) return path;
   const normalized = path.startsWith('/') ? path : `/${path}`;
+  if (normalized.startsWith('/uploads/')) {
+    const rel = normalized.slice('/uploads/'.length);
+    if (!rel) return '';
+    return `${API_ORIGIN}/api/media?path=${encodeURIComponent(rel)}`;
+  }
   return `${API_ORIGIN}${normalized}`;
 }

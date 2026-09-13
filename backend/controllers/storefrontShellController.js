@@ -4,6 +4,7 @@ const Product = require('../models/Product');
 const { injectHtmlSeo } = require('../utils/injectHtmlSeo');
 const { generateProductSeo } = require('../utils/productSeoGenerator');
 const { resolvePublicSiteBaseFromRequest } = require('../utils/publicSiteUrl');
+const { publicUploadUrl } = require('../utils/uploadsPath');
 const { stripToPlainText } = require('../utils/htmlSanitize');
 
 const DEFAULT_STORE_NAME = 'Asta Ticaret';
@@ -21,9 +22,7 @@ function firstImageAbsolute(images, base) {
     const arr = Array.isArray(images) ? images : [];
     const raw = arr[0] ? String(arr[0]).trim() : '';
     if (!raw) return '';
-    if (/^https?:\/\//i.test(raw)) return raw;
-    const root = (base || '').replace(/\/$/, '');
-    return `${root}${raw.startsWith('/') ? raw : `/${raw}`}`;
+    return publicUploadUrl(raw, base);
 }
 
 /** @param {import('express').Request} req @param {import('sequelize').Model | null} product */
