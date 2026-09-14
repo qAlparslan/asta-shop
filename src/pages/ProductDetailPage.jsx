@@ -288,12 +288,12 @@ export default function ProductDetailPage() {
           <>
           <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(320px,480px)] lg:gap-14">
             <div>
-              <div className="flex aspect-square items-center justify-center overflow-hidden rounded-2xl border border-neutral-100 bg-neutral-50">
+              <div className="flex aspect-square items-center justify-center overflow-hidden rounded-2xl border border-neutral-100 bg-neutral-50 p-4 sm:p-6">
                 {mainImg ? (
                   <img
                     src={mainImg}
                     alt={catalog.name}
-                    className="h-full w-full object-cover"
+                    className="max-h-full max-w-full object-contain"
                   />
                 ) : (
                   <span className="text-sm text-neutral-400">Görsel yok</span>
@@ -310,7 +310,11 @@ export default function ProductDetailPage() {
                         i === imgIdx ? 'border-asta-navy ring-2 ring-asta-navy/20' : 'border-neutral-200'
                       }`}
                     >
-                      <img src={u} alt={`${catalog.name} görseli`} className="h-full w-full object-cover" />
+                      <img
+                        src={u}
+                        alt={`${catalog.name} görseli`}
+                        className="h-full w-full object-contain"
+                      />
                     </button>
                   ))}
                 </div>
