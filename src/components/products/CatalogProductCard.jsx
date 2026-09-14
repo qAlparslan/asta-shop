@@ -85,14 +85,14 @@ export default function CatalogProductCard({ brand, name, priceLabel: _ignored, 
           to={detailPath}
           className="group block overflow-hidden rounded-md bg-neutral-50 outline-none ring-brand ring-offset-2 focus-visible:ring-2"
         >
-          <div className="aspect-square">
+          <div className="flex aspect-square items-center justify-center p-2 sm:p-3">
             <img
               src={image || ''}
               alt={name || ''}
               width={400}
               height={400}
               decoding="async"
-              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+              className="max-h-full max-w-full object-contain transition-transform duration-300 group-hover:scale-105"
               loading="lazy"
             />
           </div>
