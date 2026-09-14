@@ -21,7 +21,7 @@ import {
   X,
 } from 'lucide-react';
 import { apiFetch } from '../../api/client.js';
-import { mediaUrl } from '../../lib/mediaUrl.js';
+import MediaImg from '../../components/MediaImg.jsx';
 import { pickProductImagePath } from '../../lib/productMap.js';
 import { formatTRY } from '../../lib/formatTRY.js';
 import { inputClass } from '../../lib/formStyles.js';
@@ -827,7 +827,6 @@ export default function AdminProductsPage() {
               )}
               {visible.map((p) => {
                 const imgPath = pickProductImagePath(p.images);
-                const src = imgPath ? mediaUrl(imgPath) : '';
                 return (
                   <tr key={p.id} className="hover:bg-neutral-50/80">
                     <td className="px-4 py-4 align-middle">
@@ -842,8 +841,12 @@ export default function AdminProductsPage() {
                     <td className="max-w-[240px] px-4 py-4">
                       <div className="flex gap-3">
                         <div className="h-12 w-12 shrink-0 overflow-hidden rounded-lg border border-neutral-100 bg-neutral-50">
-                          {src ? (
-                            <img src={src} alt="" className="h-full w-full object-contain p-1" loading="lazy" />
+                          {imgPath ? (
+                            <MediaImg
+                              storedPath={imgPath}
+                              alt=""
+                              className="h-full w-full object-contain p-1"
+                            />
                           ) : (
                             <div className="flex h-full w-full items-center justify-center text-[10px] text-neutral-400">
                               —
@@ -1101,9 +1104,18 @@ function ProductEditorOverlay({ mode, product, onClose, onSaved }) {
   const appendImagesFromPicker = (fileList) => {
     const incoming = [...(fileList || [])].filter((f) => f instanceof File);
     if (!incoming.length) return;
+    const maxBytes = 8 * 1024 * 1024;
+    const rejected = incoming.filter(
+      (f) => !/^image\//i.test(f.type) || f.size > maxBytes,
+    );
+    if (rejected.length) {
+      setErr('Görsel yalnızca JPEG/PNG/WEBP/GIF olabilir (en fazla 8 MB).');
+    }
+    const ok = incoming.filter((f) => /^image\//i.test(f.type) && f.size <= maxBytes);
+    if (!ok.length) return;
     setImages((cur) => {
       const next = [...cur];
-      for (const f of incoming) {
+      for (const f of ok) {
         if (next.length >= 5) break;
         const url = URL.createObjectURL(f);
         blobUrlsRef.current.push(url);
@@ -1423,7 +1435,6 @@ function ProductEditorOverlay({ mode, product, onClose, onSaved }) {
               <div className="mt-3 flex flex-wrap gap-2">
                 {images.map((it, idx) => {
                   const isCover = idx === 0;
-                  const src = it.kind === 'existing' ? mediaUrl(it.url) : it.url;
                   return (
                     <div
                       key={it.id}
@@ -1440,7 +1451,11 @@ function ProductEditorOverlay({ mode, product, onClose, onSaved }) {
                       } ${dragIndex === idx ? 'opacity-50' : ''}`}
                       title="Sürükleyerek sırala"
                     >
-                      <img src={src} alt="" className="h-full w-full object-contain p-1" />
+                      {it.kind === 'existing' ? (
+                        <MediaImg storedPath={it.url} alt="" className="h-full w-full object-contain p-1" />
+                      ) : (
+                        <img src={it.url} alt="" className="h-full w-full object-contain p-1" />
+                      )}
 
                       <span className="pointer-events-none absolute left-1 top-1 rounded bg-black/45 p-0.5 text-white">
                         <GripVertical className="h-3 w-3" strokeWidth={2} />

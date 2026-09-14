@@ -116,6 +116,15 @@ sequelize
     .then(() => ensureHomeHeroColumns())
     .then(() => ensureAdminAuditLogNullable())
     .then(() => migrateLegacyStockToWarehouses())
+    .then(() => {
+        const { mergeLegacyUploads } = require('./utils/mergeLegacyUploads');
+        const { movedFiles, scannedRoots } = mergeLegacyUploads();
+        if (movedFiles > 0) {
+            console.log(
+                `📁 Eski uploads klasöründen ${movedFiles} dosya backend/uploads altına taşındı (${scannedRoots.join(', ')}).`,
+            );
+        }
+    })
     .then(() => seedCategories())
     .then(() => seedSiteSettings())
     .then(() => seedHomeHeroSlides())

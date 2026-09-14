@@ -1,5 +1,28 @@
+const fs = require('fs');
+const path = require('path');
 const sequelize = require('../config/database');
+const { uploadsRoot } = require('../utils/uploadsPath');
 const { getMailTransportMode, verifySmtpConnection, getFrontendUrl, getBackendPublicUrl } = require('./mailer');
+
+function uploadsSnapshot() {
+    let writable = false;
+    let fileCount = 0;
+    try {
+        fs.accessSync(uploadsRoot, fs.constants.W_OK);
+        writable = true;
+        const names = fs.readdirSync(uploadsRoot);
+        fileCount = names.filter((n) => {
+            try {
+                return fs.statSync(path.join(uploadsRoot, n)).isFile();
+            } catch {
+                return false;
+            }
+        }).length;
+    } catch {
+        writable = false;
+    }
+    return { dir: uploadsRoot, writable, topLevelFileCount: fileCount };
+}
 
 /**
  * Kubernetes / load balancer için hafif canlılık (DB yok).
@@ -20,7 +43,14 @@ async function getReadiness() {
     const base = getLiveness();
     try {
         await sequelize.authenticate();
-        return { ...base, status: 'ok', database: 'connected' };
+        const uploads = uploadsSnapshot();
+        return {
+            ...base,
+            status: uploads.writable ? 'ok' : 'degraded',
+            database: 'connected',
+            uploads,
+            mediaRoute: true,
+        };
     } catch (err) {
         return {
             ...base,

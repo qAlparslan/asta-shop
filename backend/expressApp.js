@@ -24,9 +24,18 @@ function buildApp() {
         app.set('trust proxy', 1);
     }
 
-    app.use(helmet({
-        crossOriginResourcePolicy: false,
-    }));
+    app.use(
+        helmet({
+            crossOriginResourcePolicy: false,
+            contentSecurityPolicy: {
+                directives: {
+                    ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+                    // Admin ürün formu önizlemesi blob:; ürün kabuğu (shell) aynı SPA'ya geçince CSP kalır
+                    'img-src': ["'self'", 'data:', 'blob:', 'https:'],
+                },
+            },
+        }),
+    );
 
     app.use(cors({
         origin: parseOrigins(),

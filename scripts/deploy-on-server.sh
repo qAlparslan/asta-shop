@@ -7,7 +7,9 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
 # aaPanel Node — sürümünüz farklıysa düzenleyin
-if [[ -d /www/server/nodejs/v20.15.0/bin ]]; then
+if [[ -d /www/server/nodejs/v20.18.3/bin ]]; then
+    export PATH="/www/server/nodejs/v20.18.3/bin:${PATH:-}"
+elif [[ -d /www/server/nodejs/v20.15.0/bin ]]; then
     export PATH="/www/server/nodejs/v20.15.0/bin:${PATH:-}"
 fi
 
@@ -62,6 +64,15 @@ if curl -sf "http://127.0.0.1:${PORT:-5000}/api/health" >/dev/null; then
     echo "    /api/health OK"
 else
     echo "    UYARI: /api/health yanıt vermedi — pm2 logs $PM2_APP"
+fi
+
+MEDIA_PROBE="$(curl -s "http://127.0.0.1:${PORT:-5000}/api/media?path=__deploy_probe__" || true)"
+if echo "$MEDIA_PROBE" | grep -q 'Dosya bulunamadı'; then
+    echo "    /api/media OK (görsel servisi aktif)"
+elif echo "$MEDIA_PROBE" | grep -q 'Cannot GET /api/media'; then
+    echo "    UYARI: /api/media yok — eski backend çalışıyor olabilir; pm2 restart ve git pull kontrol edin"
+else
+    echo "    UYARI: /api/media beklenmedik yanıt — Nginx ^~ /api/ proxy ve pm2 cwd=$ROOT/backend"
 fi
 
 echo ""
