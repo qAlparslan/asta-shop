@@ -106,9 +106,14 @@ html[data-theme='dark'] .bg-white\/95 {
 }
 
 html[data-theme='dark'] .bg-neutral-50,
+html[data-theme='dark'] .bg-neutral-50\/40,
 html[data-theme='dark'] .bg-neutral-50\/80,
 html[data-theme='dark'] .bg-neutral-50\/90 {
-  background-color: rgb(var(--t-band) / 0.92) !important;
+  background-color: rgb(var(--t-surface-muted) / 0.95) !important;
+}
+
+html[data-theme='dark'] .bg-neutral-100\/35 {
+  background-color: rgb(var(--t-surface-muted) / 0.55) !important;
 }
 
 html[data-theme='dark'] .bg-neutral-100 {
@@ -435,4 +440,14 @@ html[data-theme='dark'] .admin-shell .rounded-xl.border.border-neutral-100.p-3 {
 
 html[data-theme='dark'] .admin-shell .text-red-700 {
   color: rgb(252 165 165) !important;
+}
+
+/* Sistem ayarları — dış çerçeve (iç form kartından bir ton koyu) */
+html[data-theme='dark'] .admin-system-frame {
+  background-color: rgb(var(--t-surface-muted)) !important;
+  border-color: rgb(var(--t-border)) !important;
+}
+
+.admin-system-frame {
+  background-color: rgb(245 245 245 / 0.55);
 }

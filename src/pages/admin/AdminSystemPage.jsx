@@ -104,7 +104,7 @@ export default function AdminSystemPage() {
         </div>
       ) : null}
 
-      <div className="rounded-2xl border border-neutral-200 bg-neutral-50/40 p-4 sm:p-6">
+      <div className="admin-system-frame rounded-2xl border border-neutral-200 bg-neutral-100/35 p-4 sm:p-6">
         <SectionContent
           sectionId={bolum}
           settings={settings}
