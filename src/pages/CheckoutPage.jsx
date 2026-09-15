@@ -409,7 +409,7 @@ export default function CheckoutPage() {
   ];
 
   return (
-    <section className="border-b border-neutral-100 bg-neutral-50/80 py-8 sm:py-12 lg:py-14">
+    <section className="border-b border-neutral-100 bg-theme-band py-8 sm:py-12 lg:py-14">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
@@ -426,22 +426,21 @@ export default function CheckoutPage() {
 
         <nav
           aria-label="Ödeme sürecinin adımları"
-          className="mb-10 rounded-xl border border-neutral-200 bg-white px-4 py-6 shadow-sm sm:px-6"
+          className="checkout-steps-nav mb-10 rounded-xl border border-neutral-200 bg-white px-4 py-6 shadow-sm sm:px-6"
         >
           <ol className="grid gap-4 sm:grid-cols-2">
             {steps.map(({ num, title, icon: Icon }) => {
               const reached = step >= num;
               const active = step === num;
+              const stepSurface = active
+                ? 'checkout-step-active border-brand bg-brand-muted shadow-sm'
+                : reached
+                  ? 'checkout-step-done border-neutral-200 bg-white'
+                  : 'checkout-step-pending border-neutral-100 bg-neutral-50/90';
               return (
                 <li
                   key={num}
-                  className={`rounded-xl border-2 px-4 py-4 transition-colors sm:text-center ${
-                    active
-                      ? 'border-brand bg-brand-muted shadow-sm'
-                      : reached
-                        ? 'border-neutral-200 bg-white'
-                        : 'border-neutral-100 bg-neutral-50/90'
-                  }`}
+                  className={`rounded-xl border-2 px-4 py-4 transition-colors sm:text-center ${stepSurface}`}
                 >
                   <div className="flex flex-wrap items-start gap-3 sm:flex-col sm:items-center">
                     <span
@@ -972,7 +971,7 @@ export default function CheckoutPage() {
             <div className="rounded-xl border border-neutral-200 bg-white p-6 shadow-card">
               <h2 className="text-base font-bold text-asta-navy">Sipariş tutar özeti</h2>
 
-              <div className="mt-6 rounded-lg border border-brand/20 bg-brand-muted/40 p-4">
+              <div className="checkout-coupon-panel mt-6 rounded-lg border border-brand/20 bg-brand-muted/40 p-4">
                 <h3 className="flex items-center gap-2 text-sm font-bold text-asta-navy">
                   <TicketPercent className="h-4 w-4 text-brand" strokeWidth={1.75} />
                   İndirim kuponu
@@ -992,7 +991,7 @@ export default function CheckoutPage() {
                       type="button"
                       onClick={handleApplyCoupon}
                       disabled={couponBusy}
-                      className="w-full rounded-md bg-asta-navy py-2.5 text-xs font-bold uppercase tracking-wide text-white transition-colors hover:bg-brand disabled:cursor-not-allowed disabled:bg-neutral-400"
+                      className="w-full rounded-md bg-brand py-2.5 text-xs font-bold uppercase tracking-wide text-white transition-colors hover:bg-brand-hover disabled:cursor-not-allowed disabled:bg-neutral-400"
                     >
                       {couponBusy ? 'Deneniyor…' : 'Uygula'}
                     </button>

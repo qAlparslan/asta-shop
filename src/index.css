@@ -583,3 +583,62 @@ html[data-theme='dark'] .admin-shell .rounded-lg.border.border-neutral-100.bg-ne
 html[data-theme='dark'] .admin-shell input[type='checkbox'] {
   accent-color: #9f2133;
 }
+
+/* —— Sepet / ödeme —— */
+.free-shipping-banner--qualified {
+  border-color: rgb(16 185 129 / 0.35);
+  background-color: rgb(236 253 245);
+  color: rgb(6 78 59);
+}
+
+.free-shipping-banner--progress {
+  border-color: rgb(159 33 51 / 0.22);
+  background-color: rgb(253 242 242 / 0.85);
+  color: rgb(38 38 38);
+}
+
+.free-shipping-bar-track {
+  background-color: rgb(255 255 255 / 0.9);
+  --tw-ring-color: rgb(159 33 51 / 0.15);
+}
+
+html[data-theme='dark'] .free-shipping-banner--qualified {
+  border-color: rgb(16 185 129 / 0.45) !important;
+  background-color: rgb(6 78 59 / 0.45) !important;
+  color: rgb(167 243 208) !important;
+}
+
+html[data-theme='dark'] .free-shipping-banner--progress {
+  border-color: rgb(159 33 51 / 0.35) !important;
+  background-color: rgb(var(--t-surface-subtle)) !important;
+  color: rgb(var(--t-fg-secondary)) !important;
+}
+
+html[data-theme='dark'] .free-shipping-bar-track {
+  background-color: rgb(var(--t-surface-muted)) !important;
+  --tw-ring-color: rgb(var(--t-border)) !important;
+}
+
+html[data-theme='dark'] .checkout-steps-nav .checkout-step-active {
+  border-color: rgb(159 33 51 / 0.55) !important;
+  background-color: rgb(var(--t-surface-subtle)) !important;
+}
+
+html[data-theme='dark'] .checkout-steps-nav .checkout-step-done {
+  background-color: rgb(var(--t-surface)) !important;
+  border-color: rgb(var(--t-border)) !important;
+}
+
+html[data-theme='dark'] .checkout-steps-nav .checkout-step-pending {
+  background-color: rgb(var(--t-surface-muted) / 0.85) !important;
+  border-color: rgb(var(--t-border)) !important;
+}
+
+html[data-theme='dark'] .checkout-coupon-panel {
+  background-color: rgb(var(--t-surface-muted) / 0.65) !important;
+  border-color: rgb(159 33 51 / 0.3) !important;
+}
+
+html[data-theme='dark'] .text-red-600 {
+  color: rgb(252 165 165) !important;
+}

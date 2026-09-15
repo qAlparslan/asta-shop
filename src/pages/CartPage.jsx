@@ -36,7 +36,7 @@ export default function CartPage() {
   const paysShippingCharge = totalsPreview.shipping > 0;
 
   return (
-    <section className="border-b border-neutral-100 bg-neutral-50/80 py-10 sm:py-14 lg:py-16">
+    <section className="border-b border-neutral-100 bg-theme-band py-10 sm:py-14 lg:py-16">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
           <div>
