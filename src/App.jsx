@@ -32,6 +32,7 @@ import { apiFetch } from './api/client.js';
 import { useAuth } from './context/AuthContext.jsx';
 import SiteBranding from './components/SiteBranding.jsx';
 import StorefrontSeo from './components/StorefrontSeo.jsx';
+import ScrollToTop from './components/ScrollToTop.jsx';
 
 const AdminDashboardPage = lazy(() => import('./pages/admin/AdminDashboardPage.jsx'));
 const AdminDashboardV2Page = lazy(() => import('./pages/admin/AdminDashboardV2Page.jsx'));
@@ -138,6 +139,7 @@ function StorefrontShell() {
 export default function App() {
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <SiteBranding />
       <AuthProvider>
         <CartProvider>
