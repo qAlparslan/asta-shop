@@ -128,7 +128,7 @@ function StorefrontShell() {
   return (
     <SiteSettingsProvider value={maint.settings}>
       <StorefrontSeo />
-      <div className="min-h-screen bg-white font-sans text-neutral-900 antialiased">
+      <div className="min-h-screen bg-theme-page font-sans text-neutral-900 antialiased">
         <Navbar />
         <Outlet />
         <CookieConsentBanner />

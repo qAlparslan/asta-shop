@@ -40,7 +40,7 @@ export default function BestSellers() {
   }, []);
 
   return (
-    <section id="cok-satanlar" className="bg-white py-12 lg:py-16">
+    <section id="cok-satanlar" className="bg-theme-page py-12 lg:py-16">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex flex-wrap items-end justify-between gap-4 border-b border-neutral-200 pb-4">
           <h2 className="text-xl font-bold tracking-tight text-neutral-900 sm:text-2xl">

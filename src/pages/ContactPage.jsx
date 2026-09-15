@@ -101,12 +101,12 @@ export default function ContactPage() {
 
   return (
     <>
-      <section className="border-b border-neutral-200 bg-neutral-50/80 pb-12 pt-12 sm:pb-14 sm:pt-16">
+      <section className="border-b border-neutral-200 bg-theme-band pb-12 pt-12 sm:pb-14 sm:pt-16">
         <div className="mx-auto max-w-3xl px-4 text-center sm:px-6">
           <h1 className="text-3xl font-bold leading-tight tracking-tight text-neutral-900 sm:text-4xl">
             İletişim
           </h1>
-          <p className="mx-auto mt-6 max-w-2xl text-sm leading-relaxed text-neutral-600 sm:text-base">
+          <p className="mx-auto mt-6 max-w-2xl text-sm leading-relaxed text-theme-body sm:text-base">
             Sipariş, ürün veya iş birliği talepleriniz için aşağıdaki kanallardan bize ulaşabilirsiniz.
           </p>
         </div>

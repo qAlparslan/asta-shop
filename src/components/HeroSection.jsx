@@ -70,7 +70,7 @@ function SlideMedia({ slide, eager }) {
   if (slide.bgType === 'image' && slide.bgImageUrl) {
     const responsive = buildResponsiveImage(slide.bgImageUrl);
     return (
-      <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-card">
+      <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-theme-surface shadow-card">
         <img
           src={responsive.src || slide.bgImageUrl}
           srcSet={responsive.srcSet || undefined}
@@ -87,15 +87,13 @@ function SlideMedia({ slide, eager }) {
     );
   }
 
-  const bg =
-    slide.bgGradient?.trim() ||
-    'linear-gradient(135deg, rgb(245 247 251) 0%, rgb(230 237 246) 50%, rgb(221 229 239) 100%)';
+  const bg = slide.bgGradient?.trim() || undefined;
 
   return (
     <div className="overflow-hidden rounded-2xl border border-neutral-200 shadow-card">
       <div
-        className="aspect-video w-full min-h-[220px]"
-        style={{ background: bg }}
+        className="hero-slide-placeholder aspect-video w-full min-h-[220px]"
+        style={bg ? { background: bg } : undefined}
         aria-hidden
       />
     </div>
@@ -107,10 +105,12 @@ function HeroTrustCard({ card }) {
   const Icon = ICON_MAP[preset.iconKey] || ICON_MAP.shield;
   const iconTone = preset.iconClassName.includes('asta-navy') ? 'text-asta-navy' : 'text-brand';
   return (
-    <div className={`flex flex-col gap-2 rounded-lg p-3 ${preset.cardClassName}`}>
+    <div className={`hero-trust-card flex flex-col gap-2 rounded-lg p-3 ${preset.cardClassName}`}>
       <div className="flex items-start gap-2.5">
         <Icon className={`h-5 w-5 shrink-0 ${iconTone}`} strokeWidth={1.75} aria-hidden />
-        <span className="min-w-0 flex-1 text-xs font-semibold leading-snug text-neutral-900">{card.title}</span>
+        <span className="hero-trust-card-title min-w-0 flex-1 text-xs font-semibold leading-snug text-neutral-900">
+          {card.title}
+        </span>
       </div>
     </div>
   );
@@ -212,7 +212,7 @@ export default function HeroSection() {
   return (
     <section
       ref={containerRef}
-      className="relative border-b border-neutral-200 bg-neutral-50/80"
+      className="relative border-b border-neutral-200 bg-theme-band"
       aria-roledescription="carousel"
       aria-label="Öne çıkan kampanyalar"
       onMouseEnter={() => setPaused(true)}

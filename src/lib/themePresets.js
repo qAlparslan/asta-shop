@@ -5,15 +5,19 @@ export const THEME_STORAGE_KEY = 'asta-theme';
 /** @type {ThemePreset[]} */
 export const THEME_PRESETS = [
   { id: 'light', label: 'Açık mod', shortLabel: 'Açık', swatch: '#ffffff' },
-  { id: 'dark-graphite', label: 'Koyu — grafik gri', shortLabel: 'Gri', swatch: '#1c1c1f' },
-  { id: 'dark-slate', label: 'Koyu — arduvaz', shortLabel: 'Arduvaz', swatch: '#1a2430' },
-  { id: 'dark-midnight', label: 'Koyu — gece lacivert', shortLabel: 'Lacivert', swatch: '#141a28' },
+  { id: 'dark', label: 'Koyu mod', shortLabel: 'Koyu', swatch: '#1c1c1f' },
 ];
 
+/** Eski çoklu koyu palet kayıtlarını tek koyu moda indirger. */
+export function normalizeThemeId(id) {
+  if (id === 'dark' || (typeof id === 'string' && id.startsWith('dark-'))) return 'dark';
+  return 'light';
+}
+
 export function isValidThemeId(id) {
-  return THEME_PRESETS.some((t) => t.id === id);
+  return id === 'light' || id === 'dark';
 }
 
 export function isDarkThemeId(id) {
-  return typeof id === 'string' && id.startsWith('dark-');
+  return id === 'dark';
 }

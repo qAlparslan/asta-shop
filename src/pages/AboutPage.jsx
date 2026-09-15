@@ -37,22 +37,22 @@ export default function AboutPage() {
   return (
     <>
       {/* Üst — anasayfa hero ile aynı zemin / tipografi tonu */}
-      <section className="border-b border-neutral-200 bg-neutral-50/80 pb-14 pt-12 sm:pb-16 sm:pt-16">
+      <section className="border-b border-neutral-200 bg-theme-band pb-14 pt-12 sm:pb-16 sm:pt-16">
         <div className="mx-auto max-w-3xl px-4 text-center sm:px-6">
           <h1 className="text-3xl font-bold leading-tight tracking-tight text-neutral-900 sm:text-4xl">
             Hakkımızda
           </h1>
-          <p className="mx-auto mt-6 max-w-2xl text-sm leading-relaxed text-neutral-600 sm:text-base">
+          <p className="mx-auto mt-6 max-w-2xl text-sm leading-relaxed text-theme-body sm:text-base">
             ASTA TİCARET olarak müşterilerimize %100 orijinal dermokozmetik ürünleri güvenilir, hızlı ve kaliteli 
             hizmet anlayışıyla sunmayı hedefliyoruz. Başta Eucerin olmak üzere seçkin markaların ürünlerini 
             müşterilerimizle buluşturarak cilt bakımında güvenilir alışveriş deneyimi sağlamaktayız.
           </p>
-          <p className="mx-auto mt-6 max-w-2xl text-sm leading-relaxed text-neutral-600 sm:text-base">
+          <p className="mx-auto mt-6 max-w-2xl text-sm leading-relaxed text-theme-body sm:text-base">
             Müşteri memnuniyetini ön planda tutan hizmet anlayışımız ile güvenli ödeme altyapısı, hızlı kargo ve satış 
             sonrası destek hizmetleri sunuyoruz. Amacımız kaliteli ürünleri uygun fiyat avantajıyla kullanıcılarımıza 
             ulaştırırken profesyonel ve güvenilir bir alışveriş ortamı oluşturmaktır. 
           </p>
-          <p className="mx-auto mt-6 max-w-2xl text-sm leading-relaxed text-neutral-600 sm:text-base">
+          <p className="mx-auto mt-6 max-w-2xl text-sm leading-relaxed text-theme-body sm:text-base">
             ASTA E-TİCARET İTHALAT İHRACAT VE TİC LTD ŞTİ olarak dürüst ticaret, kaliteli hizmet ve müşteri memnuniyeti 
             ilkeleriyle faaliyet göstermeye devam ediyoruz.
           </p>

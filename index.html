@@ -6,8 +6,10 @@
         try {
           var k = 'asta-theme';
           var t = localStorage.getItem(k);
-          if (t && /^(light|dark-graphite|dark-slate|dark-midnight)$/.test(t)) {
-            document.documentElement.setAttribute('data-theme', t);
+          if (t === 'dark' || (t && String(t).indexOf('dark') === 0)) {
+            document.documentElement.setAttribute('data-theme', 'dark');
+          } else if (t === 'light') {
+            document.documentElement.setAttribute('data-theme', 'light');
           }
         } catch (e) {}
       })();

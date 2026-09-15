@@ -10,6 +10,7 @@
     --t-surface: 255 255 255;
     --t-surface-muted: 250 250 250;
     --t-surface-subtle: 245 245 245;
+    --t-band: 250 250 250;
     --t-topbar: 236 236 238;
     --t-topbar-fg: 75 85 99;
     --t-fg: 23 23 23;
@@ -21,14 +22,22 @@
     --t-input-bg: 255 255 255;
     --t-ring-offset: 255 255 255;
     --t-icon: 107 114 128;
+    --t-media-well: 245 245 245;
+    --t-hero-gradient: linear-gradient(
+      135deg,
+      rgb(245 247 251) 0%,
+      rgb(230 237 246) 50%,
+      rgb(221 229 239) 100%
+    );
   }
 
-  [data-theme='dark-graphite'] {
+  [data-theme='dark'] {
     color-scheme: dark;
     --t-page: 18 18 20;
     --t-surface: 28 28 31;
     --t-surface-muted: 24 24 27;
     --t-surface-subtle: 39 39 42;
+    --t-band: 22 22 25;
     --t-topbar: 24 24 27;
     --t-topbar-fg: 161 161 170;
     --t-fg: 244 244 245;
@@ -40,44 +49,13 @@
     --t-input-bg: 39 39 42;
     --t-ring-offset: 18 18 20;
     --t-icon: 161 161 170;
-  }
-
-  [data-theme='dark-slate'] {
-    color-scheme: dark;
-    --t-page: 15 20 26;
-    --t-surface: 22 30 40;
-    --t-surface-muted: 19 26 34;
-    --t-surface-subtle: 30 41 54;
-    --t-topbar: 19 26 34;
-    --t-topbar-fg: 148 163 184;
-    --t-fg: 241 245 249;
-    --t-fg-secondary: 203 213 225;
-    --t-fg-muted: 148 163 184;
-    --t-border: 51 65 85;
-    --t-border-strong: 71 85 105;
-    --t-heading: 226 232 240;
-    --t-input-bg: 30 41 54;
-    --t-ring-offset: 15 20 26;
-    --t-icon: 148 163 184;
-  }
-
-  [data-theme='dark-midnight'] {
-    color-scheme: dark;
-    --t-page: 14 18 28;
-    --t-surface: 22 28 42;
-    --t-surface-muted: 18 23 36;
-    --t-surface-subtle: 32 40 58;
-    --t-topbar: 18 23 36;
-    --t-topbar-fg: 165 180 203;
-    --t-fg: 236 240 247;
-    --t-fg-secondary: 196 206 222;
-    --t-fg-muted: 148 163 184;
-    --t-border: 45 55 78;
-    --t-border-strong: 61 74 102;
-    --t-heading: 224 231 245;
-    --t-input-bg: 32 40 58;
-    --t-ring-offset: 14 18 28;
-    --t-icon: 165 180 203;
+    --t-media-well: 32 32 36;
+    --t-hero-gradient: linear-gradient(
+      135deg,
+      rgb(39 39 42) 0%,
+      rgb(28 28 31) 50%,
+      rgb(24 24 27) 100%
+    );
   }
 
   html {
@@ -86,108 +64,172 @@
   }
 }
 
-/* Mağaza genelinde sık kullanılan Tailwind sınıfları — koyu paletler */
-html[data-theme^='dark-'] .bg-white {
+@layer utilities {
+  .bg-theme-page {
+    background-color: rgb(var(--t-page));
+  }
+  .bg-theme-band {
+    background-color: rgb(var(--t-band) / 0.92);
+  }
+  .bg-theme-surface {
+    background-color: rgb(var(--t-surface));
+  }
+  .bg-theme-subtle {
+    background-color: rgb(var(--t-surface-subtle));
+  }
+  .bg-theme-media-well {
+    background-color: rgb(var(--t-media-well));
+  }
+  .border-theme {
+    border-color: rgb(var(--t-border));
+  }
+  .text-theme-heading {
+    color: rgb(var(--t-heading));
+  }
+  .text-theme-body {
+    color: rgb(var(--t-fg-secondary));
+  }
+  .hero-slide-placeholder {
+    background: var(--t-hero-gradient);
+  }
+}
+
+html[data-theme='dark'] .bg-white {
   background-color: rgb(var(--t-surface)) !important;
 }
 
-html[data-theme^='dark-'] .bg-white\/90 {
-  background-color: rgb(var(--t-surface) / 0.9) !important;
+html[data-theme='dark'] .bg-white\/90,
+html[data-theme='dark'] .bg-white\/95 {
+  background-color: rgb(var(--t-surface) / 0.92) !important;
 }
 
-html[data-theme^='dark-'] .bg-neutral-50 {
+html[data-theme='dark'] .bg-neutral-50,
+html[data-theme='dark'] .bg-neutral-50\/80,
+html[data-theme='dark'] .bg-neutral-50\/90 {
+  background-color: rgb(var(--t-band) / 0.92) !important;
+}
+
+html[data-theme='dark'] .bg-neutral-100 {
   background-color: rgb(var(--t-surface-muted)) !important;
 }
 
-html[data-theme^='dark-'] .bg-neutral-100 {
-  background-color: rgb(var(--t-surface-subtle)) !important;
-}
-
-html[data-theme^='dark-'] .bg-asta-mutedBar {
+html[data-theme='dark'] .bg-asta-mutedBar {
   background-color: rgb(var(--t-topbar)) !important;
 }
 
-html[data-theme^='dark-'] .text-asta-barText {
+html[data-theme='dark'] .bg-brand-muted {
+  background-color: rgb(var(--t-surface-subtle)) !important;
+  color: rgb(var(--t-fg)) !important;
+}
+
+html[data-theme='dark'] .text-asta-barText {
   color: rgb(var(--t-topbar-fg)) !important;
 }
 
-html[data-theme^='dark-'] .text-black {
+html[data-theme='dark'] .text-black {
   color: rgb(var(--t-fg)) !important;
 }
 
-html[data-theme^='dark-'] .text-neutral-900,
-html[data-theme^='dark-'] .text-neutral-800 {
+html[data-theme='dark'] .text-neutral-900,
+html[data-theme='dark'] .text-neutral-800 {
   color: rgb(var(--t-fg)) !important;
 }
 
-html[data-theme^='dark-'] .text-neutral-700,
-html[data-theme^='dark-'] .text-neutral-600 {
+html[data-theme='dark'] .text-neutral-700,
+html[data-theme='dark'] .text-neutral-600 {
   color: rgb(var(--t-fg-secondary)) !important;
 }
 
-html[data-theme^='dark-'] .text-neutral-500,
-html[data-theme^='dark-'] .text-neutral-400 {
+html[data-theme='dark'] .text-neutral-500,
+html[data-theme='dark'] .text-neutral-400 {
   color: rgb(var(--t-fg-muted)) !important;
 }
 
-html[data-theme^='dark-'] .text-asta-navy {
+html[data-theme='dark'] .text-asta-navy {
   color: rgb(var(--t-heading)) !important;
 }
 
-html[data-theme^='dark-'] .text-asta-icon {
+html[data-theme='dark'] .text-asta-icon {
   color: rgb(var(--t-icon)) !important;
 }
 
-html[data-theme^='dark-'] .border-neutral-100,
-html[data-theme^='dark-'] .border-neutral-200,
-html[data-theme^='dark-'] .border-neutral-300 {
+html[data-theme='dark'] .border-neutral-100,
+html[data-theme='dark'] .border-neutral-200,
+html[data-theme='dark'] .border-neutral-300 {
   border-color: rgb(var(--t-border)) !important;
 }
 
-html[data-theme^='dark-'] .divide-neutral-200 > :not([hidden]) ~ :not([hidden]) {
+html[data-theme='dark'] .ring-neutral-200,
+html[data-theme='dark'] .ring-1.ring-neutral-200 {
+  --tw-ring-color: rgb(var(--t-border)) !important;
+}
+
+html[data-theme='dark'] .divide-neutral-200 > :not([hidden]) ~ :not([hidden]) {
   border-color: rgb(var(--t-border)) !important;
 }
 
-html[data-theme^='dark-'] .hover\:bg-neutral-50:hover,
-html[data-theme^='dark-'] .hover\:bg-neutral-100:hover {
+html[data-theme='dark'] .hover\:bg-neutral-50:hover,
+html[data-theme='dark'] .hover\:bg-neutral-100:hover,
+html[data-theme='dark'] .hover\:bg-white:hover {
   background-color: rgb(var(--t-surface-subtle)) !important;
 }
 
-html[data-theme^='dark-'] input:not([type='checkbox']):not([type='radio']),
-html[data-theme^='dark-'] textarea,
-html[data-theme^='dark-'] select {
+html[data-theme='dark'] input:not([type='checkbox']):not([type='radio']),
+html[data-theme='dark'] textarea,
+html[data-theme='dark'] select {
   background-color: rgb(var(--t-input-bg));
   color: rgb(var(--t-fg));
   border-color: rgb(var(--t-border-strong));
 }
 
-html[data-theme^='dark-'] .ring-offset-white {
+html[data-theme='dark'] .ring-offset-white {
   --tw-ring-offset-color: rgb(var(--t-ring-offset)) !important;
 }
 
-html[data-theme^='dark-'] .shadow-sm,
-html[data-theme^='dark-'] .shadow-card {
+html[data-theme='dark'] .shadow-sm,
+html[data-theme='dark'] .shadow-card {
   box-shadow: 0 1px 3px rgb(0 0 0 / 0.35), 0 1px 2px rgb(0 0 0 / 0.25);
 }
 
-html[data-theme^='dark-'] .theme-switcher-trigger,
-html[data-theme^='dark-'] .theme-switcher-panel {
+html[data-theme='dark'] .theme-switcher-trigger {
   background-color: rgb(var(--t-surface)) !important;
   border-color: rgb(var(--t-border)) !important;
 }
 
-html[data-theme^='dark-'] .theme-switcher-label {
+html[data-theme='dark'] .theme-switcher-label {
   color: rgb(var(--t-fg-secondary)) !important;
 }
 
-html[data-theme^='dark-'] .from-brand-muted {
-  --tw-gradient-from: rgb(var(--t-surface-muted)) var(--tw-gradient-from-position) !important;
+html[data-theme='dark'] .from-brand-muted {
+  --tw-gradient-from: rgb(var(--t-surface-subtle)) var(--tw-gradient-from-position) !important;
 }
 
-html[data-theme^='dark-'] .via-white {
+html[data-theme='dark'] .via-white {
   --tw-gradient-via: rgb(var(--t-surface)) var(--tw-gradient-via-position) !important;
 }
 
-html[data-theme^='dark-'] .to-white {
+html[data-theme='dark'] .to-white {
   --tw-gradient-to: rgb(var(--t-surface)) var(--tw-gradient-to-position) !important;
+}
+
+html[data-theme='dark'] .hero-trust-card {
+  background-color: rgb(var(--t-surface)) !important;
+  --tw-ring-color: rgb(var(--t-border)) !important;
+  border-color: rgb(var(--t-border)) !important;
+}
+
+html[data-theme='dark'] .hero-trust-card .hero-trust-card-title {
+  color: rgb(var(--t-fg)) !important;
+}
+
+html[data-theme='dark'] .hero-slide-placeholder {
+  background: var(--t-hero-gradient) !important;
+}
+
+html[data-theme='dark'] .bg-neutral-300 {
+  background-color: rgb(var(--t-border-strong)) !important;
+}
+
+html[data-theme='dark'] .hover\:bg-neutral-400:hover {
+  background-color: rgb(var(--t-fg-muted)) !important;
 }

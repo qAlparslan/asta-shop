@@ -261,7 +261,7 @@ export default function ProductsPage() {
         robots="index, follow"
         siteName={String(settings?.storeName ?? '').trim() || 'Asta Ticaret'}
       />
-    <main className="border-b border-neutral-100 bg-white">
+    <main className="border-b border-neutral-100 bg-theme-page">
       {mobileFiltersOpen ? (
         <>
           <div

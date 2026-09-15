@@ -3,7 +3,7 @@ import {
   THEME_PRESETS,
   THEME_STORAGE_KEY,
   isDarkThemeId,
-  isValidThemeId,
+  normalizeThemeId,
 } from '../lib/themePresets.js';
 
 const ThemeContext = createContext(null);
@@ -11,7 +11,7 @@ const ThemeContext = createContext(null);
 function readStoredTheme() {
   try {
     const stored = localStorage.getItem(THEME_STORAGE_KEY);
-    if (isValidThemeId(stored)) return stored;
+    return normalizeThemeId(stored);
   } catch {
     /* ignore */
   }
@@ -22,24 +22,30 @@ export function ThemeProvider({ children }) {
   const [themeId, setThemeIdState] = useState(readStoredTheme);
 
   useEffect(() => {
-    document.documentElement.setAttribute('data-theme', themeId);
+    const normalized = normalizeThemeId(themeId);
+    document.documentElement.setAttribute('data-theme', normalized);
     try {
-      localStorage.setItem(THEME_STORAGE_KEY, themeId);
+      localStorage.setItem(THEME_STORAGE_KEY, normalized);
     } catch {
       /* ignore */
     }
   }, [themeId]);
 
   const setThemeId = (next) => {
-    if (isValidThemeId(next)) setThemeIdState(next);
+    setThemeIdState(normalizeThemeId(next));
+  };
+
+  const toggleTheme = () => {
+    setThemeIdState((prev) => (normalizeThemeId(prev) === 'dark' ? 'light' : 'dark'));
   };
 
   const value = useMemo(
     () => ({
-      themeId,
+      themeId: normalizeThemeId(themeId),
       setThemeId,
+      toggleTheme,
       themes: THEME_PRESETS,
-      isDark: isDarkThemeId(themeId),
+      isDark: isDarkThemeId(normalizeThemeId(themeId)),
     }),
     [themeId],
   );
