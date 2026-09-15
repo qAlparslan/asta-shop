@@ -64,7 +64,7 @@ export default function AdminLayout() {
   };
 
   return (
-    <div className="flex min-h-screen bg-neutral-100 font-sans text-neutral-900">
+    <div className="admin-app flex min-h-screen bg-neutral-100 font-sans text-neutral-900">
       {sidebarOpen ? (
         <div
           className="fixed inset-0 z-40 bg-black/50 lg:hidden"
@@ -194,7 +194,7 @@ export default function AdminLayout() {
           </button>
         </div>
       </aside>
-      <div className="min-w-0 flex-1">
+      <div className="admin-shell min-w-0 flex-1">
         <header className="sticky top-0 z-30 border-b border-neutral-200 bg-white/90 px-4 py-4 backdrop-blur sm:px-6">
           <div className="mx-auto flex max-w-6xl items-center gap-3">
             <button

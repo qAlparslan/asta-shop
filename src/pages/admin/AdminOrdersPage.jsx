@@ -19,6 +19,7 @@ import { apiFetch, downloadAuthorizedFile } from '../../api/client.js';
 import { formatTRY } from '../../lib/formatTRY.js';
 import { inputClass } from '../../lib/formStyles.js';
 import { ORDER_STATUSES, orderStatusLabel } from './constants.js';
+import { adminOrderStatusClass } from '../../lib/adminOrderStatusClass.js';
 
 /** @param {string | Date | undefined | null} v */
 function formatTrDate(v) {
@@ -34,24 +35,6 @@ function formatTrDate(v) {
     const h = String(d.getHours()).padStart(2, '0');
     const min = String(d.getMinutes()).padStart(2, '0');
     return `${day}.${mo}.${y} ${h}:${min}`;
-  }
-}
-
-/** @param {string} status */
-function statusTone(status) {
-  switch (status) {
-    case 'hazirlaniyor':
-      return 'bg-sky-100 text-sky-800 ring-1 ring-sky-200/80';
-    case 'kargolandi':
-      return 'bg-indigo-50 text-indigo-800 ring-1 ring-indigo-200/80';
-    case 'teslim-edildi':
-      return 'bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200/80';
-    case 'iptal-edildi':
-      return 'bg-rose-50 text-rose-800 ring-1 ring-rose-200/80';
-    case 'odeme_bekleniyor':
-      return 'bg-amber-50 text-amber-900 ring-1 ring-amber-200/80';
-    default:
-      return 'bg-neutral-100 text-neutral-700 ring-1 ring-neutral-200';
   }
 }
 
@@ -347,7 +330,7 @@ export default function AdminOrdersPage() {
                   </td>
                   <td className="px-5 py-4 align-top">
                     <span
-                      className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${statusTone(o.status)}`}
+                      className={adminOrderStatusClass(o.status)}
                     >
                       {orderStatusLabel(o.status)}
                     </span>

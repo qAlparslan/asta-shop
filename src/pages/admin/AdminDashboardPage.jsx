@@ -37,6 +37,7 @@ import { formatTRY } from '../../lib/formatTRY.js';
 import { mediaUrl } from '../../lib/mediaUrl.js';
 import { pickProductImagePath } from '../../lib/productMap.js';
 import { orderStatusLabel } from './constants.js';
+import { adminOrderStatusClass } from '../../lib/adminOrderStatusClass.js';
 
 const RANGES = [
   { id: 'daily', label: 'Bugün' },
@@ -67,24 +68,6 @@ function formatTrDateTime(v) {
     return new Intl.DateTimeFormat('tr-TR', { dateStyle: 'short', timeStyle: 'short' }).format(d);
   } catch {
     return '—';
-  }
-}
-
-/** @param {string} status */
-function statusTone(status) {
-  switch (status) {
-    case 'hazirlaniyor':
-      return 'bg-sky-100 text-sky-800';
-    case 'kargolandi':
-      return 'bg-indigo-100 text-indigo-800';
-    case 'teslim-edildi':
-      return 'bg-emerald-100 text-emerald-800';
-    case 'iptal-edildi':
-      return 'bg-rose-100 text-rose-800';
-    case 'odeme_bekleniyor':
-      return 'bg-amber-100 text-amber-900';
-    default:
-      return 'bg-neutral-100 text-neutral-700';
   }
 }
 
@@ -287,28 +270,28 @@ export default function AdminDashboardPage() {
             label="Hazırlanacak sipariş"
             href="/admin/siparisler"
             icon={Clock}
-            tone="bg-orange-100 text-orange-800"
+            tone="admin-action-tone admin-action-orange"
           />
           <ActionCard
             count={actions?.unansweredQuestions ?? 0}
             label="Cevapsız müşteri sorusu"
             href="/admin/sorular"
             icon={MessageCircleQuestion}
-            tone="bg-sky-100 text-sky-800"
+            tone="admin-action-tone admin-action-sky"
           />
           <ActionCard
             count={actions?.pendingReviews ?? 0}
             label="Onay bekleyen yorum"
             href="/admin/yorumlar"
             icon={MessageSquare}
-            tone="bg-violet-100 text-violet-800"
+            tone="admin-action-tone admin-action-violet"
           />
           <ActionCard
             count={actions?.lowStockCount ?? 0}
             label="Düşük stoklu ürün"
             href="/admin/urunler"
             icon={AlertTriangle}
-            tone="bg-amber-100 text-amber-900"
+            tone="admin-action-tone admin-action-amber"
           />
         </div>
       </div>
@@ -695,7 +678,7 @@ export default function AdminDashboardPage() {
                   </td>
                   <td className="px-6 py-4">
                     <span
-                      className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${statusTone(o.status)}`}
+                      className={adminOrderStatusClass(o.status)}
                     >
                       {orderStatusLabel(o.status)}
                     </span>

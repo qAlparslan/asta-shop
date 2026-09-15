@@ -33,6 +33,8 @@
 
   [data-theme='dark'] {
     color-scheme: dark;
+    --t-brand-fg: 251 164 175;
+    --t-brand-fg-soft: 253 186 196;
     --t-page: 18 18 20;
     --t-surface: 28 28 31;
     --t-surface-muted: 24 24 27;
@@ -248,4 +250,189 @@ html[data-theme='dark'] .product-detail-html :where(h1, h2, h3, h4, strong, b) {
 
 html[data-theme='dark'] .product-detail-html blockquote {
   border-color: rgb(var(--t-border)) !important;
+}
+
+/* —— Marka vurgu rengi (koyu zemin) —— */
+html[data-theme='dark'] .text-brand {
+  color: rgb(var(--t-brand-fg)) !important;
+}
+
+html[data-theme='dark'] .hover\:text-brand:hover {
+  color: rgb(var(--t-brand-fg-soft)) !important;
+}
+
+html[data-theme='dark'] .divide-neutral-100 > :not([hidden]) ~ :not([hidden]) {
+  border-color: rgb(var(--t-border)) !important;
+}
+
+html[data-theme='dark'] .focus\:bg-white:focus {
+  background-color: rgb(var(--t-input-bg)) !important;
+}
+
+html[data-theme='dark'] .bg-neutral-50\/50 {
+  background-color: rgb(var(--t-surface-muted) / 0.65) !important;
+}
+
+html[data-theme='dark'] .bg-amber-50,
+html[data-theme='dark'] .bg-amber-50\/60 {
+  background-color: rgb(120 53 15 / 0.35) !important;
+}
+
+html[data-theme='dark'] .text-amber-800,
+html[data-theme='dark'] .text-amber-900 {
+  color: rgb(253 230 138) !important;
+}
+
+html[data-theme='dark'] .border-amber-200\/80 {
+  border-color: rgb(180 83 9 / 0.45) !important;
+}
+
+html[data-theme='dark'] .bg-rose-50 {
+  background-color: rgb(136 19 55 / 0.35) !important;
+}
+
+html[data-theme='dark'] .text-rose-800 {
+  color: rgb(254 205 211) !important;
+}
+
+html[data-theme='dark'] .ring-rose-200 {
+  --tw-ring-color: rgb(190 18 60 / 0.45) !important;
+}
+
+html[data-theme='dark'] .text-emerald-700 {
+  color: rgb(110 231 183) !important;
+}
+
+html[data-theme='dark'] .text-rose-700 {
+  color: rgb(253 164 175) !important;
+}
+
+/* Admin panel ana alan */
+html[data-theme='dark'] .admin-app {
+  background-color: rgb(var(--t-page)) !important;
+  color: rgb(var(--t-fg));
+}
+
+html[data-theme='dark'] .admin-shell .border-neutral-100 {
+  border-color: rgb(var(--t-border)) !important;
+}
+
+@layer components {
+  .admin-status {
+    @apply inline-flex rounded-full px-3 py-1 text-xs font-semibold;
+  }
+
+  .admin-status-sky {
+    @apply bg-sky-100 text-sky-800;
+    --tw-ring-color: rgb(125 211 252 / 0.55);
+  }
+
+  .admin-status-indigo {
+    @apply bg-indigo-50 text-indigo-800;
+    --tw-ring-color: rgb(165 180 252 / 0.55);
+  }
+
+  .admin-status-emerald {
+    @apply bg-emerald-50 text-emerald-800;
+    --tw-ring-color: rgb(110 231 183 / 0.45);
+  }
+
+  .admin-status-rose {
+    @apply bg-rose-50 text-rose-800;
+    --tw-ring-color: rgb(253 164 175 / 0.45);
+  }
+
+  .admin-status-amber {
+    @apply bg-amber-50 text-amber-900;
+    --tw-ring-color: rgb(252 211 77 / 0.45);
+  }
+
+  .admin-status-neutral {
+    @apply bg-neutral-100 text-neutral-700;
+    --tw-ring-color: rgb(var(--t-border));
+  }
+
+  .admin-action-tone {
+    @apply flex h-10 w-10 items-center justify-center rounded-xl;
+  }
+
+  .admin-action-orange {
+    @apply bg-orange-100 text-orange-800;
+  }
+
+  .admin-action-sky {
+    @apply bg-sky-100 text-sky-800;
+  }
+
+  .admin-action-violet {
+    @apply bg-violet-100 text-violet-800;
+  }
+
+  .admin-action-amber {
+    @apply bg-amber-100 text-amber-900;
+  }
+}
+
+html[data-theme='dark'] .admin-status-sky {
+  background-color: rgb(12 74 110 / 0.55) !important;
+  color: rgb(186 230 253) !important;
+}
+
+html[data-theme='dark'] .admin-status-indigo {
+  background-color: rgb(49 46 129 / 0.45) !important;
+  color: rgb(199 210 254) !important;
+}
+
+html[data-theme='dark'] .admin-status-emerald {
+  background-color: rgb(6 78 59 / 0.45) !important;
+  color: rgb(167 243 208) !important;
+}
+
+html[data-theme='dark'] .admin-status-rose {
+  background-color: rgb(136 19 55 / 0.45) !important;
+  color: rgb(254 205 211) !important;
+}
+
+html[data-theme='dark'] .admin-status-amber {
+  background-color: rgb(120 53 15 / 0.45) !important;
+  color: rgb(253 230 138) !important;
+}
+
+html[data-theme='dark'] .admin-status-neutral {
+  background-color: rgb(var(--t-surface-subtle)) !important;
+  color: rgb(var(--t-fg-secondary)) !important;
+}
+
+html[data-theme='dark'] .admin-action-orange {
+  background-color: rgb(124 45 18 / 0.5) !important;
+  color: rgb(254 215 170) !important;
+}
+
+html[data-theme='dark'] .admin-action-sky {
+  background-color: rgb(12 74 110 / 0.5) !important;
+  color: rgb(186 230 253) !important;
+}
+
+html[data-theme='dark'] .admin-action-violet {
+  background-color: rgb(76 29 149 / 0.45) !important;
+  color: rgb(221 214 254) !important;
+}
+
+html[data-theme='dark'] .admin-action-amber {
+  background-color: rgb(120 53 15 / 0.5) !important;
+  color: rgb(253 230 138) !important;
+}
+
+html[data-theme='dark'] .admin-shell input::placeholder,
+html[data-theme='dark'] .admin-shell textarea::placeholder {
+  color: rgb(var(--t-fg-muted)) !important;
+  opacity: 1;
+}
+
+html[data-theme='dark'] .admin-shell .rounded-xl.border.border-neutral-100.p-3 {
+  background-color: rgb(var(--t-surface-muted));
+}
+
+html[data-theme='dark'] .admin-shell .text-red-700 {
+  color: rgb(252 165 165) !important;
 }
