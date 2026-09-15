@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { SlidersHorizontal, X } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import CatalogProductCard from '../components/products/CatalogProductCard.jsx';
 import { SORT_OPTIONS } from '../data/catalogMock.js';
@@ -25,8 +26,26 @@ export default function ProductsPage() {
   const [catalogCategories, setCatalogCategories] = useState([]);
   const [loadError, setLoadError] = useState('');
   const [loading, setLoading] = useState(true);
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
   const [skinCatalogRows, setSkinCatalogRows] = useState(() => normalizeSkinCatalogRows());
+
+  const activeFilterCount =
+    selectedCategories.size + selectedSkinTypes.size + (sortBy !== 'recommended' ? 1 : 0);
+
+  useEffect(() => {
+    if (!mobileFiltersOpen) return undefined;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const onKey = (e) => {
+      if (e.key === 'Escape') setMobileFiltersOpen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => {
+      document.body.style.overflow = prev;
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [mobileFiltersOpen]);
 
   useEffect(() => {
     const ac = new AbortController();
@@ -131,6 +150,81 @@ export default function ProductsPage() {
   const placeholderSvg =
     "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Crect fill='%23f5f5f5' width='400' height='400'/%3E%3C/svg%3E";
 
+  const filtersPanel = (
+    <div className="rounded-xl border border-neutral-200 bg-white p-6 shadow-sm lg:shadow-sm">
+      <fieldset className={fieldClass}>
+        <legend className={legendClass}>Sıralama</legend>
+        <div className="space-y-2.5 border-b border-neutral-100 pb-6">
+          {SORT_OPTIONS.map((opt) => (
+            <label key={opt.id} className={labelRow}>
+              <input
+                type="radio"
+                name="catalog-sort"
+                value={opt.id}
+                checked={sortBy === opt.id}
+                onChange={() => setSortBy(opt.id)}
+                className="mt-1 h-4 w-4 shrink-0 border-neutral-300 accent-[#9f2133] focus:ring-brand"
+              />
+              <span>{opt.label}</span>
+            </label>
+          ))}
+        </div>
+      </fieldset>
+
+      <fieldset className={`${fieldClass} border-b border-neutral-100 pb-6 pt-6`}>
+        <legend className={legendClass}>Kategori</legend>
+        <input
+          type="search"
+          value={categoryQuery}
+          onChange={(e) => setCategoryQuery(e.target.value)}
+          placeholder="Kategori ara"
+          className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm outline-none ring-brand ring-offset-2 placeholder:text-neutral-400 focus:border-neutral-400 focus:ring-2"
+          autoComplete="off"
+        />
+        <div className="max-h-52 space-y-2.5 overflow-y-auto pr-1 pt-1">
+          {filteredCategories.map((cat) => (
+            <label key={cat} className={labelRow}>
+              <input
+                type="checkbox"
+                checked={selectedCategories.has(cat)}
+                onChange={() => toggleCategory(cat)}
+                className={checkClass}
+              />
+              <span>{cat}</span>
+            </label>
+          ))}
+          {filteredCategories.length === 0 && (
+            <p className="text-xs text-neutral-500">
+              {mergedCategoryOptions.length === 0
+                ? 'Şu anda listelenecek kategori yok.'
+                : 'Sonuç yok.'}
+            </p>
+          )}
+        </div>
+      </fieldset>
+
+      <fieldset className={`${fieldClass} pt-6`}>
+        <legend className={legendClass}>Cilt tipi</legend>
+        <div className="space-y-2.5">
+          {skinFilterSidebarOptions.map((skin) => (
+            <label key={skin.slug} className={labelRow}>
+              <input
+                type="checkbox"
+                checked={selectedSkinTypes.has(skin.label)}
+                onChange={() => toggleSkin(skin.label)}
+                className={checkClass}
+              />
+              <span>{skin.label}</span>
+            </label>
+          ))}
+          {skinFilterSidebarOptions.length === 0 ? (
+            <p className="text-xs text-neutral-500">Şu anda listelenecek cilt filtresi yok.</p>
+          ) : null}
+        </div>
+      </fieldset>
+    </div>
+  );
+
   const catalogSeo = useMemo(() => {
     const storeTitle = buildSiteDocumentTitle(settings);
     const storeName = String(settings?.storeName ?? '').trim() || 'Asta Ticaret';
@@ -168,89 +262,75 @@ export default function ProductsPage() {
         siteName={String(settings?.storeName ?? '').trim() || 'Asta Ticaret'}
       />
     <main className="border-b border-neutral-100 bg-white">
+      {mobileFiltersOpen ? (
+        <>
+          <div
+            className="fixed inset-0 z-40 bg-black/40 lg:hidden"
+            onClick={() => setMobileFiltersOpen(false)}
+            aria-hidden
+          />
+          <aside
+            className="fixed inset-y-0 left-0 z-50 flex w-[min(100vw,320px)] flex-col bg-white shadow-xl lg:hidden"
+            aria-modal
+            role="dialog"
+            aria-labelledby="mobile-filters-title"
+          >
+            <div className="flex items-center justify-between border-b border-neutral-200 px-4 py-3">
+              <h2 id="mobile-filters-title" className="text-base font-bold text-asta-navy">
+                Filtreler
+              </h2>
+              <button
+                type="button"
+                onClick={() => setMobileFiltersOpen(false)}
+                className="rounded-lg p-2 text-neutral-600 hover:bg-neutral-100"
+                aria-label="Filtreleri kapat"
+              >
+                <X className="h-5 w-5" strokeWidth={1.75} />
+              </button>
+            </div>
+            <div className="min-h-0 flex-1 overflow-y-auto p-4">{filtersPanel}</div>
+            <div className="border-t border-neutral-200 p-4">
+              <button
+                type="button"
+                onClick={() => setMobileFiltersOpen(false)}
+                className="w-full rounded-lg bg-brand px-4 py-3 text-sm font-semibold text-white hover:bg-brand/90"
+              >
+                Uygula
+              </button>
+            </div>
+          </aside>
+        </>
+      ) : null}
+
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:flex lg:gap-10 lg:px-8 lg:py-10">
-        <aside className="mb-10 w-full shrink-0 lg:mb-0 lg:w-[280px] lg:sticky lg:top-6 lg:self-start">
-          <div className="rounded-xl border border-neutral-200 bg-white p-6 shadow-sm">
-            <fieldset className={fieldClass}>
-              <legend className={legendClass}>Sıralama</legend>
-              <div className="space-y-2.5 border-b border-neutral-100 pb-6">
-                {SORT_OPTIONS.map((opt) => (
-                  <label key={opt.id} className={labelRow}>
-                    <input
-                      type="radio"
-                      name="catalog-sort"
-                      value={opt.id}
-                      checked={sortBy === opt.id}
-                      onChange={() => setSortBy(opt.id)}
-                      className="mt-1 h-4 w-4 shrink-0 border-neutral-300 accent-[#9f2133] focus:ring-brand"
-                    />
-                    <span>{opt.label}</span>
-                  </label>
-                ))}
-              </div>
-            </fieldset>
-
-            <fieldset className={`${fieldClass} border-b border-neutral-100 pb-6 pt-6`}>
-              <legend className={legendClass}>Kategori</legend>
-              <input
-                type="search"
-                value={categoryQuery}
-                onChange={(e) => setCategoryQuery(e.target.value)}
-                placeholder="Kategori ara"
-                className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm outline-none ring-brand ring-offset-2 placeholder:text-neutral-400 focus:border-neutral-400 focus:ring-2"
-                autoComplete="off"
-              />
-              <div className="max-h-52 space-y-2.5 overflow-y-auto pr-1 pt-1">
-                {filteredCategories.map((cat) => (
-                  <label key={cat} className={labelRow}>
-                    <input
-                      type="checkbox"
-                      checked={selectedCategories.has(cat)}
-                      onChange={() => toggleCategory(cat)}
-                      className={checkClass}
-                    />
-                    <span>{cat}</span>
-                  </label>
-                ))}
-                {filteredCategories.length === 0 && (
-                  <p className="text-xs text-neutral-500">
-                    {mergedCategoryOptions.length === 0
-                      ? 'Şu anda listelenecek kategori yok.'
-                      : 'Sonuç yok.'}
-                  </p>
-                )}
-              </div>
-            </fieldset>
-
-            <fieldset className={`${fieldClass} pt-6`}>
-              <legend className={legendClass}>Cilt tipi</legend>
-              <div className="space-y-2.5">
-                {skinFilterSidebarOptions.map((skin) => (
-                  <label key={skin.slug} className={labelRow}>
-                    <input
-                      type="checkbox"
-                      checked={selectedSkinTypes.has(skin.label)}
-                      onChange={() => toggleSkin(skin.label)}
-                      className={checkClass}
-                    />
-                    <span>{skin.label}</span>
-                  </label>
-                ))}
-                {skinFilterSidebarOptions.length === 0 ? (
-                  <p className="text-xs text-neutral-500">Şu anda listelenecek cilt filtresi yok.</p>
-                ) : null}
-              </div>
-            </fieldset>
-          </div>
+        <aside className="hidden lg:block lg:w-[280px] lg:shrink-0 lg:sticky lg:top-6 lg:self-start">
+          {filtersPanel}
         </aside>
 
         <div className="min-w-0 flex-1">
-          <h1 className="font-display text-3xl font-semibold tracking-tight text-asta-navy sm:text-[2.25rem]">
-            {tagFilter === 'cok-satan' ? 'Çok satan ürünler' : 'Tüm Ürünler'}
-          </h1>
-          <p className="mt-2 text-sm text-neutral-500">
-            {loading ? 'Ürünler yükleniyor…' : `${visibleProducts.length} ürün listeleniyor`}
-          </p>
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h1 className="font-display text-3xl font-semibold tracking-tight text-asta-navy sm:text-[2.25rem]">
+                {tagFilter === 'cok-satan' ? 'Çok satan ürünler' : 'Tüm Ürünler'}
+              </h1>
+              <p className="mt-2 text-sm text-neutral-500">
+                {loading ? 'Ürünler yükleniyor…' : `${visibleProducts.length} ürün listeleniyor`}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setMobileFiltersOpen(true)}
+              className="inline-flex shrink-0 items-center gap-2 rounded-lg border border-neutral-300 bg-white px-4 py-2.5 text-sm font-semibold text-asta-navy shadow-sm hover:bg-neutral-50 lg:hidden"
+            >
+              <SlidersHorizontal className="h-4 w-4" strokeWidth={2} aria-hidden />
+              Filtre
+              {activeFilterCount > 0 ? (
+                <span className="inline-flex min-w-[1.25rem] items-center justify-center rounded-full bg-brand px-1.5 py-0.5 text-[11px] font-bold leading-none text-white">
+                  {activeFilterCount}
+                </span>
+              ) : null}
+            </button>
+          </div>
 
           {loadError && (
             <div className="mt-6 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900">
