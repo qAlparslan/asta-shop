@@ -4,7 +4,6 @@ import 'react-quill/dist/quill.snow.css';
 import {
   AlertTriangle,
   CloudUpload,
-  FilePlus2,
   Globe,
   GripVertical,
   Package,
@@ -25,9 +24,6 @@ import MediaImg from '../../components/MediaImg.jsx';
 import { pickProductImagePath } from '../../lib/productMap.js';
 import { formatTRY } from '../../lib/formatTRY.js';
 import { inputClass } from '../../lib/formStyles.js';
-
-const CSV_TEMPLATE_BOM =
-  '\uFEFFÜrün Adı,Ürün Açıklaması,Piyasa Satış Fiyatı (KDV Dahil),Ürün Stok Adedi,Marka,Kategori\n';
 
 const SKIN_TYPE_OPTIONS = [
   { value: 'tumu', label: 'Tüm cilt tipleri' },
@@ -55,18 +51,6 @@ const quillModules = {
 };
 
 const quillFormats = ['header', 'bold', 'italic', 'underline', 'color', 'background', 'list', 'bullet'];
-
-function downloadCsvTemplate() {
-  const row =
-    'Örnek Ürün,"Kısa açıklama metni (zorunlu).",199.90,50,ASTA TİCARET,Serum\n';
-  const blob = new Blob([CSV_TEMPLATE_BOM + row], { type: 'text/csv;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'urun-sablonu.csv';
-  a.click();
-  URL.revokeObjectURL(url);
-}
 
 /** `<input type="datetime-local" />` değerini ISO UTC stringe çevirir. */
 function localDatetimeToUtcIso(datetimeLocalStr) {
@@ -397,8 +381,8 @@ export default function AdminProductsPage() {
       <div>
         <h2 className="text-2xl font-semibold tracking-tight text-asta-navy">Ürün yönetimi</h2>
         <p className="mt-1 text-sm text-neutral-600">
-          Toplu seçim ile vitrin/indirim planı (% ve tarih-saat aralığı), stok, zam ve etiket; CSV ile içe aktarma;
-          düzenleyicide SEO ve varyantlar.
+          Toplu seçim ile vitrin/indirim planı (% ve tarih-saat aralığı), stok, zam ve etiket; CSV/Excel ile toplu ürün
+          yükleme (urun_adi, marka, fiyat, galen_urun_bilgileri_turkce); düzenleyicide SEO ve varyantlar.
         </p>
       </div>
 
@@ -419,14 +403,6 @@ export default function AdminProductsPage() {
           />
         </div>
         <div className="flex flex-wrap items-center gap-2 sm:justify-end">
-          <button
-            type="button"
-            onClick={downloadCsvTemplate}
-            className="inline-flex items-center gap-2 rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm font-semibold text-asta-navy shadow-sm hover:bg-neutral-50"
-          >
-            <FilePlus2 className="h-4 w-4 text-neutral-600" strokeWidth={1.75} />
-            Şablon
-          </button>
           <button
             type="button"
             disabled={importBusy}

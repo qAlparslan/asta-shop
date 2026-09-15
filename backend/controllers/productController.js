@@ -2,7 +2,11 @@ const Product = require('../models/Product');
 const { parse } = require('csv-parse/sync');
 const { setMainWarehouseQuantity } = require('../services/inventoryService');
 const { logAdminAudit } = require('../services/auditService');
-const { sanitizeRichDescription, stripToPlainText } = require('../utils/htmlSanitize');
+const {
+    sanitizeRichDescription,
+    stripToPlainText,
+    plainTextDescriptionToHtml,
+} = require('../utils/htmlSanitize');
 const { normalizeVariantsForPersistence } = require('../utils/productVariants');
 const { applyMissingProductSeo, generateProductSeo } = require('../utils/productSeoGenerator');
 const {
@@ -719,6 +723,9 @@ const HEADER_MAP = {
     'urun aciklamasi': 'description',
     'aciklama': 'description',
     'description': 'description',
+    'galen urun bilgileri turkce': 'description',
+    'urun bilgileri turkce': 'description',
+    'urun bilgileri': 'description',
     'piyasa satis fiyati (kdv dahil)': 'price',
     'piyasa satis fiyati': 'price',
     'satis fiyati': 'price',
@@ -738,6 +745,7 @@ const norm = (s) =>
         .replace(/ş/g, 's').replace(/ş/g, 's')
         .replace(/ğ/g, 'g').replace(/ü/g, 'u')
         .replace(/ö/g, 'o').replace(/ç/g, 'c')
+        .replace(/_/g, ' ')
         .replace(/\s+/g, ' ')
         .trim();
 
@@ -790,7 +798,7 @@ exports.importProducts = async (req, res) => {
         const rows = parse(raw, {
             columns: true,
             skip_empty_lines: true,
-            trim: true,
+            trim: false,
             bom: true,
             delimiter,
             relax_column_count: true,
@@ -818,10 +826,12 @@ exports.importProducts = async (req, res) => {
                     missing
                         .map((f) =>
                             f === 'name'
-                                ? '"Ürün Adı"'
+                                ? 'urun_adi / Ürün Adı'
                                 : f === 'description'
-                                ? '"Ürün Açıklaması"'
-                                : '"Piyasa Satış Fiyatı (KDV Dahil)"'
+                                ? 'galen_urun_bilgileri_turkce / Ürün Açıklaması'
+                                : f === 'price'
+                                ? 'fiyat'
+                                : f
                         )
                         .join(', '),
             });
@@ -837,23 +847,23 @@ exports.importProducts = async (req, res) => {
                 rec[t] = r[k];
             }
 
-            const name = String(rec.name || '').trim();
-            const description = String(rec.description || '').trim();
+            const name = String(rec.name ?? '').trim();
+            const descriptionRaw = rec.description != null ? String(rec.description) : '';
             const price = parsePriceTr(rec.price);
             const stockRaw = parseStockInt(rec.stock);
             const brand = rec.brand ? String(rec.brand).trim() : null;
             const category = rec.category ? String(rec.category).trim() : null;
 
             if (!name) {
-                skipped.push({ row: i + 2, reason: 'Ürün Adı boş' });
+                skipped.push({ row: i + 2, reason: 'Ürün adı boş' });
                 continue;
             }
             if (name.length < 2 || name.length > 150) {
-                skipped.push({ row: i + 2, reason: 'Ürün Adı uzunluğu 2-150 karakter olmalı' });
+                skipped.push({ row: i + 2, reason: 'Ürün adı uzunluğu 2-150 karakter olmalı' });
                 continue;
             }
-            if (!description) {
-                skipped.push({ row: i + 2, reason: 'Ürün Açıklaması boş' });
+            if (!descriptionRaw.trim()) {
+                skipped.push({ row: i + 2, reason: 'Ürün açıklaması boş' });
                 continue;
             }
             if (!Number.isFinite(price) || price < 0) {
@@ -863,7 +873,7 @@ exports.importProducts = async (req, res) => {
             const stock = Number.isFinite(stockRaw) && stockRaw >= 0 ? stockRaw : 0;
 
             try {
-                const safeDesc = sanitizeRichDescription(description);
+                const safeDesc = plainTextDescriptionToHtml(descriptionRaw);
                 const seoPack = generateProductSeo({
                     name,
                     brand: brand || '',

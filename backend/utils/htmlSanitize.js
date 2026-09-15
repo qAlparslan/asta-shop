@@ -77,6 +77,43 @@ function sanitizeRichDescription(html) {
     return sanitizeHtml(String(html), RICH_OPTIONS);
 }
 
+function escapeHtmlText(s) {
+    return String(s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
+/** CSV / Excel düz metin açıklama → Quill uyumlu HTML (paragraflar, satır sonları, bölüm başlıkları). */
+function plainTextDescriptionToHtml(text) {
+    if (text == null) return '';
+    const raw = String(text).replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+    if (!raw.trim()) return '';
+    if (/<\s*(p|br|strong|b|div|ul|ol|h[1-6]|span)\b/i.test(raw)) {
+        return sanitizeRichDescription(raw);
+    }
+
+    const out = [];
+    const blocks = raw.split(/\n\n+/);
+    for (const block of blocks) {
+        const lines = block.split('\n');
+        for (const line of lines) {
+            if (line.trim() === '') continue;
+            const trimmed = line.trim();
+            const isSectionLabel =
+                /^[A-Za-zÇçĞğİıÖöŞşÜü0-9\s\-–—()+/%]+:\s*$/.test(trimmed) &&
+                trimmed.length <= 80;
+            if (isSectionLabel) {
+                out.push(`<p><strong>${escapeHtmlText(trimmed)}</strong></p>`);
+            } else {
+                out.push(`<p>${escapeHtmlText(line)}</p>`);
+            }
+        }
+    }
+    return sanitizeRichDescription(out.join(''));
+}
+
 /** Meta açıklama gibi düz metin — HTML etiketlerini düşürür. */
 function stripToPlainText(maybeHtml) {
     if (maybeHtml == null) return '';
@@ -86,4 +123,4 @@ function stripToPlainText(maybeHtml) {
     }).trim();
 }
 
-module.exports = { sanitizeRichDescription, stripToPlainText };
+module.exports = { sanitizeRichDescription, stripToPlainText, plainTextDescriptionToHtml };
