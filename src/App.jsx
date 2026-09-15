@@ -37,7 +37,6 @@ import { ThemeProvider } from './context/ThemeContext.jsx';
 import ThemeSwitcher from './components/ThemeSwitcher.jsx';
 
 const AdminDashboardPage = lazy(() => import('./pages/admin/AdminDashboardPage.jsx'));
-const AdminDashboardV2Page = lazy(() => import('./pages/admin/AdminDashboardV2Page.jsx'));
 const AdminOrdersPage = lazy(() => import('./pages/admin/AdminOrdersPage.jsx'));
 const AdminProductsPage = lazy(() => import('./pages/admin/AdminProductsPage.jsx'));
 const AdminCouponsPage = lazy(() => import('./pages/admin/AdminCouponsPage.jsx'));
@@ -165,14 +164,7 @@ export default function App() {
                   </Suspense>
                 }
               />
-              <Route
-                path="ozet-v2"
-                element={
-                  <Suspense fallback={<AdminRouteFallback />}>
-                    <AdminDashboardV2Page />
-                  </Suspense>
-                }
-              />
+              <Route path="ozet-v2" element={<Navigate to="/admin" replace />} />
               <Route
                 path="siparisler"
                 element={

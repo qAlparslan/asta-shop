@@ -3,6 +3,7 @@ const Order = require('../models/Order');
 const Product = require('../models/Product');
 const ProductReview = require('../models/ProductReview');
 const ProductQuestion = require('../models/ProductQuestion');
+const User = require('../models/User');
 const SiteSetting = require('../models/SiteSetting');
 const { getCartStatsMap } = require('./cartInterestService');
 
@@ -537,9 +538,20 @@ async function buildDashboardStatsV2(timeFilter = 'monthly') {
         const n = Number(thRow.value);
         if (Number.isFinite(n) && n >= 0) lowStockThreshold = n;
     }
-    const lowStockCount = await Product.count({
-        where: { stock: { [Op.lte]: lowStockThreshold }, is_active: true },
-    });
+    const lowStockWhere = { stock: { [Op.lte]: lowStockThreshold }, is_active: true };
+
+    const [lowStockCount, lowStockProducts, customerCount, activeProductCount] = await Promise.all([
+        Product.count({ where: lowStockWhere }),
+        Product.findAll({
+            attributes: ['id', 'name', 'stock', 'brand', 'images'],
+            where: lowStockWhere,
+            order: [['stock', 'ASC']],
+            limit: 8,
+            raw: true,
+        }),
+        User.count({ where: { role: 'customer' } }),
+        Product.count({ where: { is_active: true } }),
+    ]);
 
     return {
         period: {
@@ -576,6 +588,12 @@ async function buildDashboardStatsV2(timeFilter = 'monthly') {
         cartInterest,
         customerMix,
         recentOrders,
+        storeSnapshot: {
+            customerCount,
+            activeProductCount,
+            lowStockThreshold,
+            lowStockProducts,
+        },
     };
 }
 
