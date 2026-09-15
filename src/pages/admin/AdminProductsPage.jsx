@@ -382,7 +382,7 @@ export default function AdminProductsPage() {
         <h2 className="text-2xl font-semibold tracking-tight text-asta-navy">Ürün yönetimi</h2>
         <p className="mt-1 text-sm text-neutral-600">
           Toplu seçim ile vitrin/indirim planı (% ve tarih-saat aralığı), stok, zam ve etiket; CSV/Excel ile toplu ürün
-          yükleme (urun_adi, marka, fiyat, galen_urun_bilgileri_turkce); düzenleyicide SEO ve varyantlar.
+          yükleme (urun_adi, marka, fiyat, kategori, galen_urun_bilgileri_turkce); düzenleyicide SEO ve varyantlar.
         </p>
       </div>
 

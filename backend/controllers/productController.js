@@ -1,4 +1,5 @@
 const Product = require('../models/Product');
+const Category = require('../models/Category');
 const { parse } = require('csv-parse/sync');
 const { setMainWarehouseQuantity } = require('../services/inventoryService');
 const { logAdminAudit } = require('../services/auditService');
@@ -715,6 +716,7 @@ const HEADER_MAP = {
     'kategori': 'category',
     'kategori ismi': 'category',
     'kategori adi': 'category',
+    'urun kategorisi': 'category',
     'category': 'category',
     'urun adi': 'name',
     'urun ismi': 'name',
@@ -780,6 +782,53 @@ const slugify = (s) =>
         .replace(/^-+|-+$/g, '')
         .slice(0, 80);
 
+const categorySlugify = (s) =>
+    String(s || '')
+        .replace(/[ıİşŞğĞüÜöÖçÇ]/g, (ch) => {
+            const m = { ı: 'i', İ: 'i', ş: 's', Ş: 's', ğ: 'g', Ğ: 'g', ü: 'u', Ü: 'u', ö: 'o', Ö: 'o', ç: 'c', Ç: 'c' };
+            return m[ch] || ch;
+        })
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+        .slice(0, 120);
+
+async function allocateCategorySlug(base) {
+    const root = base || 'kategori';
+    let slug = root;
+    let n = 2;
+    while (await Category.findOne({ where: { slug } })) {
+        slug = `${root}-${n++}`;
+    }
+    return slug;
+}
+
+/** CSV kategori adını sistemdeki kategori adına çevirir; yoksa oluşturur. */
+async function resolveImportCategory(rawLabel, cacheByNorm) {
+    const trimmed = String(rawLabel ?? '').trim();
+    if (!trimmed) return null;
+    if (trimmed.length > 100) return null;
+    const key = norm(trimmed);
+    if (cacheByNorm.has(key)) return cacheByNorm.get(key);
+
+    const existing = await Category.findOne({ where: { name: trimmed } });
+    if (existing) {
+        cacheByNorm.set(key, existing.name);
+        return existing.name;
+    }
+
+    const slug = await allocateCategorySlug(categorySlugify(trimmed));
+    const maxOrder = (await Category.max('displayOrder')) || 0;
+    const created = await Category.create({
+        name: trimmed,
+        slug,
+        displayOrder: Number(maxOrder) + 1,
+        isActive: true,
+    });
+    cacheByNorm.set(key, created.name);
+    return created.name;
+}
+
 // 7. CSV İLE TOPLU ÜRÜN İÇE AKTAR (SADECE ADMİN)
 exports.importProducts = async (req, res) => {
     if (!req.file || !req.file.buffer) {
@@ -816,7 +865,7 @@ exports.importProducts = async (req, res) => {
             if (target) keyMap[k] = target;
         }
 
-        const requiredFields = ['name', 'description', 'price'];
+        const requiredFields = ['name', 'description', 'price', 'category'];
         const missing = requiredFields.filter((f) => !Object.values(keyMap).includes(f));
         if (missing.length) {
             return res.status(400).json({
@@ -826,11 +875,13 @@ exports.importProducts = async (req, res) => {
                     missing
                         .map((f) =>
                             f === 'name'
-                                ? 'urun_adi / Ürün Adı'
+                                ? 'urun_adi'
                                 : f === 'description'
-                                ? 'galen_urun_bilgileri_turkce / Ürün Açıklaması'
+                                ? 'galen_urun_bilgileri_turkce'
                                 : f === 'price'
                                 ? 'fiyat'
+                                : f === 'category'
+                                ? 'kategori'
                                 : f
                         )
                         .join(', '),
@@ -839,6 +890,11 @@ exports.importProducts = async (req, res) => {
 
         const skipped = [];
         const created = [];
+        const categoryCache = new Map();
+        const existingCategories = await Category.findAll({ attributes: ['name'] });
+        for (const c of existingCategories) {
+            categoryCache.set(norm(c.name), c.name);
+        }
 
         for (let i = 0; i < rows.length; i++) {
             const r = rows[i];
@@ -852,7 +908,7 @@ exports.importProducts = async (req, res) => {
             const price = parsePriceTr(rec.price);
             const stockRaw = parseStockInt(rec.stock);
             const brand = rec.brand ? String(rec.brand).trim() : null;
-            const category = rec.category ? String(rec.category).trim() : null;
+            const categoryRaw = rec.category != null ? String(rec.category).trim() : '';
 
             if (!name) {
                 skipped.push({ row: i + 2, reason: 'Ürün adı boş' });
@@ -870,14 +926,23 @@ exports.importProducts = async (req, res) => {
                 skipped.push({ row: i + 2, reason: 'Fiyat geçersiz' });
                 continue;
             }
+            if (!categoryRaw) {
+                skipped.push({ row: i + 2, reason: 'Kategori boş' });
+                continue;
+            }
             const stock = Number.isFinite(stockRaw) && stockRaw >= 0 ? stockRaw : 0;
 
             try {
+                const category = await resolveImportCategory(categoryRaw, categoryCache);
+                if (!category) {
+                    skipped.push({ row: i + 2, reason: 'Kategori geçersiz (en fazla 100 karakter)' });
+                    continue;
+                }
                 const safeDesc = plainTextDescriptionToHtml(descriptionRaw);
                 const seoPack = generateProductSeo({
                     name,
                     brand: brand || '',
-                    category: category || '',
+                    category,
                     description: safeDesc,
                 });
                 const baseSlug = seoPack.slug || slugify(name);
