@@ -7,6 +7,7 @@ import { useSiteSettings } from '../context/SiteSettingsContext.jsx';
 import { assetUrl } from '../config/api.js';
 import { formatTRY } from '../lib/formatTRY.js';
 import MobileMenu from './MobileMenu.jsx';
+import ThemeSwitcher from './ThemeSwitcher.jsx';
 
 const focusRing =
   'outline-none ring-offset-2 ring-offset-white focus-visible:ring-2 focus-visible:ring-asta-maroon/35';
@@ -103,7 +104,9 @@ export default function SiteHeader() {
 
         <div className="hidden min-h-0 flex-1 lg:block" aria-hidden />
 
-        <div className="ml-auto flex shrink-0 items-center justify-end gap-2 sm:gap-5 lg:gap-10">
+        <div className="ml-auto flex shrink-0 items-center justify-end gap-2 sm:gap-3 lg:gap-6">
+          <ThemeSwitcher compact className="shrink-0" />
+
           {/* Hesap — masaüstünde ayrıntılı blok */}
           <div className="group hidden items-start gap-2.5 rounded-sm lg:flex">
             <User

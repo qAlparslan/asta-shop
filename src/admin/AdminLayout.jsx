@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { SYSTEM_SECTIONS } from '../pages/admin/systemSectionConfig.js';
+import ThemeSwitcher from '../components/ThemeSwitcher.jsx';
 
 const subLinkBase =
   'block rounded-lg py-1.5 pl-3 pr-2 text-[13px] font-medium leading-snug transition-colors';
@@ -213,12 +214,13 @@ export default function AdminLayout() {
               <Menu className="h-6 w-6" strokeWidth={1.75} />
             </button>
             <Store className="hidden h-8 w-8 text-brand sm:block" strokeWidth={1.25} aria-hidden />
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <h1 className="text-base font-bold text-asta-navy sm:text-lg">Yönetici paneli</h1>
               <p className="hidden text-xs text-neutral-500 sm:block">
                 Sipariş, ürün ve sistem ayarları
               </p>
             </div>
+            <ThemeSwitcher compact className="ml-auto shrink-0" />
           </div>
         </header>
         <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">

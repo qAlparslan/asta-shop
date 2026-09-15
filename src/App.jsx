@@ -33,6 +33,8 @@ import { useAuth } from './context/AuthContext.jsx';
 import SiteBranding from './components/SiteBranding.jsx';
 import StorefrontSeo from './components/StorefrontSeo.jsx';
 import ScrollToTop from './components/ScrollToTop.jsx';
+import { ThemeProvider } from './context/ThemeContext.jsx';
+import ThemeSwitcher from './components/ThemeSwitcher.jsx';
 
 const AdminDashboardPage = lazy(() => import('./pages/admin/AdminDashboardPage.jsx'));
 const AdminDashboardV2Page = lazy(() => import('./pages/admin/AdminDashboardV2Page.jsx'));
@@ -97,7 +99,8 @@ function StorefrontShell() {
   if (maint.loaded && maint.active && !isAdmin) {
     if (storefrontAuthBypass) {
       return (
-        <div className="min-h-screen bg-neutral-100 font-sans text-neutral-900 antialiased">
+        <div className="relative min-h-screen bg-neutral-100 font-sans text-neutral-900 antialiased">
+          <ThemeSwitcher className="fixed right-4 top-4 z-[60]" compact />
           <Outlet />
         </div>
       );
@@ -106,7 +109,8 @@ function StorefrontShell() {
       (maint.message && String(maint.message).trim()) ||
       'Sitemiz kısa süreliğine bakımda. Çok yakında geri döneceğiz.';
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-8 bg-gradient-to-br from-asta-navy via-asta-navy to-neutral-900 px-6 py-16 text-center antialiased">
+      <div className="relative flex min-h-screen flex-col items-center justify-center gap-8 bg-gradient-to-br from-asta-navy via-asta-navy to-neutral-900 px-6 py-16 text-center antialiased">
+        <ThemeSwitcher className="fixed right-4 top-4 z-[60]" compact />
         <div className="max-w-lg rounded-2xl border border-white/10 bg-white/5 p-10 shadow-xl backdrop-blur-sm">
           <h1 className="font-display text-2xl font-semibold tracking-tight text-white">Bakımdayız</h1>
           <p className="mt-6 whitespace-pre-wrap text-sm leading-relaxed text-neutral-200">{displayMsg}</p>
@@ -138,11 +142,12 @@ function StorefrontShell() {
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <ScrollToTop />
-      <SiteBranding />
-      <AuthProvider>
-        <CartProvider>
+    <ThemeProvider>
+      <BrowserRouter>
+        <ScrollToTop />
+        <SiteBranding />
+        <AuthProvider>
+          <CartProvider>
           <Routes>
             <Route
               path="/admin"
@@ -252,8 +257,9 @@ export default function App() {
               <Route path="/abonelikten-cik/:token" element={<NewsletterActionPage mode="unsubscribe" />} />
             </Route>
           </Routes>
-        </CartProvider>
-      </AuthProvider>
-    </BrowserRouter>
+          </CartProvider>
+        </AuthProvider>
+      </BrowserRouter>
+    </ThemeProvider>
   );
 }
