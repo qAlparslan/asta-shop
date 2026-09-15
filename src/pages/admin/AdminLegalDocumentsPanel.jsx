@@ -196,7 +196,7 @@ export default function AdminLegalDocumentsPanel() {
                 key={d.slug}
                 type="button"
                 onClick={() => setActiveSlug(d.slug)}
-                className={`rounded-full px-4 py-1.5 text-sm font-semibold transition-colors ${activeSlug === d.slug ? 'bg-brand text-white shadow' : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'}`}
+                className={`rounded-full px-4 py-1.5 text-sm font-semibold transition-colors ${activeSlug === d.slug ? 'bg-brand text-white shadow' : 'admin-legal-tab-idle bg-neutral-100 text-neutral-700 hover:bg-neutral-200'}`}
               >
                 {d.label}
               </button>

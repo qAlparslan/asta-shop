@@ -58,7 +58,7 @@ function HeroSlideVisualAside({ slide, onSlideChange, uploadDisabled, onUploadFi
 
   return (
     <aside className="w-full shrink-0 lg:max-w-[420px] lg:pt-1">
-      <div className="rounded-2xl border border-neutral-200 bg-gradient-to-b from-neutral-50 to-white p-4 shadow-sm sm:p-5">
+      <div className="admin-hero-aside-panel rounded-2xl border border-neutral-200 bg-neutral-100/40 p-4 shadow-sm sm:p-5">
         <p className="text-[11px] font-bold uppercase tracking-wide text-neutral-500">Sağ vitrin</p>
         <p className="mt-1 text-base font-semibold text-asta-navy">Slayt görseli (16:9)</p>
         <p className="mt-2 text-xs leading-relaxed text-neutral-600">
@@ -88,8 +88,8 @@ function HeroSlideVisualAside({ slide, onSlideChange, uploadDisabled, onUploadFi
             />
           ) : (
             <div
-              className="aspect-video w-full min-h-[160px]"
-              style={{ background: previewGradient }}
+              className={`aspect-video w-full min-h-[160px] ${slide.bgGradient?.trim() ? '' : 'hero-slide-placeholder'}`}
+              style={slide.bgGradient?.trim() ? { background: previewGradient } : undefined}
             />
           )}
         </div>

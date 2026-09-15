@@ -548,7 +548,7 @@ export default function AdminCampaignPanel() {
               type="button"
               onClick={sendTestMail}
               disabled={testBusy}
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-asta-navy px-6 py-2.5 text-sm font-bold uppercase tracking-wide text-white shadow-sm hover:bg-asta-navy/90 disabled:opacity-60"
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-brand/35 bg-brand-muted/30 px-6 py-2.5 text-sm font-bold uppercase tracking-wide text-brand shadow-sm hover:bg-brand/15 disabled:opacity-60"
             >
               {testBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
               Test gönder
@@ -559,7 +559,7 @@ export default function AdminCampaignPanel() {
             <button
               type="submit"
               disabled={submitBusy}
-              className="inline-flex min-w-[180px] items-center justify-center gap-2 rounded-xl bg-emerald-500 px-8 py-3 text-sm font-bold uppercase tracking-wide text-white shadow hover:bg-emerald-600 disabled:opacity-60"
+              className="inline-flex min-w-[180px] items-center justify-center gap-2 rounded-xl bg-brand px-8 py-3 text-sm font-bold uppercase tracking-wide text-white shadow hover:bg-brand-hover disabled:opacity-60"
             >
               {submitBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
               {mode === 'now'
@@ -659,7 +659,7 @@ function StatCard({ title, value, note, emphasize }) {
   return (
     <div
       className={`rounded-xl border p-4 shadow-sm ${
-        emphasize ? 'border-amber-200 bg-amber-50/50' : 'border-neutral-200 bg-white'
+        emphasize ? 'admin-stat-emphasize border-amber-200 bg-amber-50/50' : 'border-neutral-200 bg-white'
       }`}
     >
       <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">{title}</p>

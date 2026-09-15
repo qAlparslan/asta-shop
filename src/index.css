@@ -451,3 +451,135 @@ html[data-theme='dark'] .admin-system-frame {
 .admin-system-frame {
   background-color: rgb(245 245 245 / 0.55);
 }
+
+/* —— Admin sistem: Quill editör —— */
+html[data-theme='dark'] .admin-shell .ql-toolbar.ql-snow {
+  border-color: rgb(var(--t-border)) !important;
+  background-color: rgb(var(--t-surface-muted)) !important;
+}
+
+html[data-theme='dark'] .admin-shell .ql-container.ql-snow {
+  border-color: rgb(var(--t-border)) !important;
+  background-color: rgb(var(--t-input-bg)) !important;
+  color: rgb(var(--t-fg));
+}
+
+html[data-theme='dark'] .admin-shell .ql-editor {
+  color: rgb(var(--t-fg));
+}
+
+html[data-theme='dark'] .admin-shell .ql-editor.ql-blank::before {
+  color: rgb(var(--t-fg-muted)) !important;
+  opacity: 1 !important;
+}
+
+html[data-theme='dark'] .admin-shell .ql-snow .ql-stroke {
+  stroke: rgb(var(--t-fg-secondary));
+}
+
+html[data-theme='dark'] .admin-shell .ql-snow .ql-fill {
+  fill: rgb(var(--t-fg-secondary));
+}
+
+html[data-theme='dark'] .admin-shell .ql-snow .ql-picker {
+  color: rgb(var(--t-fg-secondary));
+}
+
+html[data-theme='dark'] .admin-shell .ql-snow .ql-picker-options {
+  background-color: rgb(var(--t-surface));
+  border-color: rgb(var(--t-border));
+}
+
+/* Hero önizleme paneli */
+html[data-theme='dark'] .admin-hero-aside-panel {
+  background-color: rgb(var(--t-surface)) !important;
+  border-color: rgb(var(--t-border)) !important;
+}
+
+html[data-theme='dark'] .admin-hero-aside-panel .text-neutral-600 {
+  color: rgb(var(--t-fg-secondary)) !important;
+}
+
+/* Kampanya istatistik — vurgulu kart */
+html[data-theme='dark'] .admin-stat-emphasize {
+  background-color: rgb(120 53 15 / 0.4) !important;
+  border-color: rgb(180 83 9 / 0.55) !important;
+}
+
+html[data-theme='dark'] .admin-stat-emphasize .text-neutral-500 {
+  color: rgb(253 230 138) !important;
+}
+
+html[data-theme='dark'] .admin-stat-emphasize .text-asta-navy {
+  color: rgb(var(--t-fg)) !important;
+}
+
+/* Yasal metin sekmeleri */
+html[data-theme='dark'] .admin-legal-tab-idle {
+  background-color: rgb(var(--t-surface-subtle)) !important;
+  color: rgb(var(--t-fg-secondary)) !important;
+}
+
+html[data-theme='dark'] .admin-legal-tab-idle:hover {
+  background-color: rgb(var(--t-border-strong) / 0.5) !important;
+}
+
+/* Mod seçici (kampanya) */
+html[data-theme='dark'] .admin-shell .rounded-xl.bg-neutral-100.p-1 button.bg-white {
+  background-color: rgb(var(--t-surface)) !important;
+  color: rgb(var(--t-heading)) !important;
+}
+
+html[data-theme='dark'] .admin-shell .rounded-xl.bg-neutral-100.p-1 {
+  background-color: rgb(var(--t-surface-muted)) !important;
+}
+
+/* Uyarı / başarı kutuları */
+html[data-theme='dark'] .text-amber-950,
+html[data-theme='dark'] .admin-shell .border-amber-200.bg-amber-50 {
+  color: rgb(254 243 199) !important;
+}
+
+html[data-theme='dark'] .admin-shell .border-amber-200.bg-amber-50 {
+  background-color: rgb(120 53 15 / 0.35) !important;
+  border-color: rgb(180 83 9 / 0.5) !important;
+}
+
+html[data-theme='dark'] .admin-shell .text-amber-800,
+html[data-theme='dark'] .admin-shell .text-amber-700 {
+  color: rgb(253 230 138) !important;
+}
+
+html[data-theme='dark'] .border-emerald-200.bg-emerald-50,
+html[data-theme='dark'] .border-green-200.bg-green-50 {
+  background-color: rgb(6 78 59 / 0.35) !important;
+  border-color: rgb(16 185 129 / 0.45) !important;
+}
+
+html[data-theme='dark'] .text-emerald-950,
+html[data-theme='dark'] .text-green-900 {
+  color: rgb(167 243 208) !important;
+}
+
+html[data-theme='dark'] .admin-shell td .line-clamp-2.text-neutral-500,
+html[data-theme='dark'] .admin-shell td .line-clamp-2.text-xs.text-neutral-500 {
+  color: rgb(var(--t-fg-muted)) !important;
+}
+
+html[data-theme='dark'] .admin-shell .font-normal.text-neutral-400 {
+  color: rgb(var(--t-fg-muted)) !important;
+}
+
+html[data-theme='dark'] .admin-shell label.text-neutral-500,
+html[data-theme='dark'] .admin-shell h4.text-neutral-500 {
+  color: rgb(var(--t-fg-muted)) !important;
+}
+
+html[data-theme='dark'] .admin-shell .rounded-lg.border.border-neutral-100.bg-neutral-50\/80 {
+  background-color: rgb(var(--t-surface-muted)) !important;
+  border-color: rgb(var(--t-border)) !important;
+}
+
+html[data-theme='dark'] .admin-shell input[type='checkbox'] {
+  accent-color: #9f2133;
+}
