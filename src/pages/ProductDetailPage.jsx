@@ -16,9 +16,6 @@ import { buildBreadcrumbJsonLd, buildCanonicalUrl, excerptPlain, toAbsoluteUrl }
 import { assetUrl } from '../config/api.js';
 import { buildSiteDocumentTitle } from '../lib/siteDocumentTitle.js';
 
-const ACCENT = '#7d7d62';
-const BTN_BG = '#0f172a';
-
 export default function ProductDetailPage() {
   const { slug, productId } = useParams();
   const { addItem } = useCart();
@@ -214,7 +211,7 @@ export default function ProductDetailPage() {
 
   if (!productId && !slug) {
     return (
-      <main className="bg-white px-4 py-16 text-center font-sans text-sm text-neutral-600">
+      <main className="bg-theme-page px-4 py-16 text-center font-sans text-sm text-neutral-600">
         Geçersiz ürün adresi.{' '}
         <Link to="/urunler" className="font-semibold text-brand hover:underline">
           Ürünlere dön
@@ -225,7 +222,7 @@ export default function ProductDetailPage() {
 
   if (!loading && err) {
     return (
-      <main className="bg-white px-4 py-16 text-center font-sans text-sm text-neutral-600">
+      <main className="bg-theme-page px-4 py-16 text-center font-sans text-sm text-neutral-600">
         <p>{err}</p>
         <Link to="/urunler" className="mt-4 inline-block font-semibold text-brand hover:underline">
           Ürünlere dön
@@ -247,7 +244,7 @@ export default function ProductDetailPage() {
           jsonLd={productSeo.jsonLd}
         />
       ) : null}
-    <main className="border-b border-neutral-100 bg-white font-sans text-neutral-900">
+    <main className="border-b border-neutral-100 bg-theme-page font-sans text-neutral-900">
       <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
         <nav className="mb-8 text-sm text-neutral-500" aria-label="Konum">
           <Link to="/" className="hover:text-asta-navy">
@@ -288,7 +285,7 @@ export default function ProductDetailPage() {
           <>
           <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(320px,480px)] lg:gap-14">
             <div>
-              <div className="flex aspect-square items-center justify-center overflow-hidden rounded-2xl border border-neutral-100 bg-neutral-50 p-4 sm:p-6">
+              <div className="flex aspect-square items-center justify-center overflow-hidden rounded-2xl border border-neutral-100 bg-theme-media-well p-4 sm:p-6">
                 {mainImg ? (
                   <img
                     src={mainImg}
@@ -328,14 +325,11 @@ export default function ProductDetailPage() {
                 </span>
               </div>
 
-              <p
-                className="mt-5 text-sm font-medium uppercase tracking-[0.14em]"
-                style={{ color: ACCENT }}
-              >
+              <p className="mt-5 text-sm font-medium uppercase tracking-[0.14em] text-neutral-600">
                 {catalog.brand}
               </p>
 
-              <h1 className="mt-2 text-balance text-2xl font-bold leading-tight text-[#1a1a1a] sm:text-3xl lg:text-[2rem]">
+              <h1 className="mt-2 text-balance text-2xl font-bold leading-tight text-asta-navy sm:text-3xl lg:text-[2rem]">
                 {catalog.name}
               </h1>
 
@@ -383,8 +377,7 @@ export default function ProductDetailPage() {
                 type="button"
                 onClick={handleAdd}
                 disabled={!canAdd}
-                className="flex w-full max-w-md items-center justify-center gap-2 rounded-full px-6 py-4 text-sm font-bold uppercase tracking-wide text-white shadow-sm transition-opacity disabled:cursor-not-allowed disabled:opacity-45"
-                style={{ backgroundColor: BTN_BG }}
+                className="flex w-full max-w-md items-center justify-center gap-2 rounded-full bg-brand px-6 py-4 text-sm font-bold uppercase tracking-wide text-white shadow-sm transition-colors hover:bg-brand-hover disabled:cursor-not-allowed disabled:bg-neutral-400 disabled:text-neutral-200 disabled:opacity-100"
               >
                 <ShoppingCart className="h-5 w-5" strokeWidth={2} aria-hidden />
                 Sepete ekle
@@ -396,10 +389,7 @@ export default function ProductDetailPage() {
                 </p>
               ) : null}
 
-              <div
-                className="mt-12 grid grid-cols-2 gap-4 border-t border-neutral-100 pt-10 text-center text-[10px] font-bold uppercase leading-snug tracking-wide sm:gap-6 sm:text-[11px]"
-                style={{ color: ACCENT }}
-              >
+              <div className="mt-12 grid grid-cols-2 gap-4 border-t border-neutral-100 pt-10 text-center text-[10px] font-bold uppercase leading-snug tracking-wide text-neutral-500 sm:gap-6 sm:text-[11px]">
                 <div className="flex flex-col items-center gap-2">
                   <Truck className="h-7 w-7 opacity-90" strokeWidth={1.5} aria-hidden />
                   <span>Hızlı kargo</span>

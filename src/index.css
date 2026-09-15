@@ -233,3 +233,19 @@ html[data-theme='dark'] .bg-neutral-300 {
 html[data-theme='dark'] .hover\:bg-neutral-400:hover {
   background-color: rgb(var(--t-fg-muted)) !important;
 }
+
+html[data-theme='dark'] .product-detail-html {
+  color: rgb(var(--t-fg-secondary)) !important;
+}
+
+html[data-theme='dark'] .product-detail-html :where(p, li, td, th, span):not([class*='text-']) {
+  color: rgb(var(--t-fg-secondary));
+}
+
+html[data-theme='dark'] .product-detail-html :where(h1, h2, h3, h4, strong, b) {
+  color: rgb(var(--t-heading));
+}
+
+html[data-theme='dark'] .product-detail-html blockquote {
+  border-color: rgb(var(--t-border)) !important;
+}
