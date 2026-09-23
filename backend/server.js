@@ -51,6 +51,7 @@ const ensureOrderUserIdColumn = require('./utils/ensureOrderUserIdColumn');
 const ensureOrderEInvoiceColumns = require('./utils/ensureOrderEInvoiceColumns');
 const ensureOrderCouponCodeColumn = require('./utils/ensureOrderCouponCodeColumn');
 const ensureOrderShipmentColumns = require('./utils/ensureOrderShipmentColumns');
+const ensureOrderRefundColumns = require('./utils/ensureOrderRefundColumns');
 const ensureCategoryMetaColumns = require('./utils/ensureCategoryMetaColumns');
 const ensureConsentEventTermsColumn = require('./utils/ensureConsentEventTermsColumn');
 const ensureEmailDeliveryFeedbackTable = require('./utils/ensureEmailDeliveryFeedbackTable');
@@ -105,6 +106,7 @@ sequelize
     .then(() => ensureOrderEInvoiceColumns())
     .then(() => ensureOrderCouponCodeColumn())
     .then(() => ensureOrderShipmentColumns())
+    .then(() => ensureOrderRefundColumns())
     .then(() => ensureCategoryMetaColumns())
     .then(() => ensureConsentEventTermsColumn())
     .then(() => ensureEmailDeliveryFeedbackTable())

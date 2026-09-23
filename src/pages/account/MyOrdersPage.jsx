@@ -266,8 +266,8 @@ export default function MyOrdersPage() {
               </p>
               {cancelTargetStatus === 'hazirlaniyor' ? (
                 <p className="mt-2 text-sm leading-relaxed text-amber-900">
-                  Ödemeniz alındıysa iade, banka süreçlerine göre birkaç iş günü içinde yansıyabilir. Kargoya
-                  verilmemiş siparişlerde stok otomatik güncellenir.
+                  Ödemeniz PayTR üzerinden otomatik iade edilir; banka/kartınıza yansıması birkaç iş günü sürebilir.
+                  İade başarısız olursa sipariş iptal edilmez — tekrar deneyebilir veya destek ile iletişime geçebilirsiniz.
                 </p>
               ) : cancelTargetStatus === 'odeme_bekleniyor' ? (
                 <p className="mt-2 text-sm text-neutral-600">

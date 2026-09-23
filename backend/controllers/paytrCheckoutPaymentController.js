@@ -18,6 +18,7 @@ const {
     postPaytrGetToken,
     paytrIframeSrc,
 } = require('../services/paytrIframeApi');
+const { uuidToMerchantOid, merchantOidToOrderId } = require('../utils/paytrMerchantOid');
 
 function getClientIp(req) {
     const xf = req.headers['x-forwarded-for'];
@@ -27,19 +28,6 @@ function getClientIp(req) {
     }
     const raw = req.ip || (req.socket && req.socket.remoteAddress) || '';
     return String(raw || '').replace(/^::ffff:/, '').slice(0, 39);
-}
-
-function uuidToMerchantOid(uuid) {
-    return String(uuid || '').replace(/-/g, '');
-}
-
-/** PayTR merchant_oid geri sipariş UUID’sine (@param alphanumeric 32 karakter HEX) */
-function merchantOidToOrderId(merchantOid) {
-    const s = String(merchantOid || '').trim();
-    if (/^[0-9a-f]{32}$/i.test(s)) {
-        return `${s.slice(0, 8)}-${s.slice(8, 12)}-${s.slice(12, 16)}-${s.slice(16, 20)}-${s.slice(20, 32)}`;
-    }
-    return s;
 }
 
 /** PayTR dökümanda TL ↔ TRY kullanılabiliyor; karşılaştırmayı tek biçeme indirger */

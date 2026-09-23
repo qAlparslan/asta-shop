@@ -95,6 +95,28 @@ const Order = sequelize.define('Order', {
         type: DataTypes.TEXT,
         allowNull: true,
     },
+    /** none | pending | completed | failed */
+    refundStatus: {
+        type: DataTypes.STRING(24),
+        allowNull: false,
+        defaultValue: 'none',
+    },
+    refundedAmount: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: true,
+    },
+    paytrRefundReference: {
+        type: DataTypes.STRING(64),
+        allowNull: true,
+    },
+    refundLastError: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+    },
+    refundedAt: {
+        type: DataTypes.DATE,
+        allowNull: true,
+    },
 }, {
     tableName: 'orders',
     timestamps: true

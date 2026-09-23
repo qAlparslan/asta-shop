@@ -14,6 +14,8 @@ const {
 } = require('../services/orderInventory');
 const { logAdminAudit } = require('../services/auditService');
 const { buildDashboardStatsV2 } = require('../services/dashboardStatsV2Service');
+const { ensurePaytrRefundForPaidOrder } = require('../services/paytrOrderRefund');
+const { uuidToMerchantOid } = require('../utils/paytrMerchantOid');
 
 /** Stoğun düşürülmüş (commit edilmiş) sayıldığı durumlar. */
 const COMMITTED_STATUSES = new Set(['hazirlaniyor', 'kargolandi', 'teslim-edildi']);
@@ -22,6 +24,56 @@ const PENDING_STATUS = 'odeme_bekleniyor';
 
 /** Müşterinin hesabından iptal edebileceği durumlar (kargoya verilmeden önce). */
 const CUSTOMER_CANCELABLE_STATUSES = new Set([PENDING_STATUS, 'hazirlaniyor']);
+
+/** İptal öncesi PayTR iadesi gereken (tahsil edilmiş) durumlar. */
+const REFUND_BEFORE_CANCEL_STATUSES = new Set(['hazirlaniyor']);
+
+/**
+ * Tahsil edilmiş sipariş iptalinden önce PayTR iade API.
+ * @returns {Promise<{ proceed: boolean; refund?: object; message?: string }>}
+ */
+async function paytrRefundBeforeCancellation(order) {
+    if (!order || !REFUND_BEFORE_CANCEL_STATUSES.has(order.status)) {
+        return { proceed: true, refund: null };
+    }
+
+    const refund = await ensurePaytrRefundForPaidOrder(order, {
+        referenceNo: `cncl-${uuidToMerchantOid(order.id)}`.slice(0, 64),
+    });
+
+    if (!refund.ok) {
+        try {
+            await Order.update(
+                {
+                    refundStatus: 'failed',
+                    refundLastError: String(refund.error || 'PayTR iade başarısız.').slice(0, 65000),
+                },
+                { where: { id: order.id } },
+            );
+        } catch {
+            /* yoksay */
+        }
+        return {
+            proceed: false,
+            refund,
+            message: refund.error || 'PayTR iade işlemi tamamlanamadı; sipariş iptal edilmedi.',
+        };
+    }
+
+    return { proceed: true, refund };
+}
+
+/** @param {object | null | undefined} refund ensurePaytrRefundForPaidOrder sonucu */
+function refundPatchFromPaytrResult(refund) {
+    if (!refund || !refund.applied) return {};
+    return {
+        refundStatus: 'completed',
+        refundedAmount: refund.refundedAmount,
+        paytrRefundReference: refund.paytrRefundReference,
+        refundLastError: null,
+        refundedAt: new Date(),
+    };
+}
 
 /**
  * Siparişin giriş yapmış kullanıcıya ait olduğunu doğrular (listMyOrders ile aynı kural).
@@ -123,6 +175,47 @@ exports.cancelMyOrder = async (req, res) => {
         return res.status(400).json({ status: 'fail', message: 'Sipariş kimliği gerekli.' });
     }
 
+    const preview = await Order.findByPk(orderId);
+    if (!preview) {
+        return res.status(404).json({ status: 'fail', message: 'Sipariş bulunamadı.' });
+    }
+
+    if (!orderMatchesAccount(preview, req.user)) {
+        return res.status(403).json({ status: 'fail', message: 'Bu siparişi iptal etme yetkiniz yok.' });
+    }
+
+    const previewStatus = preview.status;
+
+    if (previewStatus === CANCELLED_STATUS) {
+        return res.status(200).json({
+            status: 'success',
+            message: 'Sipariş zaten iptal edilmiş.',
+            data: { order: preview, alreadyCancelled: true },
+        });
+    }
+
+    if (!CUSTOMER_CANCELABLE_STATUSES.has(previewStatus)) {
+        let message =
+            'Bu sipariş artık iptal edilemez. Kargoya verilmiş veya teslim edilmiş siparişler için müşteri hizmetleri ile iletişime geçin.';
+        if (previewStatus === 'kargolandi') {
+            message =
+                'Siparişiniz kargoya verildiği için bu ekrandan iptal edilemez. İade için müşteri hizmetleri ile iletişime geçin.';
+        } else if (previewStatus === 'teslim-edildi') {
+            message =
+                'Teslim edilmiş siparişler bu ekrandan iptal edilemez. İade süreci için müşteri hizmetleri ile iletişime geçin.';
+        }
+        return res.status(409).json({ status: 'fail', message, code: 'ORDER_NOT_CANCELLABLE' });
+    }
+
+    const paytrStep = await paytrRefundBeforeCancellation(preview);
+    if (!paytrStep.proceed) {
+        return res.status(502).json({
+            status: 'fail',
+            message: paytrStep.message,
+            code: 'PAYTR_REFUND_FAILED',
+        });
+    }
+
     const t = await sequelize.transaction();
     try {
         const order = await Order.findByPk(orderId, {
@@ -153,34 +246,36 @@ exports.cancelMyOrder = async (req, res) => {
 
         if (!CUSTOMER_CANCELABLE_STATUSES.has(oldStatus)) {
             await t.rollback();
-            let message =
-                'Bu sipariş artık iptal edilemez. Kargoya verilmiş veya teslim edilmiş siparişler için müşteri hizmetleri ile iletişime geçin.';
-            if (oldStatus === 'kargolandi') {
-                message =
-                    'Siparişiniz kargoya verildiği için bu ekrandan iptal edilemez. İade için müşteri hizmetleri ile iletişime geçin.';
-            } else if (oldStatus === 'teslim-edildi') {
-                message =
-                    'Teslim edilmiş siparişler bu ekrandan iptal edilemez. İade süreci için müşteri hizmetleri ile iletişime geçin.';
-            }
-            return res.status(409).json({ status: 'fail', message, code: 'ORDER_NOT_CANCELLABLE' });
+            return res.status(409).json({
+                status: 'fail',
+                message: 'Sipariş durumu değişti; lütfen sayfayı yenileyip tekrar deneyin.',
+                code: 'ORDER_STATUS_CHANGED',
+            });
         }
 
         await applyInventoryForStatusChange(order, oldStatus, CANCELLED_STATUS, t);
-        await order.update({ status: CANCELLED_STATUS }, { transaction: t });
+        await order.update(
+            { status: CANCELLED_STATUS, ...refundPatchFromPaytrResult(paytrStep.refund) },
+            { transaction: t },
+        );
         await t.commit();
         await order.reload();
 
         sendOrderStatusUpdateEmail(order, CANCELLED_STATUS);
 
-        const message =
+        let message =
             oldStatus === PENDING_STATUS
                 ? 'Siparişiniz iptal edildi. Ödeme alınmadı; stok güncellendi.'
-                : 'Siparişiniz iptal edildi. Ödemeniz alındıysa iade süreci en kısa sürede başlatılır.';
+                : 'Siparişiniz iptal edildi. Ödemeniz PayTR üzerinden iade edildi; bankanıza yansıması birkaç iş günü sürebilir.';
+        if (oldStatus === 'hazirlaniyor' && paytrStep.refund?.skipped && paytrStep.refund?.reason === 'already_completed') {
+            message =
+                'Siparişiniz iptal edildi. Ödeme iadesi daha önce tamamlanmıştı; bankanıza yansıması birkaç iş günü sürebilir.';
+        }
 
         return res.status(200).json({
             status: 'success',
             message,
-            data: { order },
+            data: { order, refund: paytrStep.refund?.applied ? { amount: paytrStep.refund.return_amount } : null },
         });
     } catch (err) {
         try {
@@ -511,9 +606,28 @@ exports.shipOrder = async (req, res) => {
 
 // 5. SİPARİŞ DURUMUNU GÜNCELLE
 exports.updateOrderStatus = async (req, res) => {
+    const { status, trackingNumber } = req.body;
+    let paytrStep = { proceed: true, refund: null };
+
+    if (status === CANCELLED_STATUS) {
+        const preview = await Order.findByPk(req.params.id);
+        if (!preview) {
+            return res.status(404).json({ status: 'fail', message: 'Sipariş bulunamadı.' });
+        }
+        if (preview.status !== CANCELLED_STATUS && REFUND_BEFORE_CANCEL_STATUSES.has(preview.status)) {
+            paytrStep = await paytrRefundBeforeCancellation(preview);
+            if (!paytrStep.proceed) {
+                return res.status(502).json({
+                    status: 'fail',
+                    message: paytrStep.message,
+                    code: 'PAYTR_REFUND_FAILED',
+                });
+            }
+        }
+    }
+
     const t = await sequelize.transaction();
     try {
-        const { status, trackingNumber } = req.body;
         const order = await Order.findByPk(req.params.id, {
             transaction: t,
             lock: t.LOCK.UPDATE,
@@ -531,6 +645,10 @@ exports.updateOrderStatus = async (req, res) => {
         if (trackingNumber !== undefined) patch.trackingNumber = trackingNumber || null;
         if (status === 'kargolandi' && trackingNumber) {
             if (!order.shippedAt) patch.shippedAt = new Date();
+        }
+
+        if (status === CANCELLED_STATUS && oldStatus !== CANCELLED_STATUS) {
+            Object.assign(patch, refundPatchFromPaytrResult(paytrStep.refund));
         }
 
         // Durum değiştiyse envanteri düzelt (stok iadesi / yeniden düşme)

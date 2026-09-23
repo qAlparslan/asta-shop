@@ -35,7 +35,8 @@ const STATUS_COPY = {
     },
     'iptal-edildi': {
         title: 'Siparişiniz iptal edildi',
-        message: 'Siparişiniz iptal edildi. Ödeme alındıysa iade süreci kısa sürede başlatılır.',
+        message:
+            'Siparişiniz iptal edildi. Ödeme alınmışsa PayTR üzerinden iade başlatıldı; banka/kartınıza yansıması birkaç iş günü sürebilir.',
         pillBg: '#fef2f2',
         pillColor: T.danger,
         border: '#fecaca',
