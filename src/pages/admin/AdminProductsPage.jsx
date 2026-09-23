@@ -24,6 +24,11 @@ import MediaImg from '../../components/MediaImg.jsx';
 import { pickProductImagePath } from '../../lib/productMap.js';
 import { formatTRY } from '../../lib/formatTRY.js';
 import { inputClass } from '../../lib/formStyles.js';
+import {
+  ADMIN_PRODUCT_SORT_OPTIONS,
+  filterAndSortAdminProducts,
+  uniqueProductCategories,
+} from './adminProductListFilters.js';
 
 const SKIN_TYPE_OPTIONS = [
   { value: 'tumu', label: 'Tüm cilt tipleri' },
@@ -137,6 +142,14 @@ export default function AdminProductsPage() {
   const [error, setError] = useState('');
   const [busyId, setBusyId] = useState('');
   const [query, setQuery] = useState('');
+  const [sortKey, setSortKey] = useState('createdAt_desc');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [stockFilter, setStockFilter] = useState('all');
+  const [discountFilter, setDiscountFilter] = useState('all');
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [tagFilter, setTagFilter] = useState('all');
+  const [contentFilter, setContentFilter] = useState('all');
+  const [engagementFilter, setEngagementFilter] = useState('all');
   const [importBusy, setImportBusy] = useState(false);
   const [selectedIds, setSelectedIds] = useState(() => new Set());
   const [bulkBusy, setBulkBusy] = useState(false);
@@ -167,25 +180,49 @@ export default function AdminProductsPage() {
     load();
   }, [load]);
 
-  const visible = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return products;
-    return products.filter(
-      (p) =>
-        String(p.name || '')
-          .toLowerCase()
-          .includes(q) ||
-        String(p.brand || '')
-          .toLowerCase()
-          .includes(q) ||
-        String(p.category || '')
-          .toLowerCase()
-          .includes(q) ||
-        String(p.barcode || '')
-          .toLowerCase()
-          .includes(q),
-    );
-  }, [products, query]);
+  const listFilters = useMemo(
+    () => ({
+      status: statusFilter,
+      stock: stockFilter,
+      discount: discountFilter,
+      category: categoryFilter,
+      tag: tagFilter,
+      content: contentFilter,
+      engagement: engagementFilter,
+    }),
+    [statusFilter, stockFilter, discountFilter, categoryFilter, tagFilter, contentFilter, engagementFilter],
+  );
+
+  const categoryOptions = useMemo(() => uniqueProductCategories(products), [products]);
+
+  const visible = useMemo(
+    () => filterAndSortAdminProducts(products, query, listFilters, sortKey),
+    [products, query, listFilters, sortKey],
+  );
+
+  const filtersActive =
+    statusFilter !== 'all' ||
+    stockFilter !== 'all' ||
+    discountFilter !== 'all' ||
+    categoryFilter !== 'all' ||
+    tagFilter !== 'all' ||
+    contentFilter !== 'all' ||
+    engagementFilter !== 'all' ||
+    sortKey !== 'createdAt_desc';
+
+  const resetListFilters = () => {
+    setSortKey('createdAt_desc');
+    setStatusFilter('all');
+    setStockFilter('all');
+    setDiscountFilter('all');
+    setCategoryFilter('all');
+    setTagFilter('all');
+    setContentFilter('all');
+    setEngagementFilter('all');
+  };
+
+  const selectClass =
+    'rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none ring-brand focus:border-brand/50 focus:ring-2';
 
   useEffect(() => {
     const allowed = new Set(visible.map((p) => p.id));
@@ -430,6 +467,141 @@ export default function AdminProductsPage() {
             <Plus className="h-4 w-4" strokeWidth={2.5} />
             Yeni ürün
           </button>
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-neutral-200 bg-white p-4 shadow-card">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <p className="text-sm text-neutral-600">
+            <span className="font-semibold text-asta-navy">{visible.length}</span>
+            {products.length !== visible.length ? (
+              <>
+                {' '}
+                / {products.length}
+              </>
+            ) : null}{' '}
+            ürün listeleniyor
+          </p>
+          {filtersActive ? (
+            <button
+              type="button"
+              onClick={resetListFilters}
+              className="text-xs font-semibold text-brand hover:underline"
+            >
+              Filtreleri sıfırla
+            </button>
+          ) : null}
+        </div>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
+          <label className="block min-w-0">
+            <span className="text-[11px] font-bold uppercase tracking-wide text-neutral-500">Sıralama</span>
+            <select
+              value={sortKey}
+              onChange={(e) => setSortKey(e.target.value)}
+              className={`mt-1.5 w-full ${selectClass}`}
+            >
+              {ADMIN_PRODUCT_SORT_OPTIONS.map((o) => (
+                <option key={o.id} value={o.id}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="block min-w-0">
+            <span className="text-[11px] font-bold uppercase tracking-wide text-neutral-500">Durum</span>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className={`mt-1.5 w-full ${selectClass}`}
+            >
+              <option value="all">Tümü</option>
+              <option value="published">Yayında (stoklu)</option>
+              <option value="inactive">Vitrinden gizli</option>
+              <option value="auto_hidden">Stok bitti — otomatik gizli</option>
+              <option value="out_of_stock">Stok yok</option>
+            </select>
+          </label>
+          <label className="block min-w-0">
+            <span className="text-[11px] font-bold uppercase tracking-wide text-neutral-500">Stok</span>
+            <select
+              value={stockFilter}
+              onChange={(e) => setStockFilter(e.target.value)}
+              className={`mt-1.5 w-full ${selectClass}`}
+            >
+              <option value="all">Tümü</option>
+              <option value="low">Düşük stok (≤5)</option>
+              <option value="zero">Sıfır stok</option>
+            </select>
+          </label>
+          <label className="block min-w-0">
+            <span className="text-[11px] font-bold uppercase tracking-wide text-neutral-500">İndirim</span>
+            <select
+              value={discountFilter}
+              onChange={(e) => setDiscountFilter(e.target.value)}
+              className={`mt-1.5 w-full ${selectClass}`}
+            >
+              <option value="all">Tümü</option>
+              <option value="on_sale">İndirimde (aktif fiyat)</option>
+              <option value="scheduled_active">Planlı indirim — şu an aktif</option>
+              <option value="scheduled_future">Planlı indirim — gelecek</option>
+              <option value="none">İndirimsiz</option>
+            </select>
+          </label>
+          <label className="block min-w-0">
+            <span className="text-[11px] font-bold uppercase tracking-wide text-neutral-500">Kategori</span>
+            <select
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value)}
+              className={`mt-1.5 w-full ${selectClass}`}
+            >
+              <option value="all">Tümü</option>
+              {categoryOptions.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="block min-w-0">
+            <span className="text-[11px] font-bold uppercase tracking-wide text-neutral-500">Etiket</span>
+            <select
+              value={tagFilter}
+              onChange={(e) => setTagFilter(e.target.value)}
+              className={`mt-1.5 w-full ${selectClass}`}
+            >
+              <option value="all">Tümü</option>
+              {TAG_PRESETS.map((t) => (
+                <option key={t.value} value={t.value}>
+                  {t.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="block min-w-0">
+            <span className="text-[11px] font-bold uppercase tracking-wide text-neutral-500">İçerik / SEO</span>
+            <select
+              value={contentFilter}
+              onChange={(e) => setContentFilter(e.target.value)}
+              className={`mt-1.5 w-full ${selectClass}`}
+            >
+              <option value="all">Tümü</option>
+              <option value="no_image">Görsel yok</option>
+              <option value="missing_seo">Slug veya SEO eksik</option>
+              <option value="empty_description">Açıklama boş</option>
+            </select>
+          </label>
+          <label className="block min-w-0">
+            <span className="text-[11px] font-bold uppercase tracking-wide text-neutral-500">Sepet ilgisi</span>
+            <select
+              value={engagementFilter}
+              onChange={(e) => setEngagementFilter(e.target.value)}
+              className={`mt-1.5 w-full ${selectClass}`}
+            >
+              <option value="all">Tümü</option>
+              <option value="in_cart">Şu an sepette tutulan</option>
+              <option value="cart_adds">Sepete en az 1 kez eklenmiş</option>
+            </select>
+          </label>
         </div>
       </div>
 
@@ -797,7 +969,9 @@ export default function AdminProductsPage() {
               {!loading && visible.length === 0 && (
                 <tr>
                   <td colSpan={9} className="px-4 py-12 text-center text-neutral-500">
-                    {query.trim() ? 'Aramaya uygun ürün yok.' : 'Ürün yok.'}
+                    {query.trim() || filtersActive
+                      ? 'Arama veya filtreye uygun ürün yok.'
+                      : 'Ürün yok.'}
                   </td>
                 </tr>
               )}
