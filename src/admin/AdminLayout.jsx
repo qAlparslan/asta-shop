@@ -4,6 +4,7 @@ import {
   LayoutDashboard,
   Package,
   ShoppingCart,
+  FileText,
   TicketPercent,
   SlidersHorizontal,
   ChevronDown,
@@ -108,6 +109,13 @@ export default function AdminLayout() {
           >
             <ShoppingCart className="h-4 w-4 shrink-0" strokeWidth={1.75} />
             Siparişler
+          </NavLink>
+          <NavLink
+            to="/admin/faturalandirma"
+            className={({ isActive }) => `${linkBase} ${isActive ? linkActive : linkIdle}`}
+          >
+            <FileText className="h-4 w-4 shrink-0" strokeWidth={1.75} />
+            Faturalandırma
           </NavLink>
           <NavLink
             to="/admin/urunler"
