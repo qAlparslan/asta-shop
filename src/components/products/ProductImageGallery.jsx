@@ -42,63 +42,76 @@ export default function ProductImageGallery({ images, productName, index, onInde
 
   return (
     <>
-      <div className="flex aspect-square items-center justify-center overflow-hidden rounded-2xl border border-neutral-100 bg-theme-media-well p-4 sm:p-6">
+      <div className="relative flex aspect-square items-center justify-center overflow-hidden rounded-2xl border border-neutral-100 bg-theme-media-well p-4 sm:p-6">
         {mainSrc ? (
-          <button
-            type="button"
-            onClick={openLightbox}
-            className="group relative flex h-full w-full cursor-zoom-in items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
-            aria-label="Ürün görselini büyüt"
-          >
-            <img
-              src={mainSrc}
-              alt={productName}
-              className="max-h-full max-w-full object-contain transition-transform duration-200 group-hover:scale-[1.02]"
-            />
-            <span className="pointer-events-none absolute bottom-3 right-3 flex items-center gap-1 rounded-full bg-black/50 px-2.5 py-1 text-[11px] font-medium text-white opacity-0 transition-opacity group-hover:opacity-100 sm:opacity-100">
-              <ZoomIn className="h-3.5 w-3.5" aria-hidden />
-              Büyüt
-            </span>
-          </button>
+          <>
+            <button
+              type="button"
+              onClick={openLightbox}
+              className="group relative flex h-full w-full cursor-zoom-in items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
+              aria-label="Ürün görselini büyüt"
+            >
+              <img
+                src={mainSrc}
+                alt={productName}
+                className="max-h-full max-w-full object-contain transition-transform duration-200 group-hover:scale-[1.02]"
+              />
+              <span className="pointer-events-none absolute bottom-3 right-3 flex items-center gap-1 rounded-full bg-black/50 px-2.5 py-1 text-[11px] font-medium text-white opacity-0 transition-opacity group-hover:opacity-100 sm:opacity-100">
+                <ZoomIn className="h-3.5 w-3.5" aria-hidden />
+                Büyüt
+              </span>
+            </button>
+            {count > 1 ? (
+              <>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    goPrev();
+                  }}
+                  className="absolute left-2 top-1/2 z-10 -translate-y-1/2 rounded-full border border-neutral-200/80 bg-white/95 p-2 text-neutral-700 shadow-sm hover:bg-white sm:left-3 sm:p-2.5"
+                  aria-label="Önceki görsel"
+                >
+                  <ChevronLeft className="h-5 w-5 sm:h-6 sm:w-6" strokeWidth={2} />
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    goNext();
+                  }}
+                  className="absolute right-2 top-1/2 z-10 -translate-y-1/2 rounded-full border border-neutral-200/80 bg-white/95 p-2 text-neutral-700 shadow-sm hover:bg-white sm:right-3 sm:p-2.5"
+                  aria-label="Sonraki görsel"
+                >
+                  <ChevronRight className="h-5 w-5 sm:h-6 sm:w-6" strokeWidth={2} />
+                </button>
+                <span className="pointer-events-none absolute bottom-3 left-3 rounded-full bg-black/45 px-2.5 py-1 text-[11px] font-medium text-white">
+                  {safeIndex + 1} / {count}
+                </span>
+              </>
+            ) : null}
+          </>
         ) : (
           <span className="text-sm text-neutral-400">Görsel yok</span>
         )}
       </div>
 
       {count > 1 ? (
-        <div className="mt-4 flex items-center gap-2">
-          <button
-            type="button"
-            onClick={goPrev}
-            className="flex h-20 w-9 shrink-0 items-center justify-center rounded-lg border border-neutral-200 bg-white text-neutral-600 hover:bg-neutral-50"
-            aria-label="Önceki görsel"
-          >
-            <ChevronLeft className="h-5 w-5" strokeWidth={2} />
-          </button>
-          <div className="flex min-w-0 flex-1 gap-3 overflow-x-auto pb-2">
-            {images.map((u, i) => (
-              <button
-                key={`${u}-${i}`}
-                type="button"
-                onClick={() => onIndexChange(i)}
-                className={`relative h-20 w-20 shrink-0 overflow-hidden rounded-lg border bg-white p-2 transition ${
-                  i === safeIndex ? 'border-asta-navy ring-2 ring-asta-navy/20' : 'border-neutral-200'
-                }`}
-                aria-label={`Görsel ${i + 1}`}
-                aria-current={i === safeIndex ? 'true' : undefined}
-              >
-                <img src={u} alt="" className="h-full w-full object-contain" />
-              </button>
-            ))}
-          </div>
-          <button
-            type="button"
-            onClick={goNext}
-            className="flex h-20 w-9 shrink-0 items-center justify-center rounded-lg border border-neutral-200 bg-white text-neutral-600 hover:bg-neutral-50"
-            aria-label="Sonraki görsel"
-          >
-            <ChevronRight className="h-5 w-5" strokeWidth={2} />
-          </button>
+        <div className="mt-4 flex gap-3 overflow-x-auto pb-2">
+          {images.map((u, i) => (
+            <button
+              key={`${u}-${i}`}
+              type="button"
+              onClick={() => onIndexChange(i)}
+              className={`relative h-20 w-20 shrink-0 overflow-hidden rounded-lg border bg-white p-2 transition ${
+                i === safeIndex ? 'border-asta-navy ring-2 ring-asta-navy/20' : 'border-neutral-200'
+              }`}
+              aria-label={`Görsel ${i + 1}`}
+              aria-current={i === safeIndex ? 'true' : undefined}
+            >
+              <img src={u} alt="" className="h-full w-full object-contain" />
+            </button>
+          ))}
         </div>
       ) : null}
 
