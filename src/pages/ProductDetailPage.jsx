@@ -11,6 +11,7 @@ import { useSiteSettings } from '../context/SiteSettingsContext.jsx';
 import StarRating from '../components/StarRating.jsx';
 import ProductReviewsSection from '../components/products/ProductReviewsSection.jsx';
 import ProductQuestionsSection from '../components/products/ProductQuestionsSection.jsx';
+import ProductImageGallery from '../components/products/ProductImageGallery.jsx';
 import PageSeo from '../components/PageSeo.jsx';
 import { buildBreadcrumbJsonLd, buildCanonicalUrl, excerptPlain, toAbsoluteUrl } from '../lib/siteSeo.js';
 import { assetUrl } from '../config/api.js';
@@ -297,37 +298,12 @@ export default function ProductDetailPage() {
           <>
           <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(320px,480px)] lg:gap-14">
             <div>
-              <div className="flex aspect-square items-center justify-center overflow-hidden rounded-2xl border border-neutral-100 bg-theme-media-well p-4 sm:p-6">
-                {mainImg ? (
-                  <img
-                    src={mainImg}
-                    alt={catalog.name}
-                    className="max-h-full max-w-full object-contain"
-                  />
-                ) : (
-                  <span className="text-sm text-neutral-400">Görsel yok</span>
-                )}
-              </div>
-              {gallery.length > 1 ? (
-                <div className="mt-4 flex gap-3 overflow-x-auto pb-2">
-                  {gallery.map((u, i) => (
-                    <button
-                      key={u}
-                      type="button"
-                      onClick={() => setImgIdx(i)}
-                      className={`relative h-20 w-20 shrink-0 overflow-hidden rounded-lg border bg-white p-2 transition ${
-                        i === imgIdx ? 'border-asta-navy ring-2 ring-asta-navy/20' : 'border-neutral-200'
-                      }`}
-                    >
-                      <img
-                        src={u}
-                        alt={`${catalog.name} görseli`}
-                        className="h-full w-full object-contain"
-                      />
-                    </button>
-                  ))}
-                </div>
-              ) : null}
+              <ProductImageGallery
+                images={gallery}
+                productName={catalog.name}
+                index={imgIdx}
+                onIndexChange={setImgIdx}
+              />
             </div>
 
             <div className="lg:pt-2">
