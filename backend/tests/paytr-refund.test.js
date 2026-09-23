@@ -4,6 +4,7 @@ const crypto = require('crypto');
 const {
     computePaytrRefundToken,
     formatPaytrReturnAmount,
+    sanitizePaytrReferenceNo,
 } = require('../services/paytrRefundApi');
 
 describe('PayTR refund helpers', () => {
@@ -11,6 +12,11 @@ describe('PayTR refund helpers', () => {
         assert.equal(formatPaytrReturnAmount(10), '10.00');
         assert.equal(formatPaytrReturnAmount(10.2), '10.20');
         assert.equal(formatPaytrReturnAmount('3449.5'), '3449.50');
+    });
+
+    test('sanitizePaytrReferenceNo strips non-alphanumeric', () => {
+        assert.equal(sanitizePaytrReferenceNo('cncl-76f8-dc6f'), 'cncl76f8dc6f');
+        assert.equal(sanitizePaytrReferenceNo('', 'abc123'), 'abc123');
     });
 
     test('computePaytrRefundToken matches HMAC recipe', () => {

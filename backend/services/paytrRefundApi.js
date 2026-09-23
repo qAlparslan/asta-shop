@@ -22,6 +22,18 @@ function computePaytrRefundToken({ merchantId, merchantKey, merchantSalt }, { me
  * PayTR iade tutarı: TL, ondalık ayraç nokta (iframe kuruş formatından farklı).
  * @param {number|string} amount
  */
+/** PayTR: reference_no yalnızca alfanumerik (tire/özel karakter yok). */
+function sanitizePaytrReferenceNo(raw, fallbackAlphanumeric) {
+    const cleaned = String(raw || '')
+        .replace(/[^a-zA-Z0-9]/g, '')
+        .slice(0, 64);
+    if (cleaned.length > 0) return cleaned;
+    const fb = String(fallbackAlphanumeric || '')
+        .replace(/[^a-zA-Z0-9]/g, '')
+        .slice(0, 64);
+    return fb || 'ref';
+}
+
 function formatPaytrReturnAmount(amount) {
     const n = Number(amount);
     if (!Number.isFinite(n) || n <= 0) {
@@ -65,7 +77,10 @@ async function requestPaytrRefund(params) {
     body.set('return_amount', return_amount);
     body.set('paytr_token', paytr_token);
     if (params.reference_no) {
-        body.set('reference_no', String(params.reference_no).trim().slice(0, 64));
+        body.set(
+            'reference_no',
+            sanitizePaytrReferenceNo(params.reference_no, params.merchant_oid),
+        );
     }
 
     const ac = new AbortController();
@@ -133,6 +148,7 @@ module.exports = {
     PAYTR_REFUND_URL,
     readPaytrCredentials,
     computePaytrRefundToken,
+    sanitizePaytrReferenceNo,
     formatPaytrReturnAmount,
     requestPaytrRefund,
 };

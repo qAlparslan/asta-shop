@@ -22,6 +22,10 @@ Müşteri veya admin **hazırlanıyor** siparişi iptal ettiğinde, tahsil edilm
 
 Checkout ile aynı: sipariş UUID, tire olmadan (`utils/paytrMerchantOid.js`).
 
+## reference_no
+
+Yalnızca **alfanumerik** (A–Z, a–z, 0–9). Tire veya özel karakter PayTR tarafından reddedilir. Varsayılan: `cncl` + `merchant_oid` (ör. `cncl76f8dc6f7e7045c3bd9cda9a0b815a8b`).
+
 ## Tutar
 
 `return_amount` **TL string**, ondalık **nokta** — örn. `3449.00` (iframe kuruş formatı değil).

@@ -38,7 +38,7 @@ async function paytrRefundBeforeCancellation(order) {
     }
 
     const refund = await ensurePaytrRefundForPaidOrder(order, {
-        referenceNo: `cncl-${uuidToMerchantOid(order.id)}`.slice(0, 64),
+        referenceNo: `cncl${uuidToMerchantOid(order.id)}`,
     });
 
     if (!refund.ok) {

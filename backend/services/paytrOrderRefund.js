@@ -2,6 +2,7 @@ const {
     formatPaytrReturnAmount,
     readPaytrCredentials,
     requestPaytrRefund,
+    sanitizePaytrReferenceNo,
 } = require('./paytrRefundApi');
 const { uuidToMerchantOid } = require('../utils/paytrMerchantOid');
 
@@ -75,10 +76,10 @@ async function ensurePaytrRefundForPaidOrder(order, opts = {}) {
     }
 
     const merchant_oid = uuidToMerchantOid(order.id);
-    const baseRef = uuidToMerchantOid(order.id).slice(0, 48);
-    const referenceNo =
-        (opts.referenceNo && String(opts.referenceNo).trim().slice(0, 64)) ||
-        `cncl-${baseRef}`.slice(0, 64);
+    const referenceNo = sanitizePaytrReferenceNo(
+        opts.referenceNo || `cncl${merchant_oid}`,
+        merchant_oid,
+    );
 
     const result = await requestPaytrRefund({
         merchant_oid,
