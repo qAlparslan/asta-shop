@@ -11,3 +11,8 @@ export const ORDER_STATUSES = [
 export function orderStatusLabel(status) {
   return ORDER_STATUSES.find((s) => s.value === status)?.label || status || '—';
 }
+
+/** Müşteri hesabından iptal edilebilir (ödeme bekliyor veya hazırlanıyor). */
+export function canCustomerCancelOrder(status) {
+  return status === 'odeme_bekleniyor' || status === 'hazirlaniyor';
+}

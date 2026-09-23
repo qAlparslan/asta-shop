@@ -1,6 +1,7 @@
 const express = require('express');
 const orderController = require('../controllers/orderController');
 const authMiddleware = require('../middlewares/authMiddleware');
+const { orderCancelLimiter } = require('../middlewares/rateLimits');
 
 const router = express.Router();
 
@@ -13,6 +14,12 @@ router.post('/', authMiddleware.optionalProtect, orderController.createOrder);
 
 // Giriş zorunlu: sadece hesabın siparişleri
 router.get('/me', authMiddleware.protect, orderController.listMyOrders);
+router.post(
+    '/me/:id/cancel',
+    authMiddleware.protect,
+    orderCancelLimiter,
+    orderController.cancelMyOrder,
+);
 
 // --- Bundan sonrası yalnızca admin ---
 router.use(authMiddleware.protect);

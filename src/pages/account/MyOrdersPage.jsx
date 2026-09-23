@@ -3,7 +3,7 @@ import { ClipboardList } from 'lucide-react';
 import { apiFetch } from '../../api/client.js';
 import { formatTRY } from '../../lib/formatTRY.js';
 import { mediaUrl } from '../../lib/mediaUrl.js';
-import { orderStatusLabel } from '../../lib/orderStatus.js';
+import { canCustomerCancelOrder, orderStatusLabel } from '../../lib/orderStatus.js';
 import OrderTrackingStepper from '../../components/OrderTrackingStepper.jsx';
 
 /** @param {unknown} raw */
@@ -49,6 +49,9 @@ export default function MyOrdersPage() {
   const [orders, setOrders] = useState(/** @type {Array<Record<string, unknown>>} */ ([]));
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [cancelTargetId, setCancelTargetId] = useState(/** @type {string | null} */ (null));
+  const [cancellingId, setCancellingId] = useState(/** @type {string | null} */ (null));
+  const [cancelFeedback, setCancelFeedback] = useState(/** @type {{ type: 'ok' | 'err'; text: string } | null} */ (null));
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -69,11 +72,58 @@ export default function MyOrdersPage() {
     load();
   }, [load]);
 
+  const handleCancelConfirm = async () => {
+    const id = cancelTargetId;
+    if (!id) return;
+    setCancellingId(id);
+    setCancelFeedback(null);
+    try {
+      const res = await apiFetch(`/api/orders/me/${encodeURIComponent(id)}/cancel`, {
+        method: 'POST',
+        body: {},
+      });
+      const updated = res?.data?.order;
+      setOrders((prev) =>
+        prev.map((o) => (String(o.id) === id && updated ? { ...o, ...updated, status: updated.status ?? 'iptal-edildi' } : o)),
+      );
+      setCancelFeedback({
+        type: 'ok',
+        text: typeof res?.message === 'string' ? res.message : 'Siparişiniz iptal edildi.',
+      });
+      setCancelTargetId(null);
+    } catch (e) {
+      setCancelFeedback({
+        type: 'err',
+        text: e instanceof Error ? e.message : 'Sipariş iptal edilemedi.',
+      });
+    } finally {
+      setCancellingId(null);
+    }
+  };
+
+  const cancelTargetOrder = cancelTargetId
+    ? orders.find((o) => String(o.id) === cancelTargetId)
+    : null;
+  const cancelTargetStatus = cancelTargetOrder ? String(cancelTargetOrder.status ?? '') : '';
+
   return (
     <section className="py-12 sm:py-16">
       <div className="mx-auto max-w-4xl space-y-6 px-4 sm:px-6">
         {error ? (
           <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{error}</p>
+        ) : null}
+
+        {cancelFeedback ? (
+          <p
+            className={`rounded-lg border px-4 py-3 text-sm ${
+              cancelFeedback.type === 'ok'
+                ? 'border-emerald-200 bg-emerald-50 text-emerald-900'
+                : 'border-red-200 bg-red-50 text-red-800'
+            }`}
+            role="status"
+          >
+            {cancelFeedback.text}
+          </p>
         ) : null}
 
         {loading ? (
@@ -111,6 +161,16 @@ export default function MyOrdersPage() {
                         {orderStatusLabel(status)}
                       </span>
                       <p className="text-base font-bold tabular-nums text-asta-navy">{formatTRY(total)}</p>
+                      {canCustomerCancelOrder(status) ? (
+                        <button
+                          type="button"
+                          disabled={cancellingId === id}
+                          onClick={() => setCancelTargetId(id)}
+                          className="rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-semibold text-red-700 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          {cancellingId === id ? 'İptal ediliyor…' : 'Siparişi iptal et'}
+                        </button>
+                      ) : null}
                     </div>
                   </div>
 
@@ -184,6 +244,57 @@ export default function MyOrdersPage() {
             })}
           </ul>
         )}
+
+        {cancelTargetId ? (
+          <div
+            className="fixed inset-0 z-50 flex items-end justify-center bg-black/45 p-4 sm:items-center"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="cancel-order-title"
+            onClick={() => (cancellingId ? null : setCancelTargetId(null))}
+          >
+            <div
+              className="w-full max-w-md rounded-2xl border border-neutral-200 bg-white p-6 shadow-xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h2 id="cancel-order-title" className="text-lg font-bold text-neutral-900">
+                Siparişi iptal et
+              </h2>
+              <p className="mt-3 text-sm leading-relaxed text-neutral-600">
+                <span className="font-mono font-semibold text-neutral-800">{cancelTargetId}</span> numaralı sipariş
+                iptal edilecek. Bu işlem geri alınamaz.
+              </p>
+              {cancelTargetStatus === 'hazirlaniyor' ? (
+                <p className="mt-2 text-sm leading-relaxed text-amber-900">
+                  Ödemeniz alındıysa iade, banka süreçlerine göre birkaç iş günü içinde yansıyabilir. Kargoya
+                  verilmemiş siparişlerde stok otomatik güncellenir.
+                </p>
+              ) : cancelTargetStatus === 'odeme_bekleniyor' ? (
+                <p className="mt-2 text-sm text-neutral-600">
+                  Ödeme tamamlanmadıysa rezerve edilen ürünler tekrar satışa açılır.
+                </p>
+              ) : null}
+              <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                <button
+                  type="button"
+                  disabled={Boolean(cancellingId)}
+                  onClick={() => setCancelTargetId(null)}
+                  className="rounded-xl border border-neutral-200 px-4 py-2.5 text-sm font-semibold text-neutral-800 hover:bg-neutral-50 disabled:opacity-60"
+                >
+                  Vazgeç
+                </button>
+                <button
+                  type="button"
+                  disabled={Boolean(cancellingId)}
+                  onClick={() => handleCancelConfirm()}
+                  className="rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-70"
+                >
+                  {cancellingId ? 'İptal ediliyor…' : 'Evet, iptal et'}
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : null}
       </div>
     </section>
   );

@@ -306,6 +306,19 @@ const contactMessageLimiter = rateLimit({
 
 });
 
+/** Müşteri sipariş iptali — kötüye kullanım freni (kullanıcı veya IP). */
+const orderCancelLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000,
+    limit: parseInt(process.env.RATE_LIMIT_ORDER_CANCEL_MAX || '20', 10),
+    standardHeaders: 'draft-7',
+    legacyHeaders: false,
+    keyGenerator: (req) => {
+        const uid = req.user?.id ? String(req.user.id) : '';
+        return uid ? `order-cancel:user:${uid}` : `order-cancel:ip:${clientIp(req)}`;
+    },
+    message: jsonMessage('Çok fazla iptal denemesi. Lütfen bir süre sonra tekrar deneyin.'),
+});
+
 
 
 module.exports = {
@@ -335,6 +348,8 @@ module.exports = {
     productStockAlertPostLimiter,
 
     contactMessageLimiter,
+
+    orderCancelLimiter,
 
 };
 

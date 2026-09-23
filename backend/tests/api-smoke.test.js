@@ -57,6 +57,14 @@ describe('API smoke', () => {
         assert.equal(res.status, 401);
     });
 
+    test('POST /api/orders/me/:id/cancel — token yok 401', async () => {
+        const app = buildApp();
+        const res = await request(app)
+            .post('/api/orders/me/00000000-0000-4000-8000-000000000000/cancel')
+            .send({});
+        assert.equal(res.status, 401);
+    });
+
     test('GET /api/admin/product-reviews — token yok 401', async () => {
         const app = buildApp();
         const res = await request(app).get('/api/admin/product-reviews');

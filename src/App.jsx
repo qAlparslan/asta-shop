@@ -29,6 +29,7 @@ import MyOrdersPage from './pages/account/MyOrdersPage.jsx';
 import RequireAdmin from './admin/RequireAdmin.jsx';
 import AdminLayout from './admin/AdminLayout.jsx';
 import { apiFetch } from './api/client.js';
+import { useDemoCatalogFallback } from './data/catalogMock.js';
 import { useAuth } from './context/AuthContext.jsx';
 import SiteBranding from './components/SiteBranding.jsx';
 import StorefrontSeo from './components/StorefrontSeo.jsx';
@@ -69,6 +70,10 @@ function StorefrontShell() {
   });
 
   useEffect(() => {
+    if (useDemoCatalogFallback()) {
+      setBoot({ settings: {}, active: false, message: '', loaded: true });
+      return undefined;
+    }
     apiFetch('/api/settings', { skipAuth: true })
       .then((res) => {
         const s = res?.data?.settings ?? {};

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { SlidersHorizontal, X } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import CatalogProductCard from '../components/products/CatalogProductCard.jsx';
-import { SORT_OPTIONS } from '../data/catalogMock.js';
+import { CATALOG_PRODUCTS, SORT_OPTIONS, useDemoCatalogFallback } from '../data/catalogMock.js';
 import { enabledSkinFilterChoices, normalizeSkinCatalogRows } from '../lib/skinFilterCatalog.js';
 import { formatTRY } from '../lib/formatTRY.js';
 import { apiFetch } from '../api/client.js';
@@ -60,12 +60,21 @@ export default function ProductsPage() {
         const skinNorm = normalizeSkinCatalogRows(sr?.data?.settings?.skinFilterOptions);
         setSkinCatalogRows(skinNorm);
         const raw = Array.isArray(pr?.data?.products) ? pr.data.products : [];
-        setProducts(raw.map((row) => mapApiProductToCatalog(row, skinNorm)));
+        if (raw.length > 0) {
+          setProducts(raw.map((row) => mapApiProductToCatalog(row, skinNorm)));
+        } else if (useDemoCatalogFallback()) {
+          setProducts(CATALOG_PRODUCTS);
+        }
         const cats = Array.isArray(cr?.data?.categories) ? cr.data.categories : [];
         setCatalogCategories(cats);
       })
       .catch((err) => {
-        if (err.name !== 'AbortError') setLoadError(err.message || 'Ürünler yüklenemedi.');
+        if (err.name === 'AbortError') return;
+        if (useDemoCatalogFallback()) {
+          setProducts(CATALOG_PRODUCTS);
+          return;
+        }
+        setLoadError(err.message || 'Ürünler yüklenemedi.');
       })
       .finally(() => setLoading(false));
     return () => ac.abort();

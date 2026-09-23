@@ -15,6 +15,11 @@ import PageSeo from '../components/PageSeo.jsx';
 import { buildBreadcrumbJsonLd, buildCanonicalUrl, excerptPlain, toAbsoluteUrl } from '../lib/siteSeo.js';
 import { assetUrl } from '../config/api.js';
 import { buildSiteDocumentTitle } from '../lib/siteDocumentTitle.js';
+import {
+  demoProductToApiRow,
+  findDemoCatalogProduct,
+  useDemoCatalogFallback,
+} from '../data/catalogMock.js';
 
 export default function ProductDetailPage() {
   const { slug, productId } = useParams();
@@ -49,8 +54,15 @@ export default function ProductDetailPage() {
         setRaw(p);
       })
       .catch((e) => {
-        if (e.name !== 'AbortError')
-          setErr(e.message || 'Ürün bulunamadı veya bir hata oluştu.');
+        if (e.name === 'AbortError') return;
+        if (useDemoCatalogFallback()) {
+          const demo = findDemoCatalogProduct({ slug, productId });
+          if (demo) {
+            setRaw(demoProductToApiRow(demo));
+            return;
+          }
+        }
+        setErr(e.message || 'Ürün bulunamadı veya bir hata oluştu.');
         setRaw(null);
       })
       .finally(() => setLoading(false));

@@ -1,4 +1,4 @@
-/** Tüm ürünler sayfası — örnek veri (ileride API ile değiştirilebilir). */
+/** Tüm ürünler sayfası — örnek veri (API yokken veya boşken kullanılır). */
 
 export const SORT_OPTIONS = [
   { id: 'recommended', label: 'Önerilen sıralama' },
@@ -26,111 +26,140 @@ const img = (seed) =>
 
 export const CATALOG_PRODUCTS = [
   {
-    id: '1',
-    brand: 'ASTA TİCARET',
-    name: 'Leke Karşıtı Bakım Kremi',
-    price: 3449,
-    image: img('photo-1570194065650-d99fb4b38b17'),
-    categories: ['Yüz Kremi'],
-    skinTypes: ['Kuru', 'Olgun Cilt'],
-  },
-  {
-    id: '2',
+    id: 'demo-1',
+    slug: 'hyaluron-nemlendirici-serum',
     brand: 'ASTA TİCARET',
     name: 'Hyaluron Nemlendirici Serum',
     price: 899,
+    compareAtPrice: 1099,
+    discountPercent: 18,
+    isOnSale: true,
     image: img('photo-1612817288484-6f916006741a'),
+    gallery: [img('photo-1612817288484-6f916006741a')],
     categories: ['Serum', 'Nemlendirici'],
     skinTypes: ['Kuru', 'Hassas'],
+    tag: 'cok-satan',
+    reviewCount: 24,
+    averageRating: 4.7,
+    description:
+      '<p>Yoğun hyaluronik asit içeren hafif serum, cildin nem bariyerini destekler. Sabah ve akşam temiz cilde birkaç damla uygulayın.</p>',
+    variants: [],
   },
   {
-    id: '3',
+    id: 'demo-2',
+    slug: 'spf-50-gunes-koruyucu-fluid',
     brand: 'ASTA TİCARET',
     name: 'SPF 50+ Güneş Koruyucu Fluid',
     price: 579,
+    compareAtPrice: null,
+    discountPercent: null,
+    isOnSale: false,
     image: img('photo-1620916566398-39f1143ab7be'),
+    gallery: [img('photo-1620916566398-39f1143ab7be')],
     categories: ['Güneş Koruyucu'],
     skinTypes: ['Yağlı/Karma', 'Hassas'],
+    tag: 'cok-satan',
+    reviewCount: 18,
+    averageRating: 4.5,
+    description:
+      '<p>Geniş spektrumlu, yağsız formül. Günlük kullanım için hafif doku; makyaj altında da rahatlıkla kullanılabilir.</p>',
+    variants: [],
   },
   {
-    id: '4',
+    id: 'demo-3',
+    slug: 'leke-karsiti-bakim-kremi',
+    brand: 'ASTA TİCARET',
+    name: 'Leke Karşıtı Bakım Kremi',
+    price: 3449,
+    compareAtPrice: 3899,
+    discountPercent: 12,
+    isOnSale: true,
+    image: img('photo-1570194065650-d99fb4b38b17'),
+    gallery: [img('photo-1570194065650-d99fb4b38b17')],
+    categories: ['Yüz Kremi'],
+    skinTypes: ['Kuru', 'Olgun Cilt'],
+    tag: 'cok-satan',
+    reviewCount: 31,
+    averageRating: 4.8,
+    description:
+      '<p>Düzenli kullanımda cilt tonunu eşitlemeye yardımcı formül. Akşam bakım rutininin son adımında uygulayın.</p>',
+    variants: [],
+  },
+  {
+    id: 'demo-4',
+    slug: 'ph5-hassas-cilt-temizleyici-jel',
     brand: 'ASTA TİCARET',
     name: 'pH5 Hassas Cilt Temizleyici Jel',
     price: 419,
+    compareAtPrice: null,
+    discountPercent: null,
+    isOnSale: false,
     image: img('photo-1570172619644-dfd03ed8d17b'),
+    gallery: [img('photo-1570172619644-dfd03ed8d17b')],
     categories: ['Temizleyici'],
     skinTypes: ['Hassas'],
+    tag: '',
+    reviewCount: 12,
+    averageRating: 4.4,
+    description:
+      '<p>pH dengeli jel temizleyici; hassas ciltlerde kuruluk hissi bırakmadan nazikçe temizler.</p>',
+    variants: [],
   },
   {
-    id: '5',
+    id: 'demo-5',
+    slug: 'gece-onarici-bakim-kremi',
     brand: 'ASTA TİCARET',
     name: 'Gece Onarıcı Bakım Kremi',
     price: 1299,
+    compareAtPrice: 1499,
+    discountPercent: 13,
+    isOnSale: true,
     image: img('photo-1556228578-659cd584233d'),
+    gallery: [img('photo-1556228578-659cd584233d')],
     categories: ['Yüz Kremi', 'Nemlendirici'],
     skinTypes: ['Kuru', 'Olgun Cilt'],
-  },
-  {
-    id: '6',
-    brand: 'ASTA TİCARET',
-    name: 'Ceramide Günlük Nem Bariyer Kremi',
-    price: 749,
-    image: img('photo-1598440947619-2c35fc9aa908'),
-    categories: ['Nemlendirici'],
-    skinTypes: ['Hassas', 'Kuru'],
-  },
-  {
-    id: '7',
-    brand: 'ASTA TİCARET',
-    name: 'Anti-Aging Göz Çevresi Kremi',
-    price: 989,
-    image: img('photo-1515378791036-0648a3bdd77d'),
-    categories: ['Göz Çevresi'],
-    skinTypes: ['Olgun Cilt'],
-  },
-  {
-    id: '8',
-    brand: 'ASTA TİCARET',
-    name: 'Vücut Losyonu Ultra Hydration',
-    price: 459,
-    image: img('photo-1556228720-195a672e8a03'),
-    categories: ['Vücut Kremi'],
-    skinTypes: ['Kuru'],
-  },
-  {
-    id: '9',
-    brand: 'ASTA TİCARET',
-    name: 'Yağ Kontrol Temizleyici Köpük',
-    price: 389,
-    image: img('photo-1567720643512-068fcc73c260'),
-    categories: ['Temizleyici'],
-    skinTypes: ['Yağlı/Karma'],
-  },
-  {
-    id: '10',
-    brand: 'ASTA TİCARET',
-    name: 'Tonik Dengeli Cilt Tonu',
-    price: 329,
-    image: img('photo-1596755094514-f87a0847fcf7'),
-    categories: ['Temizleyici'],
-    skinTypes: ['Yağlı/Karma', 'Hassas'],
-  },
-  {
-    id: '11',
-    brand: 'ASTA TİCARET',
-    name: 'Saç Derisi Hassas Şampuan',
-    price: 449,
-    image: img('photo-1631729361328-ac44342f8499'),
-    categories: ['Saç Bakımı'],
-    skinTypes: ['Hassas'],
-  },
-  {
-    id: '12',
-    brand: 'ASTA TİCARET',
-    name: 'Çok Yüksek Koruma Güneş Spreyi',
-    price: 699,
-    image: img('photo-1598440947619-2c35fc9aa908'),
-    categories: ['Güneş Koruyucu'],
-    skinTypes: ['Kuru', 'Yağlı/Karma'],
+    tag: '',
+    reviewCount: 9,
+    averageRating: 4.6,
+    description:
+      '<p>Gece boyunca cildi besleyen zengin krem. Temiz cilde masaj yaparak uygulayın; sabah daha canlı bir görünüm.</p>',
+    variants: [],
   },
 ];
+
+/** Geliştirme ortamında API olmadan vitrin göstermek için */
+export function useDemoCatalogFallback() {
+  if (import.meta.env.VITE_USE_DEMO_CATALOG === 'true') return true;
+  if (import.meta.env.DEV && !String(import.meta.env.VITE_API_ORIGIN || '').trim()) return true;
+  return false;
+}
+
+/** @param {{ slug?: string; productId?: string }} params */
+export function findDemoCatalogProduct({ slug, productId }) {
+  const s = String(slug || '').trim();
+  const id = String(productId || '').trim();
+  return (
+    CATALOG_PRODUCTS.find((p) => (s && p.slug === s) || (id && p.id === id)) || null
+  );
+}
+
+/** Ürün detay sayfası için API satırı biçimine çevirir */
+export function demoProductToApiRow(product) {
+  return {
+    id: product.id,
+    slug: product.slug,
+    name: product.name,
+    brand: product.brand,
+    category: product.categories[0] || '',
+    description: product.description || '',
+    images: JSON.stringify([product.image]),
+    price: product.price,
+    compare_at_price: product.compareAtPrice ?? null,
+    tag: product.tag || '',
+    skin_type: 'tumu',
+    stock: 100,
+    variants: '[]',
+    reviewCount: product.reviewCount || 0,
+    averageRating: product.averageRating || 0,
+  };
+}

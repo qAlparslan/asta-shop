@@ -20,6 +20,21 @@ const COMMITTED_STATUSES = new Set(['hazirlaniyor', 'kargolandi', 'teslim-edildi
 const CANCELLED_STATUS = 'iptal-edildi';
 const PENDING_STATUS = 'odeme_bekleniyor';
 
+/** Müşterinin hesabından iptal edebileceği durumlar (kargoya verilmeden önce). */
+const CUSTOMER_CANCELABLE_STATUSES = new Set([PENDING_STATUS, 'hazirlaniyor']);
+
+/**
+ * Siparişin giriş yapmış kullanıcıya ait olduğunu doğrular (listMyOrders ile aynı kural).
+ * @param {import('../models/Order').default | import('sequelize').Model} order
+ * @param {{ id: string; email?: string }} user
+ */
+function orderMatchesAccount(order, user) {
+    if (order.userId && String(order.userId) === String(user.id)) return true;
+    const orderEmail = String(order.email || '').trim().toLowerCase();
+    const userEmail = String(user.email || '').trim().toLowerCase();
+    return orderEmail.length > 0 && userEmail.length > 0 && orderEmail === userEmail;
+}
+
 /**
  * Sipariş durumu değişiminde envanteri düzeltir (aynı transaction içinde).
  * - committed → iptal : stoğu geri ver (restock)
@@ -96,6 +111,85 @@ exports.listMyOrders = async (req, res) => {
         });
     } catch (err) {
         res.status(400).json({ status: 'fail', message: err.message });
+    }
+};
+
+/**
+ * POST /api/orders/me/:id/cancel — müşteri sipariş iptali (stok + durum, transaction).
+ */
+exports.cancelMyOrder = async (req, res) => {
+    const orderId = String(req.params.id || '').trim();
+    if (!orderId) {
+        return res.status(400).json({ status: 'fail', message: 'Sipariş kimliği gerekli.' });
+    }
+
+    const t = await sequelize.transaction();
+    try {
+        const order = await Order.findByPk(orderId, {
+            transaction: t,
+            lock: t.LOCK.UPDATE,
+        });
+
+        if (!order) {
+            await t.rollback();
+            return res.status(404).json({ status: 'fail', message: 'Sipariş bulunamadı.' });
+        }
+
+        if (!orderMatchesAccount(order, req.user)) {
+            await t.rollback();
+            return res.status(403).json({ status: 'fail', message: 'Bu siparişi iptal etme yetkiniz yok.' });
+        }
+
+        const oldStatus = order.status;
+
+        if (oldStatus === CANCELLED_STATUS) {
+            await t.commit();
+            return res.status(200).json({
+                status: 'success',
+                message: 'Sipariş zaten iptal edilmiş.',
+                data: { order, alreadyCancelled: true },
+            });
+        }
+
+        if (!CUSTOMER_CANCELABLE_STATUSES.has(oldStatus)) {
+            await t.rollback();
+            let message =
+                'Bu sipariş artık iptal edilemez. Kargoya verilmiş veya teslim edilmiş siparişler için müşteri hizmetleri ile iletişime geçin.';
+            if (oldStatus === 'kargolandi') {
+                message =
+                    'Siparişiniz kargoya verildiği için bu ekrandan iptal edilemez. İade için müşteri hizmetleri ile iletişime geçin.';
+            } else if (oldStatus === 'teslim-edildi') {
+                message =
+                    'Teslim edilmiş siparişler bu ekrandan iptal edilemez. İade süreci için müşteri hizmetleri ile iletişime geçin.';
+            }
+            return res.status(409).json({ status: 'fail', message, code: 'ORDER_NOT_CANCELLABLE' });
+        }
+
+        await applyInventoryForStatusChange(order, oldStatus, CANCELLED_STATUS, t);
+        await order.update({ status: CANCELLED_STATUS }, { transaction: t });
+        await t.commit();
+        await order.reload();
+
+        sendOrderStatusUpdateEmail(order, CANCELLED_STATUS);
+
+        const message =
+            oldStatus === PENDING_STATUS
+                ? 'Siparişiniz iptal edildi. Ödeme alınmadı; stok güncellendi.'
+                : 'Siparişiniz iptal edildi. Ödemeniz alındıysa iade süreci en kısa sürede başlatılır.';
+
+        return res.status(200).json({
+            status: 'success',
+            message,
+            data: { order },
+        });
+    } catch (err) {
+        try {
+            if (!t.finished) await t.rollback();
+        } catch {
+            /* yoksay */
+        }
+        console.error('cancelMyOrder:', orderId, err.message);
+        return res.status(400).json({ status: 'fail', message: err.message || 'Sipariş iptal edilemedi.' });
     }
 };
 

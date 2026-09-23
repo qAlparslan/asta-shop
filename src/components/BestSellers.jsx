@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import CatalogProductCard from './products/CatalogProductCard.jsx';
 import { apiFetch } from '../api/client.js';
+import { CATALOG_PRODUCTS, useDemoCatalogFallback } from '../data/catalogMock.js';
 import { formatTRY } from '../lib/formatTRY.js';
 import { mapApiProductToCatalog } from '../lib/productMap.js';
 import { normalizeSkinCatalogRows } from '../lib/skinFilterCatalog.js';
@@ -30,10 +31,21 @@ export default function BestSellers() {
       .then(([pr, sr]) => {
         const skinNorm = normalizeSkinCatalogRows(sr?.data?.settings?.skinFilterOptions);
         const raw = Array.isArray(pr?.data?.products) ? pr.data.products : [];
-        setProducts(raw.map((row) => mapApiProductToCatalog(row, skinNorm)));
+        if (raw.length > 0) {
+          setProducts(raw.map((row) => mapApiProductToCatalog(row, skinNorm)));
+          return;
+        }
+        if (useDemoCatalogFallback()) {
+          setProducts(CATALOG_PRODUCTS.filter((p) => p.tag === BESTSELLER_TAG).slice(0, LIMIT));
+        }
       })
       .catch((err) => {
-        if (err.name !== 'AbortError') setError(err.message || 'Ürünler yüklenemedi.');
+        if (err.name === 'AbortError') return;
+        if (useDemoCatalogFallback()) {
+          setProducts(CATALOG_PRODUCTS.filter((p) => p.tag === BESTSELLER_TAG).slice(0, LIMIT));
+          return;
+        }
+        setError(err.message || 'Ürünler yüklenemedi.');
       })
       .finally(() => setLoading(false));
     return () => ac.abort();
