@@ -22,8 +22,8 @@ const COMMITTED_STATUSES = new Set(['hazirlaniyor', 'kargolandi', 'teslim-edildi
 const CANCELLED_STATUS = 'iptal-edildi';
 const PENDING_STATUS = 'odeme_bekleniyor';
 
-/** Müşterinin hesabından iptal edebileceği durumlar (kargoya verilmeden önce). */
-const CUSTOMER_CANCELABLE_STATUSES = new Set([PENDING_STATUS, 'hazirlaniyor']);
+/** Müşteri iptali: yalnızca hazırlanıyor (ödeme alındı, henüz kargoda değil). */
+const CUSTOMER_CANCELABLE_STATUSES = new Set(['hazirlaniyor']);
 
 /** İptal öncesi PayTR iadesi gereken (tahsil edilmiş) durumlar. */
 const REFUND_BEFORE_CANCEL_STATUSES = new Set(['hazirlaniyor']);
@@ -197,7 +197,10 @@ exports.cancelMyOrder = async (req, res) => {
     if (!CUSTOMER_CANCELABLE_STATUSES.has(previewStatus)) {
         let message =
             'Bu sipariş artık iptal edilemez. Kargoya verilmiş veya teslim edilmiş siparişler için müşteri hizmetleri ile iletişime geçin.';
-        if (previewStatus === 'kargolandi') {
+        if (previewStatus === 'odeme_bekleniyor') {
+            message =
+                'Ödeme bekleyen siparişler bu ekrandan iptal edilemez. Ödeme sayfasından ayrılma veya süre dolunca otomatik iptal uygulanır.';
+        } else if (previewStatus === 'kargolandi') {
             message =
                 'Siparişiniz kargoya verildiği için bu ekrandan iptal edilemez. İade için müşteri hizmetleri ile iletişime geçin.';
         } else if (previewStatus === 'teslim-edildi') {

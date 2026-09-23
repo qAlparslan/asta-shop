@@ -269,10 +269,6 @@ export default function MyOrdersPage() {
                   Ödemeniz PayTR üzerinden otomatik iade edilir; banka/kartınıza yansıması birkaç iş günü sürebilir.
                   İade başarısız olursa sipariş iptal edilmez — tekrar deneyebilir veya destek ile iletişime geçebilirsiniz.
                 </p>
-              ) : cancelTargetStatus === 'odeme_bekleniyor' ? (
-                <p className="mt-2 text-sm text-neutral-600">
-                  Ödeme tamamlanmadıysa rezerve edilen ürünler tekrar satışa açılır.
-                </p>
               ) : null}
               <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
                 <button

@@ -9,7 +9,7 @@ Müşteri veya admin **hazırlanıyor** siparişi iptal ettiğinde, tahsil edilm
 3. PayTR `POST https://www.paytr.com/odeme/iade` başarılı → sipariş iptal + stok iadesi
 4. PayTR hata → sipariş **iptal edilmez**; `orders.refundStatus=failed`, `refundLastError` dolar
 
-**Ödeme bekleniyor:** PayTR iade yok (para çekilmemiş).
+**Ödeme bekleniyor:** Müşteri hesabından iptal kapalı (`POST /api/payments/cancel-pending` veya süre aşımı).
 
 ## Ortam değişkenleri
 
