@@ -27,19 +27,21 @@ function formatTrDate(v) {
   }
 }
 
-/** @type {{ id: string; label: string }}[] */
-const QUEUE_FILTERS = [
-  { id: 'queue', label: 'Fatura kuyruğu' },
-  { id: 'corporate', label: 'Kurumsal talep' },
-  { id: 'all_billable', label: 'Tüm faturalanabilir' },
-];
+/** @param {Record<string, unknown>} o */
+function formatBillingAddressLine(o) {
+  if (o.billingSameAsShipping !== false) {
+    const parts = [o.address, o.shippingDistrict, o.shippingProvince].filter(Boolean);
+    return parts.length ? parts.join(', ') : String(o.address || '—');
+  }
+  const parts = [o.billingAddress, o.billingDistrict, o.billingProvince].filter(Boolean);
+  return parts.length ? parts.join(', ') : '—';
+}
 
 export default function AdminBillingPage() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [query, setQuery] = useState('');
-  const [queueFilter, setQueueFilter] = useState('queue');
 
   const load = useCallback(() => {
     setLoading(true);
@@ -76,15 +78,6 @@ export default function AdminBillingPage() {
     const q = query.trim().toLowerCase();
     let list = [...billableOrders];
 
-    if (queueFilter === 'queue') {
-      list = list.filter((o) => {
-        const st = String(o.eInvoiceStatus || 'none');
-        return st === 'awaiting_integration' || st === 'pending_manual' || st === 'failed';
-      });
-    } else if (queueFilter === 'corporate') {
-      list = list.filter((o) => Boolean(o.wantsElectronicInvoice));
-    }
-
     if (q) {
       list = list.filter((o) => {
         const hay = [
@@ -93,6 +86,7 @@ export default function AdminBillingPage() {
           o.email,
           o.invoiceCompanyTitle,
           o.invoiceTaxNumber,
+          formatBillingAddressLine(o),
         ]
           .filter(Boolean)
           .join(' ')
@@ -102,7 +96,7 @@ export default function AdminBillingPage() {
     }
 
     return list;
-  }, [billableOrders, queueFilter, query]);
+  }, [billableOrders, query]);
 
   return (
     <div className="space-y-6">
@@ -153,24 +147,8 @@ export default function AdminBillingPage() {
       </div>
 
       <div className="rounded-2xl border border-neutral-200 bg-white shadow-card">
-        <div className="flex flex-col gap-3 border-b border-neutral-100 p-4 sm:flex-row sm:flex-wrap sm:items-center">
-          <div className="flex flex-wrap gap-2">
-            {QUEUE_FILTERS.map((f) => (
-              <button
-                key={f.id}
-                type="button"
-                onClick={() => setQueueFilter(f.id)}
-                className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${
-                  queueFilter === f.id
-                    ? 'border-brand bg-brand text-white'
-                    : 'border-neutral-200 bg-white text-neutral-700 hover:bg-neutral-50'
-                }`}
-              >
-                {f.label}
-              </button>
-            ))}
-          </div>
-          <div className="relative min-w-[12rem] flex-1 sm:max-w-xs sm:ml-auto">
+        <div className="flex flex-col gap-3 border-b border-neutral-100 p-4 sm:flex-row sm:items-center">
+          <div className="relative min-w-[12rem] flex-1 sm:max-w-md sm:ml-auto">
             <Search
               className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400"
               strokeWidth={1.75}
@@ -193,7 +171,7 @@ export default function AdminBillingPage() {
           <p className="px-4 py-12 text-center text-sm text-neutral-500">Yükleniyor…</p>
         ) : visible.length === 0 ? (
           <p className="px-4 py-12 text-center text-sm text-neutral-500">
-            Bu filtreye uygun sipariş yok.
+            Kayıt bulunamadı.
           </p>
         ) : (
           <div className="overflow-x-auto">
@@ -203,7 +181,7 @@ export default function AdminBillingPage() {
                   <th className="px-4 py-3">Sipariş</th>
                   <th className="px-4 py-3">Tarih</th>
                   <th className="px-4 py-3">Müşteri</th>
-                  <th className="px-4 py-3">Fatura</th>
+                  <th className="px-4 py-3">Fatura / adres</th>
                   <th className="px-4 py-3">E-fatura durumu</th>
                   <th className="px-4 py-3">Sipariş durumu</th>
                   <th className="px-4 py-3 text-right">Tutar</th>
@@ -245,6 +223,12 @@ export default function AdminBillingPage() {
                         ) : (
                           <span className="text-neutral-600">Perakende (ad-soyad)</span>
                         )}
+                        <p className="mt-1 max-w-[16rem] text-xs leading-snug text-neutral-500">
+                          {formatBillingAddressLine(o)}
+                          {o.billingSameAsShipping === false ? (
+                            <span className="ml-1 font-semibold text-amber-800">· Ayrı fatura adresi</span>
+                          ) : null}
+                        </p>
                       </td>
                       <td className="px-4 py-3">
                         <span

@@ -65,6 +65,17 @@ export default function CheckoutPage() {
     addressLine: '',
   });
 
+  const [billingSameAsShipping, setBillingSameAsShipping] = useState(true);
+  const [billingAddress, setBillingAddress] = useState({
+    provinceId: '',
+    city: '',
+    district: '',
+    addressLine: '',
+  });
+  const [billingDistricts, setBillingDistricts] = useState([]);
+  const [billingDistrictsLoading, setBillingDistrictsLoading] = useState(false);
+  const [billingDistrictsError, setBillingDistrictsError] = useState('');
+
   const [termsAccepted, setTermsAccepted] = useState(false);
 
   const [provinces, setProvinces] = useState([]);
@@ -143,6 +154,28 @@ export default function CheckoutPage() {
     return () => ac.abort();
   }, [address.provinceId]);
 
+  useEffect(() => {
+    const id = billingAddress.provinceId;
+    if (!id || billingSameAsShipping) {
+      setBillingDistricts([]);
+      setBillingDistrictsError('');
+      return;
+    }
+    const ac = new AbortController();
+    setBillingDistrictsLoading(true);
+    setBillingDistrictsError('');
+    fetchDistrictsByProvince(id, ac.signal)
+      .then(setBillingDistricts)
+      .catch((err) => {
+        if (err.name !== 'AbortError') {
+          setBillingDistricts([]);
+          setBillingDistrictsError(err.message || 'İlçeler yüklenemedi.');
+        }
+      })
+      .finally(() => setBillingDistrictsLoading(false));
+    return () => ac.abort();
+  }, [billingAddress.provinceId, billingSameAsShipping]);
+
   const discountPercentApplied = couponApplied?.discountPercent ?? 0;
 
   const totals = useMemo(
@@ -168,6 +201,13 @@ export default function CheckoutPage() {
     if (!address.provinceId) e.province = 'İl seçin.';
     if (!address.district.trim()) e.district = 'İlçe seçin.';
     if (!address.addressLine.trim()) e.addressLine = 'Adres satırını doldurun.';
+    if (!billingSameAsShipping) {
+      if (!billingAddress.provinceId) e.billingProvince = 'Fatura adresi için il seçin.';
+      if (!billingAddress.district.trim()) e.billingDistrict = 'Fatura adresi için ilçe seçin.';
+      if (!billingAddress.addressLine.trim() || billingAddress.addressLine.trim().length < 5) {
+        e.billingAddressLine = 'Fatura açık adresini girin.';
+      }
+    }
     if (invoice.wantsElectronicInvoice) {
       const vd = invoice.invoiceTaxNumber.replace(/\D/g, '');
       if (vd.length !== 10 && vd.length !== 11)
@@ -195,6 +235,14 @@ export default function CheckoutPage() {
     address: address.addressLine.trim(),
     province: address.city,
     district: address.district,
+    billingSameAsShipping,
+    ...(billingSameAsShipping
+      ? {}
+      : {
+          billingAddress: billingAddress.addressLine.trim(),
+          billingProvince: billingAddress.city,
+          billingDistrict: billingAddress.district,
+        }),
     couponCode: couponApplied?.code || undefined,
     wantsElectronicInvoice: invoice.wantsElectronicInvoice,
     acceptedCheckoutLegal: termsAccepted === true,
@@ -682,6 +730,132 @@ export default function CheckoutPage() {
                 <div className="mt-10 rounded-xl border border-neutral-200 bg-neutral-50/80 p-5 sm:p-6">
                   <h3 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-asta-navy">
                     <FileText className="h-5 w-5 shrink-0 text-brand" strokeWidth={1.75} />
+                    Fatura adresi
+                  </h3>
+                  <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-lg bg-white px-4 py-3 ring-1 ring-neutral-200/80">
+                    <input
+                      type="checkbox"
+                      className="mt-1 size-4 rounded border-neutral-300 text-brand focus:ring-brand"
+                      checked={billingSameAsShipping}
+                      onChange={(ev) => {
+                        const checked = ev.target.checked;
+                        setBillingSameAsShipping(checked);
+                        if (checked) {
+                          setErrors((x) => ({
+                            ...x,
+                            billingProvince: undefined,
+                            billingDistrict: undefined,
+                            billingAddressLine: undefined,
+                          }));
+                        }
+                      }}
+                    />
+                    <span className="text-sm font-medium leading-snug text-neutral-800">
+                      Fatura adresim teslimat adresimle aynı
+                      <span className="block text-xs font-normal text-neutral-500">
+                        İşaretli değilse fatura için ayrı il, ilçe ve açık adres girmeniz istenir.
+                      </span>
+                    </span>
+                  </label>
+
+                  {!billingSameAsShipping ? (
+                    <div className="mt-5 grid gap-5 sm:grid-cols-2">
+                      <div>
+                        <label htmlFor="co-bill-province" className="block text-sm font-medium text-neutral-700">
+                          Fatura — il <span className="text-brand">*</span>
+                        </label>
+                        <select
+                          id="co-bill-province"
+                          value={billingAddress.provinceId}
+                          disabled={provincesLoading || Boolean(provincesError)}
+                          onChange={(ev) => {
+                            const id = ev.target.value;
+                            const name = provinces.find((p) => String(p.id) === id)?.name ?? '';
+                            setBillingAddress((a) => ({ ...a, provinceId: id, city: name, district: '' }));
+                            if (errors.billingProvince) {
+                              setErrors((x) => ({ ...x, billingProvince: undefined }));
+                            }
+                          }}
+                          className={`mt-1.5 ${errors.billingProvince ? inputErrorClass : inputClass}`}
+                        >
+                          <option value="">
+                            {provincesLoading ? 'İller yükleniyor…' : 'İl seçin'}
+                          </option>
+                          {provinces.map((p) => (
+                            <option key={p.id} value={p.id}>
+                              {p.name}
+                            </option>
+                          ))}
+                        </select>
+                        {errors.billingProvince && (
+                          <p className="mt-1 text-xs text-red-600">{errors.billingProvince}</p>
+                        )}
+                      </div>
+                      <div>
+                        <label htmlFor="co-bill-district" className="block text-sm font-medium text-neutral-700">
+                          Fatura — ilçe <span className="text-brand">*</span>
+                        </label>
+                        <select
+                          id="co-bill-district"
+                          value={billingAddress.district}
+                          disabled={
+                            !billingAddress.provinceId ||
+                            billingDistrictsLoading ||
+                            Boolean(billingDistrictsError)
+                          }
+                          onChange={(ev) => {
+                            setBillingAddress((a) => ({ ...a, district: ev.target.value }));
+                            if (errors.billingDistrict) {
+                              setErrors((x) => ({ ...x, billingDistrict: undefined }));
+                            }
+                          }}
+                          className={`mt-1.5 ${errors.billingDistrict ? inputErrorClass : inputClass}`}
+                        >
+                          <option value="">
+                            {!billingAddress.provinceId
+                              ? 'Önce il seçin'
+                              : billingDistrictsLoading
+                                ? 'İlçeler yükleniyor…'
+                                : 'İlçe seçin'}
+                          </option>
+                          {billingDistricts.map((d) => (
+                            <option key={d.id} value={d.name}>
+                              {d.name}
+                            </option>
+                          ))}
+                        </select>
+                        {billingDistrictsError && (
+                          <p className="mt-1 text-xs text-amber-800">{billingDistrictsError}</p>
+                        )}
+                        {errors.billingDistrict && (
+                          <p className="mt-1 text-xs text-red-600">{errors.billingDistrict}</p>
+                        )}
+                      </div>
+                      <div className="sm:col-span-2">
+                        <label htmlFor="co-bill-ad" className="block text-sm font-medium text-neutral-700">
+                          Fatura — açık adres <span className="text-brand">*</span>
+                        </label>
+                        <textarea
+                          id="co-bill-ad"
+                          rows={3}
+                          value={billingAddress.addressLine}
+                          onChange={(ev) =>
+                            setBillingAddress((a) => ({ ...a, addressLine: ev.target.value }))
+                          }
+                          className={`mt-1.5 resize-y min-h-[80px] ${errors.billingAddressLine ? inputErrorClass : inputClass}`}
+                          placeholder="Mahalle, sokak, bina no…"
+                        />
+                        {errors.billingAddressLine && (
+                          <p className="mt-1 text-xs text-red-600">{errors.billingAddressLine}</p>
+                        )}
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+
+                <div className="mt-10 rounded-xl border border-neutral-200 bg-neutral-50/80 p-5 sm:p-6">
+                  <h3 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-asta-navy">
+                    <FileText className="h-5 w-5 shrink-0 text-brand" strokeWidth={1.75} />
                     Fatura bilgisi
                   </h3>
                   <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-lg bg-white px-4 py-3 ring-1 ring-neutral-200/80">
@@ -842,6 +1016,17 @@ export default function CheckoutPage() {
                       </>
                     ) : (
                       <> — Bireysel alım; ticari kimlik bildirimi işaretlenmemiştir.</>
+                    )}
+                    <br />
+                    <strong className="text-asta-navy">Fatura adresi</strong>
+                    {billingSameAsShipping ? (
+                      <> — Teslimat adresi ile aynı.</>
+                    ) : (
+                      <>
+                        {' — '}
+                        {billingAddress.addressLine || '—'}, {billingAddress.district || '—'} /{' '}
+                        {billingAddress.city || '—'}
+                      </>
                     )}
                   </div>
 

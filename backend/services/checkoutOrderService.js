@@ -4,7 +4,10 @@ const { normalizeCouponCode, validateCheckoutCustomer } = require('./checkoutCus
 const { resolveCartLine } = require('../utils/productVariants');
 const { computeExpectedTotal, totalsMatchClient } = require('./orderPricing');
 const { allocateFromWarehouses, applyReservation, syncProductStockField } = require('./inventoryService');
-const { normalizeElectronicInvoiceFromBody } = require('./orderInvoiceFields');
+const {
+    normalizeElectronicInvoiceFromBody,
+    normalizeBillingAddressFromBody,
+} = require('./orderInvoiceFields');
 const { ORDER_CHECKOUT_PENDING_INSERT_FIELDS } = require('../constants/orderInsertFields');
 const { getMergedVersionPins } = require('./legalPagesMerge');
 
@@ -30,6 +33,10 @@ async function createPendingOrderInTransaction(req, t) {
     } = req.body;
 
     const invoiceFields = normalizeElectronicInvoiceFromBody(req.body);
+    const billingFields = normalizeBillingAddressFromBody(req.body, {
+        province: province,
+        district: district,
+    });
 
     const emailNorm = String(email || '')
         .trim()
@@ -130,6 +137,12 @@ async function createPendingOrderInTransaction(req, t) {
             email: emailNorm,
             phone: String(phone || '').replace(/\D/g, ''),
             address,
+            shippingProvince: billingFields.shippingProvince,
+            shippingDistrict: billingFields.shippingDistrict,
+            billingSameAsShipping: billingFields.billingSameAsShipping,
+            billingAddress: billingFields.billingAddress,
+            billingProvince: billingFields.billingProvince,
+            billingDistrict: billingFields.billingDistrict,
             userId: linkUserId,
             items: enrichedItems,
             totalAmount: Number(pricing.total).toFixed(2),

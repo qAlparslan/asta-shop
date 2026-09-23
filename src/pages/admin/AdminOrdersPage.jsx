@@ -419,8 +419,36 @@ export default function AdminOrdersPage() {
                   <MapPin className="h-4 w-4 text-brand" strokeWidth={1.75} />
                   Teslimat adresi
                 </div>
-                <p className="whitespace-pre-wrap text-sm leading-relaxed text-neutral-800">{detailOrder.address}</p>
+                <p className="whitespace-pre-wrap text-sm leading-relaxed text-neutral-800">
+                  {detailOrder.address}
+                  {detailOrder.shippingDistrict || detailOrder.shippingProvince ? (
+                    <>
+                      <br />
+                      <span className="text-neutral-600">
+                        {[detailOrder.shippingDistrict, detailOrder.shippingProvince]
+                          .filter(Boolean)
+                          .join(' / ')}
+                      </span>
+                    </>
+                  ) : null}
+                </p>
               </section>
+
+              {detailOrder.billingSameAsShipping === false ? (
+                <section className="rounded-xl border border-amber-200/80 bg-amber-50/40 p-4 shadow-sm">
+                  <div className="mb-3 flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-amber-900">
+                    <MapPin className="h-4 w-4 text-brand" strokeWidth={1.75} />
+                    Fatura adresi (teslimattan farklı)
+                  </div>
+                  <p className="whitespace-pre-wrap text-sm leading-relaxed text-neutral-800">
+                    {detailOrder.billingAddress}
+                    <br />
+                    <span className="text-neutral-600">
+                      {[detailOrder.billingDistrict, detailOrder.billingProvince].filter(Boolean).join(' / ')}
+                    </span>
+                  </p>
+                </section>
+              ) : null}
 
               <section className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
                 <div className="mb-3 flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-neutral-500">

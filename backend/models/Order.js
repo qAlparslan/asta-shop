@@ -28,6 +28,31 @@ const Order = sequelize.define('Order', {
         type: DataTypes.TEXT,
         allowNull: false
     },
+    shippingProvince: {
+        type: DataTypes.STRING(80),
+        allowNull: true,
+    },
+    shippingDistrict: {
+        type: DataTypes.STRING(80),
+        allowNull: true,
+    },
+    billingSameAsShipping: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: true,
+    },
+    billingAddress: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+    },
+    billingProvince: {
+        type: DataTypes.STRING(80),
+        allowNull: true,
+    },
+    billingDistrict: {
+        type: DataTypes.STRING(80),
+        allowNull: true,
+    },
     items: {
         type: DataTypes.JSON,
         allowNull: false

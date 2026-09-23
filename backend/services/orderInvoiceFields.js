@@ -41,4 +41,59 @@ function normalizeElectronicInvoiceFromBody(body) {
     };
 }
 
-module.exports = { normalizeElectronicInvoiceFromBody, BIREYSEL_TCKN_PLACEHOLDER };
+/**
+ * @param {Record<string, unknown>} body
+ * @param {{ province: string; district: string }} shipping
+ */
+function normalizeBillingAddressFromBody(body, shipping) {
+    const sameRaw = body?.billingSameAsShipping;
+    const billingSameAsShipping =
+        sameRaw === undefined ||
+        sameRaw === null ||
+        sameRaw === true ||
+        sameRaw === 'true' ||
+        String(sameRaw).toLowerCase() === 'true';
+
+    const shippingProvince = String(shipping?.province || '').trim();
+    const shippingDistrict = String(shipping?.district || '').trim();
+
+    if (billingSameAsShipping) {
+        return {
+            billingSameAsShipping: true,
+            billingAddress: null,
+            billingProvince: null,
+            billingDistrict: null,
+            shippingProvince: shippingProvince || null,
+            shippingDistrict: shippingDistrict || null,
+        };
+    }
+
+    const billingAddress = String(body?.billingAddress || '').trim();
+    const billingProvince = String(body?.billingProvince || '').trim();
+    const billingDistrict = String(body?.billingDistrict || '').trim();
+
+    if (!billingAddress || billingAddress.length < 5) {
+        throw new Error('Fatura açık adresini girin.');
+    }
+    if (!billingProvince) {
+        throw new Error('Fatura adresi için il seçin.');
+    }
+    if (!billingDistrict) {
+        throw new Error('Fatura adresi için ilçe seçin.');
+    }
+
+    return {
+        billingSameAsShipping: false,
+        billingAddress: billingAddress.slice(0, 4000),
+        billingProvince: billingProvince.slice(0, 80),
+        billingDistrict: billingDistrict.slice(0, 80),
+        shippingProvince: shippingProvince || null,
+        shippingDistrict: shippingDistrict || null,
+    };
+}
+
+module.exports = {
+    normalizeElectronicInvoiceFromBody,
+    normalizeBillingAddressFromBody,
+    BIREYSEL_TCKN_PLACEHOLDER,
+};
