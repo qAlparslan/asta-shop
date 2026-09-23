@@ -2,27 +2,16 @@ import { useMemo, useState } from 'react';
 import { ArrowUpDown, ChevronDown, SlidersHorizontal } from 'lucide-react';
 import { ADMIN_PRODUCT_SORT_OPTIONS } from './adminProductListFilters.js';
 
-const pillBase =
-  'rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-1';
-const pillIdle = 'border-neutral-200 bg-white text-neutral-700 hover:border-neutral-300 hover:bg-neutral-50';
-const pillActive = 'border-brand bg-brand text-white shadow-sm';
+const selectClass =
+  'rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none ring-brand focus:border-brand/50 focus:ring-2';
 
-/** @param {{ active: boolean; onClick: () => void; children: import('react').ReactNode }} p */
-function Pill({ active, onClick, children }) {
+/** @param {{ label: string; children: import('react').ReactNode }} p */
+function FilterSelect({ label, children }) {
   return (
-    <button type="button" onClick={onClick} className={`${pillBase} ${active ? pillActive : pillIdle}`}>
+    <label className="block min-w-0">
+      <span className="text-[11px] font-bold uppercase tracking-wide text-neutral-500">{label}</span>
       {children}
-    </button>
-  );
-}
-
-/** @param {{ title: string; children: import('react').ReactNode }} p */
-function FilterGroup({ title, children }) {
-  return (
-    <div>
-      <p className="mb-2 text-[10px] font-bold uppercase tracking-wide text-neutral-500">{title}</p>
-      <div className="flex flex-wrap gap-2">{children}</div>
-    </div>
+    </label>
   );
 }
 
@@ -177,127 +166,121 @@ export default function AdminProductListToolbar({
       </div>
 
       {filtersOpen ? (
-        <div className="space-y-4 border-t border-neutral-100 px-3 pb-4 pt-3 sm:px-4 sm:pb-5">
-          <FilterGroup title="Durum">
-            <Pill active={statusFilter === 'all'} onClick={() => setStatusFilter('all')}>
-              Tümü
-            </Pill>
-            <Pill active={statusFilter === 'published'} onClick={() => setStatusFilter('published')}>
-              Yayında
-            </Pill>
-            <Pill active={statusFilter === 'inactive'} onClick={() => setStatusFilter('inactive')}>
-              Gizli
-            </Pill>
-            <Pill active={statusFilter === 'auto_hidden'} onClick={() => setStatusFilter('auto_hidden')}>
-              Otom. gizli
-            </Pill>
-            <Pill active={statusFilter === 'out_of_stock'} onClick={() => setStatusFilter('out_of_stock')}>
-              Stok yok
-            </Pill>
-          </FilterGroup>
+        <div className="border-t border-neutral-100 px-3 pb-4 pt-3 sm:px-4 sm:pb-5">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
+            <FilterSelect label="Durum">
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className={`mt-1.5 w-full ${selectClass}`}
+              >
+                <option value="all">Tümü</option>
+                <option value="published">Yayında (stoklu)</option>
+                <option value="inactive">Vitrinden gizli</option>
+                <option value="auto_hidden">Stok bitti — otomatik gizli</option>
+                <option value="out_of_stock">Stok yok</option>
+              </select>
+            </FilterSelect>
 
-          <FilterGroup title="Stok">
-            <Pill active={stockFilter === 'all'} onClick={() => setStockFilter('all')}>
-              Tümü
-            </Pill>
-            <Pill active={stockFilter === 'low'} onClick={() => setStockFilter('low')}>
-              Düşük (≤5)
-            </Pill>
-            <Pill active={stockFilter === 'zero'} onClick={() => setStockFilter('zero')}>
-              Sıfır
-            </Pill>
-          </FilterGroup>
+            <FilterSelect label="Stok">
+              <select
+                value={stockFilter}
+                onChange={(e) => setStockFilter(e.target.value)}
+                className={`mt-1.5 w-full ${selectClass}`}
+              >
+                <option value="all">Tümü</option>
+                <option value="low">Düşük stok (≤5)</option>
+                <option value="zero">Sıfır stok</option>
+              </select>
+            </FilterSelect>
 
-          <FilterGroup title="İndirim">
-            <Pill active={discountFilter === 'all'} onClick={() => setDiscountFilter('all')}>
-              Tümü
-            </Pill>
-            <Pill active={discountFilter === 'on_sale'} onClick={() => setDiscountFilter('on_sale')}>
-              İndirimde
-            </Pill>
-            <Pill
-              active={discountFilter === 'scheduled_active'}
-              onClick={() => setDiscountFilter('scheduled_active')}
-            >
-              Planlı — aktif
-            </Pill>
-            <Pill
-              active={discountFilter === 'scheduled_future'}
-              onClick={() => setDiscountFilter('scheduled_future')}
-            >
-              Planlı — gelecek
-            </Pill>
-            <Pill active={discountFilter === 'none'} onClick={() => setDiscountFilter('none')}>
-              İndirimsiz
-            </Pill>
-          </FilterGroup>
+            <FilterSelect label="İndirim">
+              <select
+                value={discountFilter}
+                onChange={(e) => setDiscountFilter(e.target.value)}
+                className={`mt-1.5 w-full ${selectClass}`}
+              >
+                <option value="all">Tümü</option>
+                <option value="on_sale">İndirimde (aktif fiyat)</option>
+                <option value="scheduled_active">Planlı indirim — şu an aktif</option>
+                <option value="scheduled_future">Planlı indirim — gelecek</option>
+                <option value="none">İndirimsiz</option>
+              </select>
+            </FilterSelect>
 
-          {categoryOptions.length > 0 ? (
-            <FilterGroup title="Kategori">
-              <Pill active={categoryFilter === 'all'} onClick={() => setCategoryFilter('all')}>
-                Tümü
-              </Pill>
-              {categoryOptions.map((c) => (
-                <Pill key={c} active={categoryFilter === c} onClick={() => setCategoryFilter(c)}>
-                  {c}
-                </Pill>
-              ))}
-            </FilterGroup>
-          ) : null}
+            <FilterSelect label="Kategori">
+              <select
+                value={categoryFilter}
+                onChange={(e) => setCategoryFilter(e.target.value)}
+                className={`mt-1.5 w-full ${selectClass}`}
+              >
+                <option value="all">Tümü</option>
+                {categoryOptions.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
+            </FilterSelect>
 
-          <FilterGroup title="Etiket">
-            <Pill active={tagFilter === 'all'} onClick={() => setTagFilter('all')}>
-              Tümü
-            </Pill>
-            {tagPresets.map((t) => (
-              <Pill key={t.value} active={tagFilter === t.value} onClick={() => setTagFilter(t.value)}>
-                {t.label}
-              </Pill>
-            ))}
-          </FilterGroup>
+            <FilterSelect label="Etiket">
+              <select
+                value={tagFilter}
+                onChange={(e) => setTagFilter(e.target.value)}
+                className={`mt-1.5 w-full ${selectClass}`}
+              >
+                <option value="all">Tümü</option>
+                {tagPresets.map((t) => (
+                  <option key={t.value} value={t.value}>
+                    {t.label}
+                  </option>
+                ))}
+              </select>
+            </FilterSelect>
 
-          <FilterGroup title="İçerik / SEO">
-            <Pill active={contentFilter === 'all'} onClick={() => setContentFilter('all')}>
-              Tümü
-            </Pill>
-            <Pill active={contentFilter === 'no_image'} onClick={() => setContentFilter('no_image')}>
-              Görsel yok
-            </Pill>
-            <Pill active={contentFilter === 'missing_seo'} onClick={() => setContentFilter('missing_seo')}>
-              SEO eksik
-            </Pill>
-            <Pill
-              active={contentFilter === 'empty_description'}
-              onClick={() => setContentFilter('empty_description')}
-            >
-              Açıklama boş
-            </Pill>
-          </FilterGroup>
+            <FilterSelect label="İçerik / SEO">
+              <select
+                value={contentFilter}
+                onChange={(e) => setContentFilter(e.target.value)}
+                className={`mt-1.5 w-full ${selectClass}`}
+              >
+                <option value="all">Tümü</option>
+                <option value="no_image">Görsel yok</option>
+                <option value="missing_seo">Slug veya SEO eksik</option>
+                <option value="empty_description">Açıklama boş</option>
+              </select>
+            </FilterSelect>
 
-          <FilterGroup title="Sepet">
-            <Pill active={engagementFilter === 'all'} onClick={() => setEngagementFilter('all')}>
-              Tümü
-            </Pill>
-            <Pill active={engagementFilter === 'in_cart'} onClick={() => setEngagementFilter('in_cart')}>
-              Sepette tutulan
-            </Pill>
-            <Pill active={engagementFilter === 'cart_adds'} onClick={() => setEngagementFilter('cart_adds')}>
-              Sepete eklenmiş
-            </Pill>
-          </FilterGroup>
+            <FilterSelect label="Sepet ilgisi">
+              <select
+                value={engagementFilter}
+                onChange={(e) => setEngagementFilter(e.target.value)}
+                className={`mt-1.5 w-full ${selectClass}`}
+              >
+                <option value="all">Tümü</option>
+                <option value="in_cart">Şu an sepette tutulan</option>
+                <option value="cart_adds">Sepete en az 1 kez eklenmiş</option>
+              </select>
+            </FilterSelect>
+          </div>
         </div>
       ) : null}
 
       {sortOpen ? (
         <div className="border-t border-neutral-100 px-3 pb-4 pt-3 sm:px-4 sm:pb-5">
-          <p className="mb-2 text-[10px] font-bold uppercase tracking-wide text-neutral-500">Sıralama</p>
-          <div className="flex flex-wrap gap-2">
-            {ADMIN_PRODUCT_SORT_OPTIONS.map((o) => (
-              <Pill key={o.id} active={sortKey === o.id} onClick={() => setSortKey(o.id)}>
-                {o.label}
-              </Pill>
-            ))}
-          </div>
+          <FilterSelect label="Sıralama">
+            <select
+              value={sortKey}
+              onChange={(e) => setSortKey(e.target.value)}
+              className={`mt-1.5 w-full max-w-md ${selectClass}`}
+            >
+              {ADMIN_PRODUCT_SORT_OPTIONS.map((o) => (
+                <option key={o.id} value={o.id}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+          </FilterSelect>
         </div>
       ) : null}
     </div>
