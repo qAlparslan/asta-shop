@@ -85,13 +85,15 @@ async function cancelPendingOrderCleanup(orderId) {
     }
 }
 
-function buildMerchantLandingUrls(orderId) {
+function buildMerchantLandingUrls(orderId, orderNumber) {
     const base = (getFrontendUrl() || '').trim().replace(/\/+$/, '');
     if (!base || !/^https?:\/\//i.test(base)) return { merchant_ok_url: '', merchant_fail_url: '' };
     const enc = encodeURIComponent(orderId);
+    const no = String(orderNumber || '').trim();
+    const noQ = no ? `&orderNo=${encodeURIComponent(no)}` : '';
     return {
-        merchant_ok_url: `${base}/odeme/basarili?orderId=${enc}`,
-        merchant_fail_url: `${base}/odeme/hatali?reason=${encodeURIComponent('paytr_odeme_red')}&orderId=${enc}`,
+        merchant_ok_url: `${base}/odeme/basarili?orderId=${enc}${noQ}`,
+        merchant_fail_url: `${base}/odeme/hatali?reason=${encodeURIComponent('paytr_odeme_red')}&orderId=${enc}${noQ}`,
     };
 }
 
@@ -151,7 +153,7 @@ exports.createPaytrPaymentInitialize = async (req, res) => {
             return res.status(500).json({ status: 'fail', message: 'Sipariş numarası PayTR için uygun değil.' });
         }
 
-        const urls = buildMerchantLandingUrls(orderRow.id);
+        const urls = buildMerchantLandingUrls(orderRow.id, orderRow.orderNumber);
         if (!urls.merchant_ok_url || !urls.merchant_fail_url) {
             await cancelPendingOrderCleanup(committedOrderId);
             return res.status(500).json({

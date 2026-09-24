@@ -2,6 +2,7 @@
  * Ödeme bekleyen sipariş INSERT—yalnızca bu kolonlar yazılır.
  */
 const ORDER_CHECKOUT_PENDING_INSERT_FIELDS = Object.freeze([
+    'orderNumber',
     'fullName',
     'email',
     'userId',

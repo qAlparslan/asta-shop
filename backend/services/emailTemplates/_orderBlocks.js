@@ -136,7 +136,7 @@ function renderOrderSummaryBox(orderIdShort, totalAmount, extraHtml = '', option
     <div style="${T.cardNeutral} margin:20px 0;">
       <p style="margin:0;font-size:14px;color:${T.text};font-family:${T.fontSans};">
         Sipariş no:
-        <strong style="color:${T.brand};font-family:${T.fontMono};font-weight:700;">#${escapeHtml(orderIdShort)}</strong>
+        <strong style="color:${T.brand};font-family:${T.fontMono};font-weight:700;">${escapeHtml(orderIdShort)}</strong>
       </p>
       ${totalLine}
       ${extraHtml}

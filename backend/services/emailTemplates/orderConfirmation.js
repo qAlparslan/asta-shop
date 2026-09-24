@@ -1,5 +1,5 @@
 const baseLayout = require('./baseLayout');
-const { escapeHtml, shortOrderId, money, firstNameFromOrder } = require('./_utils');
+const { escapeHtml, publicOrderNumber, money, firstNameFromOrder } = require('./_utils');
 const {
     renderOrderItemsTable,
     renderDeliveryCard,
@@ -13,7 +13,7 @@ module.exports = function orderConfirmationTemplate({ order, storeName, logoUrl,
     const items = Array.isArray(order.items) ? order.items : [];
     const base = String(frontendUrl || '').replace(/\/$/, '');
     const ordersUrl = base ? `${base}/hesabim/siparisler` : '';
-    const orderShort = shortOrderId(order.id);
+    const orderShort = publicOrderNumber(order);
 
     const couponLine =
         typeof order.couponCode === 'string' && order.couponCode.trim()
@@ -63,7 +63,7 @@ module.exports = function orderConfirmationTemplate({ order, storeName, logoUrl,
   `;
 
     return {
-        subject: `Siparişiniz alındı — #${orderShort}`,
+        subject: `Siparişiniz alındı — ${orderShort}`,
         html: baseLayout({ title: 'Sipariş onayı', content, storeName, logoUrl }),
     };
 };

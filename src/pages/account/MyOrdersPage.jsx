@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { ClipboardList } from 'lucide-react';
 import { apiFetch } from '../../api/client.js';
 import { formatTRY } from '../../lib/formatTRY.js';
+import { displayOrderNumber } from '../../lib/orderDisplayNumber.js';
 import { mediaUrl } from '../../lib/mediaUrl.js';
 import { canCustomerCancelOrder, orderStatusLabel } from '../../lib/orderStatus.js';
 import OrderTrackingStepper from '../../components/OrderTrackingStepper.jsx';
@@ -151,7 +152,12 @@ export default function MyOrdersPage() {
                   <div className="flex flex-wrap items-start justify-between gap-4 border-b border-neutral-100 bg-neutral-50/80 px-4 py-4 sm:px-6">
                     <div>
                       <p className="text-[11px] font-bold uppercase tracking-wide text-neutral-500">Sipariş</p>
-                      <p className="mt-1 font-mono text-sm text-neutral-900">{id || '—'}</p>
+                      <p className="mt-1 font-mono text-sm tabular-nums text-neutral-900">
+                        {(() => {
+                          const no = displayOrderNumber(o);
+                          return no !== '—' ? no : id || '—';
+                        })()}
+                      </p>
                       <p className="mt-2 text-xs text-neutral-600">{formatOrderDate(/** @type {any} */ (o.createdAt))}</p>
                     </div>
                     <div className="flex flex-wrap items-center gap-3">

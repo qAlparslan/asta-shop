@@ -1,5 +1,5 @@
 const baseLayout = require('./baseLayout');
-const { escapeHtml, shortOrderId, firstNameFromOrder } = require('./_utils');
+const { escapeHtml, publicOrderNumber, firstNameFromOrder } = require('./_utils');
 const {
     renderCtaButton,
     renderOrderSummaryBox,
@@ -53,7 +53,7 @@ module.exports = function orderStatusUpdateTemplate({ order, newStatus, storeNam
     };
 
     const firstName = firstNameFromOrder(order);
-    const orderShort = shortOrderId(order.id);
+    const orderShort = publicOrderNumber(order);
     const items = Array.isArray(order.items) ? order.items : [];
     const base = String(frontendUrl || '').replace(/\/$/, '');
     const ordersUrl = base ? `${base}/hesabim/siparisler` : '';
@@ -118,7 +118,7 @@ module.exports = function orderStatusUpdateTemplate({ order, newStatus, storeNam
   `;
 
     return {
-        subject: `${copy.title} — #${orderShort}`,
+        subject: `${copy.title} — ${orderShort}`,
         html: baseLayout({ title: copy.title, content, storeName, logoUrl }),
     };
 };

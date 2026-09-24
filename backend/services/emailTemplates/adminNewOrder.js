@@ -1,5 +1,5 @@
 const baseLayout = require('./baseLayout');
-const { escapeHtml, shortOrderId, money } = require('./_utils');
+const { escapeHtml, publicOrderNumber, money } = require('./_utils');
 const { renderOrderItemsTable, renderCtaButton } = require('./_orderBlocks');
 const T = require('./emailTheme');
 
@@ -7,7 +7,7 @@ module.exports = function adminNewOrderTemplate({ order, storeName, logoUrl, fro
     const base = String(frontendUrl || '').replace(/\/$/, '');
     const adminOrdersUrl = base ? `${base}/admin/siparisler` : '';
     const items = Array.isArray(order.items) ? order.items : [];
-    const orderShort = shortOrderId(order.id);
+    const orderShort = publicOrderNumber(order);
 
     const content = `
     <p style="margin:0 0 4px;font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:${T.gold};font-family:${T.fontSans};">
@@ -17,7 +17,7 @@ module.exports = function adminNewOrderTemplate({ order, storeName, logoUrl, fro
       Yeni sipariş geldi
     </h2>
     <p style="margin:0 0 20px;color:${T.textMuted};font-size:14px;font-family:${T.fontSans};">
-      <strong style="color:${T.brand};font-family:${T.fontMono};font-weight:700;">#${orderShort}</strong>
+      <strong style="color:${T.brand};font-family:${T.fontMono};font-weight:700;">${orderShort}</strong>
       · ${money(order.totalAmount)} ₺ · durum: <strong style="color:${T.navy};">${escapeHtml(order.status || 'hazirlaniyor')}</strong>
     </p>
 
@@ -44,7 +44,7 @@ module.exports = function adminNewOrderTemplate({ order, storeName, logoUrl, fro
   `;
 
     return {
-        subject: `[Yeni sipariş] #${orderShort} — ${money(order.totalAmount)} ₺`,
+        subject: `[Yeni sipariş] ${orderShort} — ${money(order.totalAmount)} ₺`,
         html: baseLayout({ title: 'Yeni sipariş', content, storeName, logoUrl }),
     };
 };

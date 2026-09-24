@@ -34,6 +34,7 @@ import {
 } from 'recharts';
 import { apiFetch } from '../../api/client.js';
 import { formatTRY } from '../../lib/formatTRY.js';
+import { displayOrderNumber } from '../../lib/orderDisplayNumber.js';
 import { mediaUrl } from '../../lib/mediaUrl.js';
 import { pickProductImagePath } from '../../lib/productMap.js';
 import { orderStatusLabel } from './constants.js';
@@ -667,7 +668,7 @@ export default function AdminDashboardPage() {
               {(data?.recentOrders || []).map((o) => (
                 <tr key={o.id} className="transition-colors hover:bg-neutral-50/80">
                   <td className="px-6 py-4 font-mono font-bold text-asta-navy">
-                    #{String(o.id).replace(/-/g, '').slice(0, 8).toUpperCase()}
+                    {displayOrderNumber(o)}
                   </td>
                   <td className="px-6 py-4">
                     <p className="font-semibold text-neutral-900">{o.fullName}</p>

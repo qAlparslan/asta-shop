@@ -9,6 +9,7 @@ const {
     normalizeBillingAddressFromBody,
 } = require('./orderInvoiceFields');
 const { ORDER_CHECKOUT_PENDING_INSERT_FIELDS } = require('../constants/orderInsertFields');
+const { allocateUniqueOrderNumber } = require('../utils/orderNumber');
 const { getMergedVersionPins } = require('./legalPagesMerge');
 
 /**
@@ -110,6 +111,7 @@ async function createPendingOrderInTransaction(req, t) {
             price,
             quantity: qty,
             images: product.images,
+            barcode: product.barcode || null,
             area: product.area,
             purpose: product.purpose,
             warehouseAllocations: allocations,
@@ -131,8 +133,11 @@ async function createPendingOrderInTransaction(req, t) {
         }
     }
 
+    const orderNumber = await allocateUniqueOrderNumber(t);
+
     const order = await Order.create(
         {
+            orderNumber,
             fullName: String(fullName || '').trim(),
             email: emailNorm,
             phone: String(phone || '').replace(/\D/g, ''),

@@ -6,6 +6,7 @@ import { useCart } from '../context/CartContext.jsx';
 export default function PaymentSuccessPage() {
   const [searchParams] = useSearchParams();
   const orderId = searchParams.get('orderId') || '';
+  const orderNo = searchParams.get('orderNo') || '';
   const { clearCart } = useCart();
 
   useEffect(() => {
@@ -21,10 +22,10 @@ export default function PaymentSuccessPage() {
           </div>
           <h1 className="mt-8 text-2xl font-bold text-asta-navy">Ödeme başarılı</h1>
           <p className="mx-auto mt-4 max-w-sm text-sm leading-relaxed text-neutral-600">
-            {orderId ? (
+            {orderNo || orderId ? (
               <>
                 Sipariş numaranız:{' '}
-                <span className="font-mono font-semibold text-neutral-900">{orderId}</span>. Siparişiniz
+                <span className="font-mono font-semibold text-neutral-900">{orderNo || orderId}</span>. Siparişiniz
                 hazırlanmaya alındı; onay e-postası gönderilebilir.
               </>
             ) : (

@@ -7,6 +7,12 @@ const Order = sequelize.define('Order', {
         defaultValue: DataTypes.UUIDV4,
         primaryKey: true
     },
+    /** Müşteri / admin görünen 10–11 haneli sipariş numarası */
+    orderNumber: {
+        type: DataTypes.STRING(11),
+        allowNull: true,
+        unique: true,
+    },
     fullName: {
         type: DataTypes.STRING,
         allowNull: false

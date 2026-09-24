@@ -493,6 +493,7 @@ exports.exportOrdersCsv = async (req, res) => {
 
         const headers = [
             'id',
+            'orderNumber',
             'createdAt',
             'fullName',
             'email',
@@ -522,6 +523,7 @@ exports.exportOrdersCsv = async (req, res) => {
                 typeof o.items === 'string' ? o.items : JSON.stringify(o.items ?? []);
             return [
                 o.id,
+                o.orderNumber || '',
                 o.createdAt ? new Date(o.createdAt).toISOString() : '',
                 o.fullName,
                 o.email,

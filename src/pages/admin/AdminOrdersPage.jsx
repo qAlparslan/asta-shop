@@ -4,7 +4,6 @@ import {
   Check,
   Clock,
   Download,
-  Eye,
   MapPin,
   RotateCcw,
   Search,
@@ -20,7 +19,10 @@ import { apiFetch, downloadAuthorizedFile } from '../../api/client.js';
 import { formatTRY } from '../../lib/formatTRY.js';
 import { inputClass } from '../../lib/formStyles.js';
 import { orderStatusLabel } from './constants.js';
-import { adminOrderStatusClass } from '../../lib/adminOrderStatusClass.js';
+import { displayOrderNumber } from '../../lib/orderDisplayNumber.js';
+import AdminOrderMarketplaceRow, {
+  AdminOrderMarketplaceHeader,
+} from './AdminOrderMarketplaceRow.jsx';
 
 /** @param {string | Date | undefined | null} v */
 function formatTrDate(v) {
@@ -37,10 +39,6 @@ function formatTrDate(v) {
     const min = String(d.getMinutes()).padStart(2, '0');
     return `${day}.${mo}.${y} ${h}:${min}`;
   }
-}
-
-function orderNoDisplay(id) {
-  return `#${String(id).replace(/-/g, '').slice(0, 8).toUpperCase()}`;
 }
 
 /** @param {unknown} raw */
@@ -128,11 +126,9 @@ export default function AdminOrdersPage() {
 
     if (q) {
       list = list.filter((o) => {
-        const idFold = String(o.id).replace(/-/g, '').toLowerCase();
-        const shortId = orderNoDisplay(o.id).slice(1).toLowerCase();
+        const orderNo = displayOrderNumber(o);
         return (
-          idFold.includes(q.replace(/^#/, '')) ||
-          shortId.includes(q.replace(/^#/, '')) ||
+          orderNo.includes(q.replace(/\D/g, '')) ||
           String(o.fullName || '')
             .toLowerCase()
             .includes(q) ||
@@ -321,71 +317,18 @@ export default function AdminOrdersPage() {
       )}
 
       <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-card">
-        <div className="overflow-x-auto">
-          <table className="min-w-[880px] w-full divide-y divide-neutral-100 text-left text-sm">
-            <thead>
-              <tr className="text-[11px] font-bold uppercase tracking-wider text-neutral-500">
-                <th className="px-5 py-3.5">Sipariş no</th>
-                <th className="px-5 py-3.5">Müşteri</th>
-                <th className="px-5 py-3.5 whitespace-nowrap">Tarih</th>
-                <th className="px-5 py-3.5 text-right">Tutar</th>
-                <th className="px-5 py-3.5">Durum</th>
-                <th className="px-5 py-3.5 text-right">İşlem</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-neutral-100 bg-white">
-              {loading && (
-                <tr>
-                  <td colSpan={6} className="px-5 py-14 text-center text-neutral-500">
-                    Yükleniyor…
-                  </td>
-                </tr>
-              )}
-              {!loading && filtered.length === 0 && (
-                <tr>
-                  <td colSpan={6} className="px-5 py-14 text-center text-neutral-500">
-                    Kayıt yok.
-                  </td>
-                </tr>
-              )}
-              {filtered.map((o) => (
-                <tr key={o.id} className="transition-colors hover:bg-neutral-50/80">
-                  <td className="px-5 py-4 align-top font-mono text-sm font-bold text-asta-navy">
-                    {orderNoDisplay(o.id)}
-                  </td>
-                  <td className="px-5 py-4 align-top">
-                    <p className="font-semibold text-neutral-900">{o.fullName}</p>
-                    <p className="mt-0.5 text-xs text-neutral-500">{o.email}</p>
-                    <p className="mt-0.5 text-xs text-neutral-500">{o.phone || '—'}</p>
-                  </td>
-                  <td className="whitespace-nowrap px-5 py-4 align-top tabular-nums text-neutral-600">
-                    {formatTrDate(o.createdAt)}
-                  </td>
-                  <td className="px-5 py-4 align-top text-right text-sm font-semibold tabular-nums text-brand">
-                    {formatTRY(Number(o.totalAmount) || 0)}
-                  </td>
-                  <td className="px-5 py-4 align-top">
-                    <span
-                      className={adminOrderStatusClass(o.status)}
-                    >
-                      {orderStatusLabel(o.status)}
-                    </span>
-                  </td>
-                  <td className="px-5 py-4 align-top text-right">
-                    <button
-                      type="button"
-                      onClick={() => openDetail(o)}
-                      className="inline-flex items-center gap-1.5 rounded-xl bg-brand px-3.5 py-2 text-xs font-bold uppercase tracking-wide text-white shadow-sm transition-colors hover:bg-brand-hover"
-                    >
-                      <Eye className="h-3.5 w-3.5" strokeWidth={2} />
-                      Detay
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <AdminOrderMarketplaceHeader />
+        {loading ? (
+          <p className="px-5 py-14 text-center text-sm text-neutral-500">Yükleniyor…</p>
+        ) : filtered.length === 0 ? (
+          <p className="px-5 py-14 text-center text-sm text-neutral-500">Kayıt yok.</p>
+        ) : (
+          <div className="min-w-[960px] overflow-x-auto">
+            {filtered.map((o) => (
+              <AdminOrderMarketplaceRow key={o.id} order={o} onDetail={openDetail} />
+            ))}
+          </div>
+        )}
       </div>
 
       {detailOrder && (
@@ -406,7 +349,7 @@ export default function AdminOrdersPage() {
                 <h3 id="order-detail-title" className="text-xl font-semibold text-asta-navy">
                   Sipariş detayı
                 </h3>
-                <p className="mt-1 font-mono text-sm text-neutral-500">{orderNoDisplay(detailOrder.id)}</p>
+                <p className="mt-1 font-mono text-sm text-neutral-500">{displayOrderNumber(detailOrder)}</p>
               </div>
               <button
                 type="button"

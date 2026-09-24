@@ -10,6 +10,17 @@ function shortOrderId(id) {
     return String(id || '').slice(0, 8).toUpperCase();
 }
 
+/** Müşteri / e-posta için 10–11 haneli sipariş numarası */
+function publicOrderNumber(order) {
+    if (order && typeof order === 'object') {
+        const n = String(order.orderNumber ?? '')
+            .replace(/\D/g, '');
+        if (n.length >= 10 && n.length <= 11) return n;
+        if (order.id) return shortOrderId(order.id);
+    }
+    return shortOrderId(order);
+}
+
 function money(n) {
     const v = Number(n);
     return (Number.isFinite(v) ? v : 0).toFixed(2);
@@ -54,6 +65,7 @@ function normalizeOrderForEmail(order) {
 module.exports = {
     escapeHtml,
     shortOrderId,
+    publicOrderNumber,
     money,
     parseOrderItemsForEmail,
     firstNameFromOrder,
