@@ -176,8 +176,15 @@ html[data-theme='dark'] .divide-neutral-200 > :not([hidden]) ~ :not([hidden]) {
 }
 
 html[data-theme='dark'] .hover\:bg-neutral-50:hover,
+html[data-theme='dark'] .hover\:bg-neutral-50\/80:hover,
+html[data-theme='dark'] .hover\:bg-neutral-50\/90:hover,
 html[data-theme='dark'] .hover\:bg-neutral-100:hover,
 html[data-theme='dark'] .hover\:bg-white:hover {
+  background-color: rgb(var(--t-surface-subtle)) !important;
+}
+
+/* Admin tablo satırı — Tailwind hover opacity sınıfları koyu temada açık gri kalmasın */
+html[data-theme='dark'] .admin-shell table tbody tr:hover {
   background-color: rgb(var(--t-surface-subtle)) !important;
 }
 
