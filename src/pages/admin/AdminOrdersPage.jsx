@@ -81,8 +81,10 @@ export default function AdminOrdersPage() {
     }
   };
 
-  const openDetail = (o) => {
-    navigate(`/admin/siparisler/${o.id}`);
+  /** @param {Record<string, unknown>} o @param {{ manage?: boolean } | undefined} opts */
+  const openDetail = (o, opts) => {
+    const suffix = opts?.manage ? '?yonetim=1' : '';
+    navigate(`/admin/siparisler/${o.id}${suffix}`);
   };
 
   return (

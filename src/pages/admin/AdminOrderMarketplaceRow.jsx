@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react';
 import { ChevronRight, Truck } from 'lucide-react';
 import { formatTRY } from '../../lib/formatTRY.js';
 import { pickProductImagePath } from '../../lib/productMap.js';
@@ -12,9 +13,71 @@ import { deliveryNumber, packageNumber, parseOrderItems } from './adminOrderDisp
 const cell = 'flex min-h-[148px] flex-col border-neutral-200 px-4 py-4 lg:border-l lg:first:border-l-0';
 
 /**
+ * @param {{ onManage: () => void; onPrintLabel: () => void }} p
+ */
+function OtherActionsMenu({ onManage, onPrintLabel }) {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef(/** @type {HTMLDivElement | null} */ (null));
+
+  useEffect(() => {
+    if (!open) return;
+    const onDoc = (e) => {
+      if (rootRef.current && !rootRef.current.contains(/** @type {Node} */ (e.target))) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', onDoc);
+    return () => document.removeEventListener('mousedown', onDoc);
+  }, [open]);
+
+  return (
+    <div className="relative w-full" ref={rootRef}>
+      <button
+        type="button"
+        aria-expanded={open}
+        aria-haspopup="menu"
+        onClick={() => setOpen((v) => !v)}
+        className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-xs font-semibold text-neutral-700 hover:bg-neutral-50"
+      >
+        Diğer işlemler {open ? '▴' : '▾'}
+      </button>
+      {open ? (
+        <div
+          role="menu"
+          className="absolute right-0 top-full z-30 mt-1 min-w-[13.5rem] overflow-hidden rounded-lg border border-neutral-200 bg-white py-1 shadow-lg"
+        >
+          <button
+            type="button"
+            role="menuitem"
+            className="block w-full px-3 py-2.5 text-left text-xs font-semibold text-neutral-800 hover:bg-neutral-50"
+            onClick={() => {
+              setOpen(false);
+              onManage();
+            }}
+          >
+            Kargo ve durum güncelle
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            className="block w-full px-3 py-2.5 text-left text-xs font-semibold text-neutral-800 hover:bg-neutral-50"
+            onClick={() => {
+              setOpen(false);
+              onPrintLabel();
+            }}
+          >
+            Etiketi yazdır
+          </button>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+/**
  * @param {{
  *   order: Record<string, unknown>;
- *   onDetail: (o: Record<string, unknown>) => void;
+ *   onDetail: (o: Record<string, unknown>, opts?: { manage?: boolean }) => void;
  *   showInvoiceUpload?: boolean;
  *   onInvoiceUploaded?: () => void;
  *   onLabelPrinted?: (orderId: string) => void;
@@ -190,13 +253,10 @@ export default function AdminOrderMarketplaceRow({
             Detaya git
             <ChevronRight className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
           </button>
-          <button
-            type="button"
-            onClick={() => onDetail(order)}
-            className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-xs font-semibold text-neutral-700 hover:bg-neutral-50"
-          >
-            Diğer işlemler ▾
-          </button>
+          <OtherActionsMenu
+            onManage={() => onDetail(order, { manage: true })}
+            onPrintLabel={printLabel}
+          />
         </div>
       </div>
     </article>

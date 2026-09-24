@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
   Check,
   CheckCircle2,
@@ -89,6 +89,7 @@ function TimelineStep({ done, active, title, subtitle, date, icon = 'check', las
 export default function AdminOrderDetailPage() {
   const { orderId } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [order, setOrder] = useState(/** @type {Record<string, unknown> | null} */ (null));
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -121,6 +122,12 @@ export default function AdminOrderDetailPage() {
   useEffect(() => {
     load();
   }, [load]);
+
+  useEffect(() => {
+    if (searchParams.get('yonetim') === '1') {
+      setAdminOpen(true);
+    }
+  }, [searchParams]);
 
   const status = String(order?.status || '');
   const orderNo = order ? displayOrderNumber(order) : '—';
