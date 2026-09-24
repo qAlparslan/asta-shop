@@ -39,7 +39,6 @@ import ThemeSwitcher from './components/ThemeSwitcher.jsx';
 
 const AdminDashboardPage = lazy(() => import('./pages/admin/AdminDashboardPage.jsx'));
 const AdminOrdersPage = lazy(() => import('./pages/admin/AdminOrdersPage.jsx'));
-const AdminBillingPage = lazy(() => import('./pages/admin/AdminBillingPage.jsx'));
 const AdminProductsPage = lazy(() => import('./pages/admin/AdminProductsPage.jsx'));
 const AdminCouponsPage = lazy(() => import('./pages/admin/AdminCouponsPage.jsx'));
 const AdminSystemPage = lazy(() => import('./pages/admin/AdminSystemPage.jsx'));
@@ -179,14 +178,7 @@ export default function App() {
                   </Suspense>
                 }
               />
-              <Route
-                path="faturalandirma"
-                element={
-                  <Suspense fallback={<AdminRouteFallback />}>
-                    <AdminBillingPage />
-                  </Suspense>
-                }
-              />
+              <Route path="faturalandirma" element={<Navigate to="/admin/siparisler" replace />} />
               <Route
                 path="urunler"
                 element={

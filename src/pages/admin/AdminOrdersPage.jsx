@@ -14,11 +14,12 @@ import {
   X,
   CheckCircle2,
   XCircle,
+  Package,
 } from 'lucide-react';
 import { apiFetch, downloadAuthorizedFile } from '../../api/client.js';
 import { formatTRY } from '../../lib/formatTRY.js';
 import { inputClass } from '../../lib/formStyles.js';
-import { ORDER_STATUSES, orderStatusLabel } from './constants.js';
+import { orderStatusLabel } from './constants.js';
 import { adminOrderStatusClass } from '../../lib/adminOrderStatusClass.js';
 
 /** @param {string | Date | undefined | null} v */
@@ -60,6 +61,13 @@ const QUICK_STATUS_OPTIONS = [
   { value: 'iptal-edildi', label: 'İptal et', icon: XCircle },
 ];
 
+/** @type {{ status: string; label: string; icon: import('lucide-react').LucideIcon }[]} */
+const ORDER_WORKFLOW_TABS = [
+  { status: 'hazirlaniyor', label: 'Gönderime Hazır', icon: Package },
+  { status: 'kargolandi', label: 'Kargoda', icon: Truck },
+  { status: 'teslim-edildi', label: 'Teslim Edildi', icon: CheckCircle2 },
+];
+
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -67,7 +75,7 @@ export default function AdminOrdersPage() {
   const [exporting, setExporting] = useState(false);
 
   const [query, setQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
+  const [activeTab, setActiveTab] = useState('hazirlaniyor');
   /** yyyy-mm-dd for <input type="date" /> */
   const [dateFilter, setDateFilter] = useState('');
 
@@ -91,13 +99,18 @@ export default function AdminOrdersPage() {
     load();
   }, [load]);
 
+  const tabCounts = useMemo(() => {
+    const counts = { hazirlaniyor: 0, kargolandi: 0, 'teslim-edildi': 0 };
+    for (const o of orders) {
+      const st = String(o.status || '');
+      if (st in counts) counts[st] += 1;
+    }
+    return counts;
+  }, [orders]);
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    let list = [...orders];
-
-    if (statusFilter) {
-      list = list.filter((o) => o.status === statusFilter);
-    }
+    let list = orders.filter((o) => o.status === activeTab);
 
     if (dateFilter) {
       const [y, m, d] = dateFilter.split('-').map(Number);
@@ -134,7 +147,7 @@ export default function AdminOrdersPage() {
     }
 
     return list;
-  }, [orders, query, statusFilter, dateFilter]);
+  }, [orders, query, activeTab, dateFilter]);
 
   const csvExport = async () => {
     setExporting(true);
@@ -176,6 +189,7 @@ export default function AdminOrdersPage() {
       });
       await load();
       closeDetail();
+      setActiveTab('kargolandi');
     } catch (e) {
       setError(e.message || 'Kargoya verilemedi.');
     } finally {
@@ -217,12 +231,47 @@ export default function AdminOrdersPage() {
           Sipariş yönetimi
         </h2>
         <p className="mt-1 text-sm text-neutral-600">
-          Arama ve filtrelerle siparişleri bulun; detayda durum ve kargo kodunu güncelleyin. Kayıtta müşteri
-          bildirimi (varsa) tetiklenir.
+          Gönderime hazır, kargoda ve teslim edilen siparişleri sekmelerden yönetin; detayda durum ve kargo kodunu
+          güncelleyin.
         </p>
       </div>
 
-      {/* Filtre çubuğu */}
+      <div
+        className="flex flex-wrap gap-2"
+        role="tablist"
+        aria-label="Sipariş durumu sekmeleri"
+      >
+        {ORDER_WORKFLOW_TABS.map((tab) => {
+          const Icon = tab.icon;
+          const active = activeTab === tab.status;
+          const count = tabCounts[tab.status] ?? 0;
+          return (
+            <button
+              key={tab.status}
+              type="button"
+              role="tab"
+              aria-selected={active}
+              onClick={() => setActiveTab(tab.status)}
+              className={`inline-flex items-center gap-2 rounded-full border px-4 py-2.5 text-sm font-semibold transition-colors ${
+                active
+                  ? 'border-brand bg-brand text-white shadow-sm'
+                  : 'border-neutral-200 bg-white text-asta-navy hover:border-brand/30 hover:bg-brand-muted/30'
+              }`}
+            >
+              <Icon className="h-4 w-4 shrink-0" strokeWidth={1.75} aria-hidden />
+              {tab.label}
+              <span
+                className={`inline-flex min-w-[1.25rem] items-center justify-center rounded-full px-1.5 py-0.5 text-[11px] font-bold tabular-nums ${
+                  active ? 'bg-white/20 text-white' : 'bg-neutral-100 text-neutral-700'
+                }`}
+              >
+                {count}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
       <div className="rounded-2xl border border-neutral-200 bg-white p-4 shadow-card">
         <div className="flex flex-col gap-3 lg:flex-row lg:flex-wrap lg:items-end xl:flex-nowrap">
           <div className="relative min-w-0 flex-1 xl:max-w-xl">
@@ -241,19 +290,6 @@ export default function AdminOrdersPage() {
             />
           </div>
           <div className="flex w-full flex-col gap-3 sm:flex-row sm:flex-wrap lg:w-auto xl:flex-nowrap">
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className={`min-w-[11rem] rounded-xl py-2.5 text-sm font-medium text-neutral-800 ${inputClass}`}
-              aria-label="Durum filtresi"
-            >
-              <option value="">Tüm durumlar</option>
-              {ORDER_STATUSES.map((s) => (
-                <option key={s.value} value={s.value}>
-                  {s.label}
-                </option>
-              ))}
-            </select>
             <label className="flex min-w-[11rem] items-center gap-2 rounded-xl border border-neutral-300 bg-white px-3 py-0.5 ring-brand ring-offset-2 focus-within:border-brand/40 focus-within:ring-2">
               <Calendar className="h-4 w-4 shrink-0 text-neutral-400" aria-hidden />
               <input

@@ -53,7 +53,7 @@ const PIE_COLORS = ['#9f2133', '#1a2332', '#6b7280'];
 
 const QUICK_LINKS = [
   { to: '/', label: 'Mağazayı gör', external: true },
-  { to: '/admin/siparisler', label: 'Siparişler' },
+  { to: '/admin/siparisler', label: 'Sipariş yönetimi' },
   { to: '/admin/urunler', label: 'Ürünler' },
   { to: '/admin/kuponlar', label: 'Kuponlar' },
   { to: '/admin/sistem/kategoriler', label: 'Sistem ayarları' },
