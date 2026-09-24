@@ -79,7 +79,10 @@ export default function AdminOrderMarketplaceRow({ order, onDetail }) {
   const imgPath = pickProductImagePath(first.images);
   const imgSrc = imgPath ? mediaUrl(imgPath) : '';
   const orderNo = displayOrderNumber(order);
-  const barcode = String(first.barcode || '').trim() || '—';
+  const barcodeFromItems = items
+    .map((it) => String(it?.barcode ?? '').trim())
+    .find(Boolean);
+  const barcode = barcodeFromItems || '—';
   const title = String(first.name || 'Ürün');
   const status = String(order.status || '');
 

@@ -16,6 +16,7 @@ const { logAdminAudit } = require('../services/auditService');
 const { buildDashboardStatsV2 } = require('../services/dashboardStatsV2Service');
 const { ensurePaytrRefundForPaidOrder } = require('../services/paytrOrderRefund');
 const { uuidToMerchantOid } = require('../utils/paytrMerchantOid');
+const { enrichOrdersItemsWithBarcodes } = require('../utils/enrichOrderItemsBarcodes');
 
 /** Stoğun düşürülmüş (commit edilmiş) sayıldığı durumlar. */
 const COMMITTED_STATUSES = new Set(['hazirlaniyor', 'kargolandi', 'teslim-edildi']);
@@ -154,11 +155,13 @@ exports.listMyOrders = async (req, res) => {
             offset,
         });
 
+        const orders = await enrichOrdersItemsWithBarcodes(rows);
+
         res.status(200).json({
             status: 'success',
             data: {
-                orders: rows,
-                pagination: { limit, offset, count: rows.length },
+                orders,
+                pagination: { limit, offset, count: orders.length },
             },
         });
     } catch (err) {
@@ -474,9 +477,10 @@ exports.getDashboardStatsV2 = async (req, res) => {
 // 3. TÜM SİPARİŞLERİ GETİR
 exports.getAllOrders = async (req, res) => {
     try {
-        const orders = await Order.findAll({
-            order: [['createdAt', 'DESC']]
+        const rows = await Order.findAll({
+            order: [['createdAt', 'DESC']],
         });
+        const orders = await enrichOrdersItemsWithBarcodes(rows);
         res.status(200).json({ status: 'success', data: { orders } });
     } catch (err) {
         res.status(400).json({ status: 'fail', message: err.message });
