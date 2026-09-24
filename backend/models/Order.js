@@ -126,6 +126,11 @@ const Order = sequelize.define('Order', {
         type: DataTypes.TEXT,
         allowNull: true,
     },
+    /** Admin yüklediği fatura PDF yolu (/uploads/invoices/...) */
+    invoicePdfPath: {
+        type: DataTypes.STRING(512),
+        allowNull: true,
+    },
     /** none | pending | completed | failed */
     refundStatus: {
         type: DataTypes.STRING(24),

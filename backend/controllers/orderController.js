@@ -17,6 +17,7 @@ const { buildDashboardStatsV2 } = require('../services/dashboardStatsV2Service')
 const { ensurePaytrRefundForPaidOrder } = require('../services/paytrOrderRefund');
 const { uuidToMerchantOid } = require('../utils/paytrMerchantOid');
 const { enrichOrdersItemsWithBarcodes } = require('../utils/enrichOrderItemsBarcodes');
+const { saveOrderInvoicePdfAndEmail } = require('../services/orderInvoicePdfService');
 
 /** Stoğun düşürülmüş (commit edilmiş) sayıldığı durumlar. */
 const COMMITTED_STATUSES = new Set(['hazirlaniyor', 'kargolandi', 'teslim-edildi']);
@@ -694,6 +695,35 @@ exports.updateOrderStatus = async (req, res) => {
         } catch {
             /* yoksay */
         }
+        res.status(400).json({ status: 'fail', message: err.message });
+    }
+};
+
+/** POST /api/orders/:id/invoice-pdf — teslim edilmiş siparişe fatura PDF (admin) */
+exports.uploadOrderInvoicePdf = async (req, res) => {
+    try {
+        const order = await Order.findByPk(req.params.id);
+        if (!order) {
+            return res.status(404).json({ status: 'fail', message: 'Sipariş bulunamadı.' });
+        }
+
+        const result = await saveOrderInvoicePdfAndEmail(req.file, order, { adminUser: req.user });
+
+        await logAdminAudit({
+            req,
+            adminUser: req.user,
+            action: 'order.invoice_pdf',
+            entityType: 'order',
+            entityId: order.id,
+            meta: { email: order.email },
+        });
+
+        res.status(200).json({
+            status: 'success',
+            message: 'Fatura yüklendi ve müşteriye e-posta ile gönderildi.',
+            data: result,
+        });
+    } catch (err) {
         res.status(400).json({ status: 'fail', message: err.message });
     }
 };

@@ -181,6 +181,7 @@ async function sendMail({
     to, subject, html, text, type = 'generic',
     relatedId = null, metadata = null, headers = null,
     campaignId = null, variant = null,
+    attachments = null,
 }) {
     if (!to) {
         console.warn(`⚠️ [mail/${type}] alıcı yok, mail gönderilmedi`);
@@ -203,6 +204,7 @@ async function sendMail({
             html,
             text: text || stripHtml(html),
             ...(headers ? { headers } : {}),
+            ...(Array.isArray(attachments) && attachments.length ? { attachments } : {}),
         });
 
         const previewUrl = nodemailer.getTestMessageUrl(info);

@@ -325,7 +325,13 @@ export default function AdminOrdersPage() {
         ) : (
           <div className="min-w-[960px] overflow-x-auto">
             {filtered.map((o) => (
-              <AdminOrderMarketplaceRow key={o.id} order={o} onDetail={openDetail} />
+              <AdminOrderMarketplaceRow
+                key={o.id}
+                order={o}
+                onDetail={openDetail}
+                showInvoiceUpload={activeTab === 'teslim-edildi'}
+                onInvoiceUploaded={load}
+              />
             ))}
           </div>
         )}
