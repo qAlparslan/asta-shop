@@ -39,6 +39,7 @@ import ThemeSwitcher from './components/ThemeSwitcher.jsx';
 
 const AdminDashboardPage = lazy(() => import('./pages/admin/AdminDashboardPage.jsx'));
 const AdminOrdersPage = lazy(() => import('./pages/admin/AdminOrdersPage.jsx'));
+const AdminOrderDetailPage = lazy(() => import('./pages/admin/AdminOrderDetailPage.jsx'));
 const AdminProductsPage = lazy(() => import('./pages/admin/AdminProductsPage.jsx'));
 const AdminCouponsPage = lazy(() => import('./pages/admin/AdminCouponsPage.jsx'));
 const AdminSystemPage = lazy(() => import('./pages/admin/AdminSystemPage.jsx'));
@@ -175,6 +176,14 @@ export default function App() {
                 element={
                   <Suspense fallback={<AdminRouteFallback />}>
                     <AdminOrdersPage />
+                  </Suspense>
+                }
+              />
+              <Route
+                path="siparisler/:orderId"
+                element={
+                  <Suspense fallback={<AdminRouteFallback />}>
+                    <AdminOrderDetailPage />
                   </Suspense>
                 }
               />
