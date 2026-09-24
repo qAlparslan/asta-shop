@@ -159,6 +159,7 @@ function InvoicePdfDropZone({ orderId, hasInvoice, onSuccess }) {
  *   onDetail: (o: Record<string, unknown>) => void;
  *   showInvoiceUpload?: boolean;
  *   onInvoiceUploaded?: () => void;
+ *   onLabelPrinted?: (orderId: string) => void;
  * }} props
  */
 export default function AdminOrderMarketplaceRow({
@@ -166,6 +167,7 @@ export default function AdminOrderMarketplaceRow({
   onDetail,
   showInvoiceUpload = false,
   onInvoiceUploaded,
+  onLabelPrinted,
 }) {
   const items = parseItems(order.items);
   const first = items[0] || {};
@@ -191,6 +193,7 @@ export default function AdminOrderMarketplaceRow({
     );
     w.document.close();
     w.print();
+    onLabelPrinted?.(orderId);
   };
 
   return (

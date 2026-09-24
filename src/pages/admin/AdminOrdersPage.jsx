@@ -1,12 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  Calendar,
   Check,
   Clock,
-  Download,
   MapPin,
   RotateCcw,
-  Search,
   ShoppingCart,
   Truck,
   User,
@@ -23,6 +20,12 @@ import { displayOrderNumber } from '../../lib/orderDisplayNumber.js';
 import AdminOrderMarketplaceRow, {
   AdminOrderMarketplaceHeader,
 } from './AdminOrderMarketplaceRow.jsx';
+import AdminOrdersFilterSortBar from './AdminOrdersFilterSortBar.jsx';
+import {
+  DEFAULT_ADMIN_ORDER_LIST_FILTERS,
+  filterAndSortAdminOrders,
+} from './adminOrderListFilters.js';
+import { markOrderLabelPrinted } from '../../lib/adminOrderLabelPrinted.js';
 
 /** @param {string | Date | undefined | null} v */
 function formatTrDate(v) {
@@ -74,8 +77,9 @@ export default function AdminOrdersPage() {
 
   const [query, setQuery] = useState('');
   const [activeTab, setActiveTab] = useState('hazirlaniyor');
-  /** yyyy-mm-dd for <input type="date" /> */
-  const [dateFilter, setDateFilter] = useState('');
+  const [listFilters, setListFilters] = useState(() => ({ ...DEFAULT_ADMIN_ORDER_LIST_FILTERS }));
+  const [sortKey, setSortKey] = useState('createdAt_desc');
+  const [labelPrintedTick, setLabelPrintedTick] = useState(0);
 
   /** @type {null | Record<string, unknown>} */
   const [detailOrder, setDetailOrder] = useState(null);
@@ -106,44 +110,21 @@ export default function AdminOrdersPage() {
     return counts;
   }, [orders]);
 
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    let list = orders.filter((o) => o.status === activeTab);
+  const tabOrders = useMemo(
+    () => orders.filter((o) => o.status === activeTab),
+    [orders, activeTab],
+  );
 
-    if (dateFilter) {
-      const [y, m, d] = dateFilter.split('-').map(Number);
-      if (y && m && d) {
-        list = list.filter((o) => {
-          const dt = new Date(o.createdAt);
-          return (
-            dt.getFullYear() === y &&
-            dt.getMonth() + 1 === m &&
-            dt.getDate() === d
-          );
-        });
-      }
-    }
-
-    if (q) {
-      list = list.filter((o) => {
-        const orderNo = displayOrderNumber(o);
-        return (
-          orderNo.includes(q.replace(/\D/g, '')) ||
-          String(o.fullName || '')
-            .toLowerCase()
-            .includes(q) ||
-          String(o.email || '')
-            .toLowerCase()
-            .includes(q) ||
-          String(o.phone || '')
-            .toLowerCase()
-            .includes(q.replace(/\s/g, ''))
-        );
-      });
-    }
-
-    return list;
-  }, [orders, query, activeTab, dateFilter]);
+  const filtered = useMemo(
+    () =>
+      filterAndSortAdminOrders(orders, {
+        activeTab,
+        query,
+        filters: listFilters,
+        sortKey,
+      }),
+    [orders, activeTab, query, listFilters, sortKey, labelPrintedTick],
+  );
 
   const csvExport = async () => {
     setExporting(true);
@@ -268,49 +249,19 @@ export default function AdminOrdersPage() {
         })}
       </div>
 
-      <div className="rounded-2xl border border-neutral-200 bg-white p-4 shadow-card">
-        <div className="flex flex-col gap-3 lg:flex-row lg:flex-wrap lg:items-end xl:flex-nowrap">
-          <div className="relative min-w-0 flex-1 xl:max-w-xl">
-            <Search
-              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400"
-              strokeWidth={2}
-              aria-hidden
-            />
-            <input
-              type="search"
-              placeholder="Sipariş no, müşteri adı veya e-posta…"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              className="w-full rounded-xl border border-neutral-200 bg-neutral-50/50 py-2.5 pl-10 pr-4 text-sm text-neutral-900 outline-none ring-brand ring-offset-2 placeholder:text-neutral-400 focus:border-brand/40 focus:bg-white focus:ring-2"
-              autoComplete="off"
-            />
-          </div>
-          <div className="flex w-full flex-col gap-3 sm:flex-row sm:flex-wrap lg:w-auto xl:flex-nowrap">
-            <label className="flex min-w-[11rem] items-center gap-2 rounded-xl border border-neutral-300 bg-white px-3 py-0.5 ring-brand ring-offset-2 focus-within:border-brand/40 focus-within:ring-2">
-              <Calendar className="h-4 w-4 shrink-0 text-neutral-400" aria-hidden />
-              <input
-                type="date"
-                value={dateFilter}
-                onChange={(e) => setDateFilter(e.target.value)}
-                className="w-full min-h-[42px] border-0 bg-transparent py-2 text-sm text-neutral-900 outline-none placeholder:text-neutral-400"
-                title="Bu güne göre filtre"
-              />
-            </label>
-            <button
-              type="button"
-              disabled={exporting || loading}
-              onClick={() => csvExport()}
-              className="inline-flex items-center justify-center gap-2 rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm font-semibold text-asta-navy shadow-sm transition-colors hover:bg-brand-muted hover:border-brand/25 disabled:opacity-50"
-            >
-              <Download className="h-4 w-4 shrink-0" strokeWidth={1.75} />
-              {exporting ? 'CSV…' : 'CSV indir'}
-            </button>
-          </div>
-          <p className="w-full shrink-0 text-center text-xs font-semibold uppercase tracking-wide text-neutral-500 lg:w-auto lg:text-left xl:ml-auto">
-            {loading ? '…' : `${filtered.length} sipariş`}
-          </p>
-        </div>
-      </div>
+      <AdminOrdersFilterSortBar
+        query={query}
+        setQuery={setQuery}
+        filters={listFilters}
+        setFilters={setListFilters}
+        sortKey={sortKey}
+        setSortKey={setSortKey}
+        onExportCsv={csvExport}
+        exporting={exporting}
+        loading={loading}
+        resultCount={filtered.length}
+        totalInTab={tabOrders.length}
+      />
 
       {error && !detailOrder && (
         <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900">{error}</div>
@@ -331,6 +282,10 @@ export default function AdminOrdersPage() {
                 onDetail={openDetail}
                 showInvoiceUpload={activeTab === 'teslim-edildi'}
                 onInvoiceUploaded={load}
+                onLabelPrinted={(id) => {
+                  markOrderLabelPrinted(id);
+                  setLabelPrintedTick((t) => t + 1);
+                }}
               />
             ))}
           </div>
