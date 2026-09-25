@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { SlidersHorizontal, X } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import CatalogProductCard from '../components/products/CatalogProductCard.jsx';
@@ -11,6 +11,17 @@ import PageSeo from '../components/PageSeo.jsx';
 import { buildCanonicalUrl } from '../lib/siteSeo.js';
 import { buildSiteDocumentTitle } from '../lib/siteDocumentTitle.js';
 import { useSiteSettings } from '../context/SiteSettingsContext.jsx';
+
+const PAGE_SIZE_OPTIONS = [15, 25, 50];
+
+/** @param {number} current @param {number} total */
+function catalogPageNumbers(current, total) {
+  if (total <= 7) {
+    return Array.from({ length: total }, (_, i) => i + 1);
+  }
+  const set = new Set([1, total, current, current - 1, current + 1]);
+  return [...set].filter((p) => p >= 1 && p <= total).sort((a, b) => a - b);
+}
 
 export default function ProductsPage() {
   const [searchParams] = useSearchParams();
@@ -27,6 +38,10 @@ export default function ProductsPage() {
   const [loadError, setLoadError] = useState('');
   const [loading, setLoading] = useState(true);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
+  const gridTopRef = useRef(null);
+  const skipPageScrollRef = useRef(true);
 
   const [skinCatalogRows, setSkinCatalogRows] = useState(() => normalizeSkinCatalogRows());
 
@@ -149,6 +164,29 @@ export default function ProductsPage() {
 
     return list;
   }, [sortBy, selectedCategories, selectedSkinTypes, products, tagFilter]);
+
+  const totalPages = Math.max(1, Math.ceil(visibleProducts.length / pageSize) || 1);
+
+  const paginatedProducts = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return visibleProducts.slice(start, start + pageSize);
+  }, [visibleProducts, page, pageSize]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [sortBy, selectedCategories, selectedSkinTypes, tagFilter, pageSize]);
+
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
+
+  useEffect(() => {
+    if (skipPageScrollRef.current) {
+      skipPageScrollRef.current = false;
+      return;
+    }
+    gridTopRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, [page]);
 
   const fieldClass = 'space-y-3';
   const legendClass = 'text-sm font-bold text-asta-navy';
@@ -323,9 +361,31 @@ export default function ProductsPage() {
                 {tagFilter === 'cok-satan' ? 'Çok satan ürünler' : 'Tüm Ürünler'}
               </h1>
               <p className="mt-2 text-sm text-neutral-500">
-                {loading ? 'Ürünler yükleniyor…' : `${visibleProducts.length} ürün listeleniyor`}
+                {loading
+                  ? 'Ürünler yükleniyor…'
+                  : visibleProducts.length === 0
+                    ? '0 ürün'
+                    : `${visibleProducts.length} ürün · sayfa ${page}/${totalPages}`}
               </p>
             </div>
+            <div className="flex flex-wrap items-center gap-3">
+              {!loading && visibleProducts.length > 0 ? (
+                <label className="flex items-center gap-2 text-sm text-neutral-700">
+                  <span className="whitespace-nowrap font-medium">Sayfa başına</span>
+                  <select
+                    value={pageSize}
+                    onChange={(e) => setPageSize(Number(e.target.value))}
+                    className="rounded-lg border border-neutral-300 bg-white px-2.5 py-2 text-sm font-semibold text-asta-navy outline-none ring-brand focus:border-neutral-400 focus:ring-2"
+                    aria-label="Sayfa başına ürün sayısı"
+                  >
+                    {PAGE_SIZE_OPTIONS.map((n) => (
+                      <option key={n} value={n}>
+                        {n}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : null}
             <button
               type="button"
               onClick={() => setMobileFiltersOpen(true)}
@@ -339,6 +399,7 @@ export default function ProductsPage() {
                 </span>
               ) : null}
             </button>
+            </div>
           </div>
 
           {loadError && (
@@ -347,8 +408,9 @@ export default function ProductsPage() {
             </div>
           )}
 
+          <div ref={gridTopRef} className="scroll-mt-24" aria-hidden />
           <div className="mt-8 grid grid-cols-2 items-stretch gap-3 sm:gap-6 xl:grid-cols-3">
-            {visibleProducts.map((p) => (
+            {paginatedProducts.map((p) => (
               <CatalogProductCard
                 key={p.id}
                 brand={p.brand}
@@ -359,6 +421,57 @@ export default function ProductsPage() {
               />
             ))}
           </div>
+
+          {!loading && visibleProducts.length > 0 && totalPages > 1 ? (
+            <nav
+              className="mt-10 flex flex-wrap items-center justify-center gap-2"
+              aria-label="Ürün sayfaları"
+            >
+              <button
+                type="button"
+                disabled={page <= 1}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                className="rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm font-semibold text-asta-navy hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Önceki
+              </button>
+              <ul className="flex flex-wrap items-center gap-1">
+                {catalogPageNumbers(page, totalPages).map((num, idx, arr) => {
+                  const prevNum = arr[idx - 1];
+                  const gap = prevNum != null && num - prevNum > 1;
+                  return (
+                    <li key={num} className="flex items-center gap-1">
+                      {gap ? (
+                        <span className="px-1 text-neutral-400" aria-hidden>
+                          …
+                        </span>
+                      ) : null}
+                      <button
+                        type="button"
+                        onClick={() => setPage(num)}
+                        aria-current={page === num ? 'page' : undefined}
+                        className={`min-w-[2.25rem] rounded-lg px-2.5 py-2 text-sm font-semibold ${
+                          page === num
+                            ? 'bg-brand text-white'
+                            : 'border border-neutral-300 bg-white text-asta-navy hover:bg-neutral-50'
+                        }`}
+                      >
+                        {num}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+              <button
+                type="button"
+                disabled={page >= totalPages}
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                className="rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm font-semibold text-asta-navy hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Sonraki
+              </button>
+            </nav>
+          ) : null}
 
           {!loading && visibleProducts.length === 0 && !loadError && (
             <p className="mt-12 rounded-lg border border-dashed border-neutral-300 bg-neutral-50 py-12 text-center text-neutral-600">
