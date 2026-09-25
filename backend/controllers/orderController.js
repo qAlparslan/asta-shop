@@ -653,6 +653,7 @@ exports.shipOrder = async (req, res) => {
             data: { order, mng: mngMeta },
         });
     } catch (err) {
+        console.error('[shipOrder]', err?.cause || err);
         res.status(400).json({ status: 'fail', message: err.message });
     }
 };

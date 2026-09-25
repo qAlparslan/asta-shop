@@ -21,4 +21,14 @@ MNG_DELIVERY_TYPE=1
 
 **Önemli:** IBM anahtarları ile `/token` için ayrıca **müşteri numarası + şifre** gerekir (Online Şube → Tanımlamalar → API kullanıcısı).
 
+Şifrede `#` veya boşluk varsa `.env` içinde tırnak kullanın: `MNG_CUSTOMER_PASSWORD="..."`.
+
+Sunucuda bağlantı testi:
+
+```bash
+cd backend && node scripts/mng-ping.js
+```
+
+Panelde sadece `fetch failed` görürseniz: backend MNG host’una çıkamıyordur (firewall / yanlış `MNG_API_BASE_URL`).
+
 Akış: `createOrder` → `createbarcode` → `orders.trackingNumber` + mail.
