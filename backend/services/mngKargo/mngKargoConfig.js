@@ -9,6 +9,12 @@ function isMngKargoEnabled() {
     );
 }
 
+/** @returns {boolean} api.mngkargo.com.tr (canlı) — testapi değil */
+function isMngProductionApi() {
+    const baseUrl = (process.env.MNG_API_BASE_URL || 'https://testapi.mngkargo.com.tr').replace(/\/$/, '');
+    return !/testapi\.mngkargo\.com\.tr/i.test(baseUrl);
+}
+
 function getMngKargoConfig() {
     const baseUrl = (process.env.MNG_API_BASE_URL || 'https://testapi.mngkargo.com.tr').replace(/\/$/, '');
     return {
@@ -26,4 +32,4 @@ function getMngKargoConfig() {
     };
 }
 
-module.exports = { isMngKargoEnabled, getMngKargoConfig };
+module.exports = { isMngKargoEnabled, getMngKargoConfig, isMngProductionApi };

@@ -18,7 +18,7 @@ const { ensurePaytrRefundForPaidOrder } = require('../services/paytrOrderRefund'
 const { uuidToMerchantOid } = require('../utils/paytrMerchantOid');
 const { enrichOrdersItemsWithBarcodes } = require('../utils/enrichOrderItemsBarcodes');
 const { saveOrderInvoicePdfAndEmail } = require('../services/orderInvoicePdfService');
-const { isMngKargoEnabled } = require('../services/mngKargo/mngKargoConfig');
+const { isMngKargoEnabled, isMngProductionApi } = require('../services/mngKargo/mngKargoConfig');
 const {
     createMngShipmentForOrder,
     trackMngByReference,
@@ -574,6 +574,7 @@ exports.getMngShippingConfig = (_req, res) => {
         status: 'success',
         data: {
             mngAutoShipEnabled: isMngKargoEnabled(),
+            mngApiEnvironment: isMngProductionApi() ? 'production' : 'sandbox',
         },
     });
 };

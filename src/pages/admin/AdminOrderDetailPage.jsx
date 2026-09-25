@@ -99,6 +99,7 @@ export default function AdminOrderDetailPage() {
   const [shipping, setShipping] = useState(false);
   const [adminOpen, setAdminOpen] = useState(false);
   const [mngAutoShip, setMngAutoShip] = useState(false);
+  const [mngProduction, setMngProduction] = useState(false);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -126,7 +127,10 @@ export default function AdminOrderDetailPage() {
 
   useEffect(() => {
     apiFetch('/api/orders/shipping/mng-config')
-      .then((res) => setMngAutoShip(Boolean(res?.data?.mngAutoShipEnabled)))
+      .then((res) => {
+        setMngAutoShip(Boolean(res?.data?.mngAutoShipEnabled));
+        setMngProduction(res?.data?.mngApiEnvironment === 'production');
+      })
       .catch(() => setMngAutoShip(false));
   }, []);
 
@@ -517,6 +521,11 @@ export default function AdminOrderDetailPage() {
                   ? 'DHL eCommerce (MNG) API ile gönderi ve barkod oluşturulur; takip numarası otomatik kaydedilir.'
                   : 'Kargo takip numarasını girin; sipariş kargoda olur ve müşteriye e-posta gider.'}
               </p>
+              {mngAutoShip && mngProduction ? (
+                <p className="mb-3 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-900">
+                  Canlı MNG API — bu işlem gerçek kargo gönderisi oluşturur.
+                </p>
+              ) : null}
               {!mngAutoShip ? (
                 <>
                   <label className="text-xs font-semibold text-neutral-600">Kargo takip numarası *</label>
