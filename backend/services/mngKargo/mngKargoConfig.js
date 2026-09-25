@@ -9,14 +9,34 @@ function isMngKargoEnabled() {
     );
 }
 
+const MNG_SANDBOX_URL = 'https://testapi.mngkargo.com.tr';
+const MNG_PRODUCTION_URL = 'https://api.mngkargo.com.tr';
+
+/** @returns {'sandbox' | 'production'} */
+function getMngApiEnv() {
+    const mode = String(process.env.MNG_API_ENV || 'sandbox').trim().toLowerCase();
+    if (mode === 'production' || mode === 'prod' || mode === 'live' || mode === 'canli') {
+        return 'production';
+    }
+    return 'sandbox';
+}
+
+function resolveMngBaseUrl() {
+    const env = getMngApiEnv();
+    if (env === 'sandbox') {
+        return MNG_SANDBOX_URL;
+    }
+    const custom = String(process.env.MNG_API_BASE_URL || MNG_PRODUCTION_URL).replace(/\/$/, '');
+    return custom || MNG_PRODUCTION_URL;
+}
+
 /** @returns {boolean} api.mngkargo.com.tr (canlı) — testapi değil */
 function isMngProductionApi() {
-    const baseUrl = (process.env.MNG_API_BASE_URL || 'https://testapi.mngkargo.com.tr').replace(/\/$/, '');
-    return !/testapi\.mngkargo\.com\.tr/i.test(baseUrl);
+    return getMngApiEnv() === 'production';
 }
 
 function getMngKargoConfig() {
-    const baseUrl = (process.env.MNG_API_BASE_URL || 'https://testapi.mngkargo.com.tr').replace(/\/$/, '');
+    const baseUrl = resolveMngBaseUrl();
     return {
         baseUrl,
         clientId: process.env.MNG_IBM_CLIENT_ID || '',
@@ -32,4 +52,4 @@ function getMngKargoConfig() {
     };
 }
 
-module.exports = { isMngKargoEnabled, getMngKargoConfig, isMngProductionApi };
+module.exports = { isMngKargoEnabled, getMngKargoConfig, isMngProductionApi, getMngApiEnv };

@@ -5,12 +5,18 @@
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 
-const { isMngKargoEnabled, getMngKargoConfig, isMngProductionApi } = require('../services/mngKargo/mngKargoConfig');
+const {
+    isMngKargoEnabled,
+    getMngKargoConfig,
+    isMngProductionApi,
+    getMngApiEnv,
+} = require('../services/mngKargo/mngKargoConfig');
 const { getMngJwt, clearMngTokenCache } = require('../services/mngKargo/mngKargoHttp');
 
 async function main() {
     const cfg = getMngKargoConfig();
     console.log('MNG_API_BASE_URL:', cfg.baseUrl);
+    console.log('MNG_API_ENV:', getMngApiEnv());
     console.log('Ortam:', isMngProductionApi() ? 'CANLI (production)' : 'sandbox (testapi)');
     if (isMngProductionApi()) {
         console.warn('Uyarı: Canlı API — admin "DHL ile kargoya ver" gerçek gönderi oluşturur.');

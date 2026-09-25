@@ -7,6 +7,7 @@
 
 ```env
 MNG_KARGO_ENABLED=true
+MNG_API_ENV=sandbox
 MNG_API_BASE_URL=https://testapi.mngkargo.com.tr
 MNG_IBM_CLIENT_ID=          # Uygulama API Anahtarı (X-IBM-Client-Id)
 MNG_IBM_CLIENT_SECRET=      # Güvenlik Dizisi (X-IBM-Client-Secret)
@@ -19,6 +20,10 @@ MNG_SHIPMENT_SERVICE_TYPE=1
 MNG_PAYMENT_TYPE=1
 MNG_DELIVERY_TYPE=1
 ```
+
+**Varsayılan:** `MNG_API_ENV=sandbox` — API istekleri **her zaman** `testapi.mngkargo.com.tr` adresine gider (sunucuda yanlışlıkla canlı URL kalsa bile).
+
+Canlıya geçmek için: `MNG_API_ENV=production`, `MNG_API_BASE_URL=https://api.mngkargo.com.tr` ve **apizone canlı** IBM anahtarları.
 
 **Önemli:** IBM anahtarları ile `/token` için ayrıca **müşteri numarası + şifre** gerekir (Online Şube → Tanımlamalar → API kullanıcısı).
 
@@ -41,6 +46,7 @@ Kod değişikliği gerekmez; **sunucudaki** `backend/.env` güncellenir. Sandbox
 
 ```env
 MNG_KARGO_ENABLED=true
+MNG_API_ENV=production
 MNG_API_BASE_URL=https://api.mngkargo.com.tr
 MNG_IBM_CLIENT_ID=<apizone CANLI uygulama anahtarı>
 MNG_IBM_CLIENT_SECRET=<apizone CANLI güvenlik dizisi>
