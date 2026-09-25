@@ -18,6 +18,12 @@ const { ensurePaytrRefundForPaidOrder } = require('../services/paytrOrderRefund'
 const { uuidToMerchantOid } = require('../utils/paytrMerchantOid');
 const { enrichOrdersItemsWithBarcodes } = require('../utils/enrichOrderItemsBarcodes');
 const { saveOrderInvoicePdfAndEmail } = require('../services/orderInvoicePdfService');
+const { isMngKargoEnabled } = require('../services/mngKargo/mngKargoConfig');
+const {
+    createMngShipmentForOrder,
+    trackMngByReference,
+    buildMngReferenceId,
+} = require('../services/mngKargo/mngKargoShipOrder');
 
 /** Stoğun düşürülmüş (commit edilmiş) sayıldığı durumlar. */
 const COMMITTED_STATUSES = new Set(['hazirlaniyor', 'kargolandi', 'teslim-edildi']);
@@ -562,16 +568,27 @@ exports.exportOrdersCsv = async (req, res) => {
     }
 };
 
+/** GET /api/orders/shipping/mng-config */
+exports.getMngShippingConfig = (_req, res) => {
+    res.status(200).json({
+        status: 'success',
+        data: {
+            mngAutoShipEnabled: isMngKargoEnabled(),
+        },
+    });
+};
+
 /**
- * Siparişi kargoya ver (manuel takip no + kargolandi + müşteri maili).
- * POST /api/orders/:id/ship  { trackingNumber }
+ * Siparişi kargoya ver.
+ * POST /api/orders/:id/ship
+ * - MNG yapılandırılmışsa: createOrder + createBarcode → otomatik takip no
+ * - Değilse veya forceManual: body.trackingNumber (manuel)
  */
 exports.shipOrder = async (req, res) => {
     try {
-        const trackingNumber = String(req.body?.trackingNumber || '').trim();
-        if (!trackingNumber) {
-            return res.status(400).json({ status: 'fail', message: 'Kargo takip numarası zorunludur.' });
-        }
+        const manualTracking = String(req.body?.trackingNumber || '').trim();
+        const forceManual = Boolean(req.body?.forceManual);
+        const useMng = isMngKargoEnabled() && !forceManual && !manualTracking;
 
         const order = await Order.findByPk(req.params.id);
         if (!order) return res.status(404).json({ status: 'fail', message: 'Sipariş bulunamadı.' });
@@ -585,12 +602,36 @@ exports.shipOrder = async (req, res) => {
             });
         }
 
+        let trackingNumber = manualTracking;
+        let mngMeta = null;
+
+        if (useMng) {
+            const mng = await createMngShipmentForOrder(order);
+            trackingNumber = mng.trackingNumber;
+            mngMeta = mng;
+        } else if (!trackingNumber) {
+            return res.status(400).json({
+                status: 'fail',
+                message: isMngKargoEnabled()
+                    ? 'Takip numarası girin veya MNG otomatik gönderi için alanı boş bırakın.'
+                    : 'Kargo takip numarası zorunludur (MNG API henüz yapılandırılmadı).',
+            });
+        }
+
         const now = new Date();
-        await order.update({
+        const patch = {
             trackingNumber,
+            carrier: useMng ? 'DHL_MNG' : order.carrier || 'DHL_MNG',
             status: 'kargolandi',
             shippedAt: order.shippedAt || now,
-        });
+        };
+        if (mngMeta) {
+            patch.mngReferenceId = mngMeta.referenceId;
+            patch.mngShipmentId = mngMeta.shipmentId;
+            patch.mngLabelPayload =
+                mngMeta.labelPayload || JSON.stringify(mngMeta.barcodes || []);
+        }
+        await order.update(patch);
         await order.reload();
 
         await logAdminAudit({
@@ -599,16 +640,73 @@ exports.shipOrder = async (req, res) => {
             action: 'order.ship',
             entityType: 'order',
             entityId: order.id,
-            meta: { trackingNumber },
+            meta: { trackingNumber, viaMng: useMng, referenceId: mngMeta?.referenceId },
         });
 
         sendOrderStatusUpdateEmail(order, 'kargolandi');
 
         res.status(200).json({
             status: 'success',
-            message: 'Sipariş kargoya verildi. Müşteriye e-posta gönderildi.',
-            data: { order },
+            message: useMng
+                ? 'DHL eCommerce (MNG) gönderisi oluşturuldu. Müşteriye e-posta gönderildi.'
+                : 'Sipariş kargoya verildi. Müşteriye e-posta gönderildi.',
+            data: { order, mng: mngMeta },
         });
+    } catch (err) {
+        res.status(400).json({ status: 'fail', message: err.message });
+    }
+};
+
+/** POST /api/orders/:id/sync-tracking — MNG durum sorgu */
+exports.syncOrderTracking = async (req, res) => {
+    try {
+        if (!isMngKargoEnabled()) {
+            return res.status(400).json({ status: 'fail', message: 'MNG API yapılandırılmamış.' });
+        }
+        const order = await Order.findByPk(req.params.id);
+        if (!order) return res.status(404).json({ status: 'fail', message: 'Sipariş bulunamadı.' });
+
+        const referenceId = order.mngReferenceId || buildMngReferenceId(order);
+        const track = await trackMngByReference(referenceId);
+
+        const events = track?.shipmentMovementList || track?.ShipmentMovementList || [];
+        const last = Array.isArray(events) && events.length ? events[events.length - 1] : null;
+        const lastDesc = String(last?.description || last?.Description || '').toLowerCase();
+
+        let newStatus = order.status;
+        if (/teslim|delivered|alıcı/i.test(lastDesc) && order.status === 'kargolandi') {
+            newStatus = 'teslim-edildi';
+        }
+
+        if (newStatus !== order.status) {
+            await order.update({ status: newStatus });
+            await order.reload();
+            if (newStatus === 'teslim-edildi') {
+                sendOrderStatusUpdateEmail(order, 'teslim-edildi');
+            }
+        }
+
+        res.status(200).json({
+            status: 'success',
+            data: { order, tracking: track },
+        });
+    } catch (err) {
+        res.status(400).json({ status: 'fail', message: err.message });
+    }
+};
+
+/** GET /api/orders/:id/shipping-label — kayıtlı etiket (ZPL/text) */
+exports.getOrderShippingLabel = async (req, res) => {
+    try {
+        const order = await Order.findByPk(req.params.id);
+        if (!order) return res.status(404).json({ status: 'fail', message: 'Sipariş bulunamadı.' });
+        const payload = String(order.mngLabelPayload || '').trim();
+        if (!payload) {
+            return res.status(404).json({ status: 'fail', message: 'Bu sipariş için kayıtlı etiket yok.' });
+        }
+        res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+        res.setHeader('Content-Disposition', `attachment; filename="label-${order.mngReferenceId || order.id}.zpl"`);
+        res.send(payload);
     } catch (err) {
         res.status(400).json({ status: 'fail', message: err.message });
     }

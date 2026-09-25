@@ -57,7 +57,10 @@ router.use(authMiddleware.restrictTo('admin'));
 router.get('/stats/v2', orderController.getDashboardStatsV2);
 router.get('/stats', orderController.getDashboardStats);
 router.get('/export/csv', orderController.exportOrdersCsv);
+router.get('/shipping/mng-config', orderController.getMngShippingConfig);
 router.get('/', orderController.getAllOrders);
+router.get('/:id/shipping-label', orderController.getOrderShippingLabel);
+router.post('/:id/sync-tracking', orderController.syncOrderTracking);
 router.post('/:id/ship', orderController.shipOrder);
 router.post(
     '/:id/invoice-pdf',

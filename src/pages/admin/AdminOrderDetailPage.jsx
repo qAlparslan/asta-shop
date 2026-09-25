@@ -9,7 +9,7 @@ import {
   Truck,
   XCircle,
 } from 'lucide-react';
-import { apiFetch } from '../../api/client.js';
+import { apiFetch, getToken } from '../../api/client.js';
 import { formatTRY } from '../../lib/formatTRY.js';
 import { inputClass } from '../../lib/formStyles.js';
 import { displayOrderNumber } from '../../lib/orderDisplayNumber.js';
@@ -98,6 +98,7 @@ export default function AdminOrderDetailPage() {
   const [saving, setSaving] = useState(false);
   const [shipping, setShipping] = useState(false);
   const [adminOpen, setAdminOpen] = useState(false);
+  const [mngAutoShip, setMngAutoShip] = useState(false);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -122,6 +123,12 @@ export default function AdminOrderDetailPage() {
   useEffect(() => {
     load();
   }, [load]);
+
+  useEffect(() => {
+    apiFetch('/api/orders/shipping/mng-config')
+      .then((res) => setMngAutoShip(Boolean(res?.data?.mngAutoShipEnabled)))
+      .catch(() => setMngAutoShip(false));
+  }, []);
 
   useEffect(() => {
     if (searchParams.get('yonetim') === '1') {
@@ -187,7 +194,7 @@ export default function AdminOrderDetailPage() {
   const shipOrder = async () => {
     if (!order) return;
     const no = (modalTracking || '').trim();
-    if (!no) {
+    if (!mngAutoShip && !no) {
       setError('Kargo takip numarası zorunludur.');
       return;
     }
@@ -196,13 +203,35 @@ export default function AdminOrderDetailPage() {
     try {
       await apiFetch(`/api/orders/${order.id}/ship`, {
         method: 'POST',
-        body: { trackingNumber: no },
+        body: no ? { trackingNumber: no } : {},
       });
       await load();
     } catch (e) {
       setError(e.message || 'Kargoya verilemedi.');
     } finally {
       setShipping(false);
+    }
+  };
+
+  const downloadShippingLabel = async () => {
+    if (!order) return;
+    try {
+      const token = getToken();
+      const origin = (import.meta.env.VITE_API_ORIGIN || '').replace(/\/$/, '');
+      const res = await fetch(`${origin}/api/orders/${order.id}/shipping-label`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!res.ok) throw new Error('Etiket indirilemedi.');
+      const text = await res.text();
+      const blob = new Blob([text], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `kargo-etiket-${displayOrderNumber(order)}.zpl`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Etiket indirilemedi.');
     }
   };
 
@@ -483,23 +512,45 @@ export default function AdminOrderDetailPage() {
                 <Truck className="h-4 w-4" strokeWidth={1.75} />
                 Kargoya ver
               </div>
-              <label className="text-xs font-semibold text-neutral-600">Kargo takip numarası *</label>
-              <input
-                type="text"
-                placeholder="Örn: 614118757013"
-                value={modalTracking}
-                onChange={(e) => setModalTracking(e.target.value)}
-                className={`mt-1 ${inputClass} rounded-xl`}
-              />
+              <p className="mb-3 text-xs leading-relaxed text-neutral-700">
+                {mngAutoShip
+                  ? 'DHL eCommerce (MNG) API ile gönderi ve barkod oluşturulur; takip numarası otomatik kaydedilir.'
+                  : 'Kargo takip numarasını girin; sipariş kargoda olur ve müşteriye e-posta gider.'}
+              </p>
+              {!mngAutoShip ? (
+                <>
+                  <label className="text-xs font-semibold text-neutral-600">Kargo takip numarası *</label>
+                  <input
+                    type="text"
+                    placeholder="Örn: 614118757013"
+                    value={modalTracking}
+                    onChange={(e) => setModalTracking(e.target.value)}
+                    className={`mt-1 ${inputClass} rounded-xl`}
+                  />
+                </>
+              ) : null}
               <button
                 type="button"
-                disabled={shipping || !(modalTracking || '').trim()}
+                disabled={shipping || (!mngAutoShip && !(modalTracking || '').trim())}
                 onClick={() => shipOrder()}
                 className="mt-3 inline-flex items-center gap-2 rounded-xl bg-brand px-5 py-2.5 text-sm font-bold text-white hover:bg-brand-hover disabled:bg-neutral-300"
               >
                 <Truck className="h-4 w-4" strokeWidth={2} />
-                {shipping ? 'Gönderiliyor…' : 'Kargoya ver ve müşteriye bildir'}
+                {shipping
+                  ? 'Gönderiliyor…'
+                  : mngAutoShip
+                    ? 'DHL ile kargoya ver'
+                    : 'Kargoya ver ve müşteriye bildir'}
               </button>
+              {order.mngLabelPayload ? (
+                <button
+                  type="button"
+                  onClick={() => downloadShippingLabel()}
+                  className="mt-2 block text-xs font-semibold text-brand hover:underline"
+                >
+                  Kargo etiketini indir
+                </button>
+              ) : null}
             </section>
           )}
 

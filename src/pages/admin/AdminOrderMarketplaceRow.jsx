@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { ChevronRight, Truck } from 'lucide-react';
 import { formatTRY } from '../../lib/formatTRY.js';
 import { pickProductImagePath } from '../../lib/productMap.js';
@@ -17,22 +18,103 @@ const cell = 'flex min-h-[148px] flex-col border-neutral-200 px-4 py-4 lg:border
  */
 function OtherActionsMenu({ onManage, onPrintLabel }) {
   const [open, setOpen] = useState(false);
-  const rootRef = useRef(/** @type {HTMLDivElement | null} */ (null));
+  const [menuPos, setMenuPos] = useState(/** @type {{ top: number; left: number } | null} */ (null));
+  const buttonRef = useRef(/** @type {HTMLButtonElement | null} */ (null));
+  const menuRef = useRef(/** @type {HTMLDivElement | null} */ (null));
+
+  const updateMenuPosition = useCallback(() => {
+    const btn = buttonRef.current;
+    const menu = menuRef.current;
+    if (!btn || !menu) return;
+    const rect = btn.getBoundingClientRect();
+    const menuH = menu.offsetHeight;
+    const menuW = menu.offsetWidth;
+    const gap = 4;
+    const pad = 8;
+    let top = rect.bottom + gap;
+    if (top + menuH > window.innerHeight - pad) {
+      top = rect.top - menuH - gap;
+    }
+    top = Math.max(pad, Math.min(top, window.innerHeight - menuH - pad));
+    let left = rect.right - menuW;
+    left = Math.max(pad, Math.min(left, window.innerWidth - menuW - pad));
+    setMenuPos({ top, left });
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!open) {
+      setMenuPos(null);
+      return;
+    }
+    updateMenuPosition();
+  }, [open, updateMenuPosition]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onScrollOrResize = () => updateMenuPosition();
+    window.addEventListener('resize', onScrollOrResize);
+    window.addEventListener('scroll', onScrollOrResize, true);
+    return () => {
+      window.removeEventListener('resize', onScrollOrResize);
+      window.removeEventListener('scroll', onScrollOrResize, true);
+    };
+  }, [open, updateMenuPosition]);
 
   useEffect(() => {
     if (!open) return;
     const onDoc = (e) => {
-      if (rootRef.current && !rootRef.current.contains(/** @type {Node} */ (e.target))) {
-        setOpen(false);
-      }
+      const t = /** @type {Node} */ (e.target);
+      if (buttonRef.current?.contains(t) || menuRef.current?.contains(t)) return;
+      setOpen(false);
     };
     document.addEventListener('mousedown', onDoc);
     return () => document.removeEventListener('mousedown', onDoc);
   }, [open]);
 
+  const menu =
+    open && typeof document !== 'undefined'
+      ? createPortal(
+          <div
+            ref={menuRef}
+            role="menu"
+            style={
+              menuPos
+                ? { top: menuPos.top, left: menuPos.left }
+                : { top: -9999, left: -9999, visibility: 'hidden' }
+            }
+            className="fixed z-[200] min-w-[13.5rem] overflow-hidden rounded-lg border border-neutral-200 bg-white py-1 shadow-lg"
+          >
+            <button
+              type="button"
+              role="menuitem"
+              className="block w-full px-3 py-2.5 text-left text-xs font-semibold text-neutral-800 hover:bg-neutral-50"
+              onClick={() => {
+                setOpen(false);
+                onManage();
+              }}
+            >
+              Kargo ve durum güncelle
+            </button>
+            <button
+              type="button"
+              role="menuitem"
+              className="block w-full px-3 py-2.5 text-left text-xs font-semibold text-neutral-800 hover:bg-neutral-50"
+              onClick={() => {
+                setOpen(false);
+                onPrintLabel();
+              }}
+            >
+              Etiketi yazdır
+            </button>
+          </div>,
+          document.body,
+        )
+      : null;
+
   return (
-    <div className="relative w-full" ref={rootRef}>
+    <div className="relative w-full">
       <button
+        ref={buttonRef}
         type="button"
         aria-expanded={open}
         aria-haspopup="menu"
@@ -41,35 +123,7 @@ function OtherActionsMenu({ onManage, onPrintLabel }) {
       >
         Diğer işlemler {open ? '▴' : '▾'}
       </button>
-      {open ? (
-        <div
-          role="menu"
-          className="absolute right-0 top-full z-30 mt-1 min-w-[13.5rem] overflow-hidden rounded-lg border border-neutral-200 bg-white py-1 shadow-lg"
-        >
-          <button
-            type="button"
-            role="menuitem"
-            className="block w-full px-3 py-2.5 text-left text-xs font-semibold text-neutral-800 hover:bg-neutral-50"
-            onClick={() => {
-              setOpen(false);
-              onManage();
-            }}
-          >
-            Kargo ve durum güncelle
-          </button>
-          <button
-            type="button"
-            role="menuitem"
-            className="block w-full px-3 py-2.5 text-left text-xs font-semibold text-neutral-800 hover:bg-neutral-50"
-            onClick={() => {
-              setOpen(false);
-              onPrintLabel();
-            }}
-          >
-            Etiketi yazdır
-          </button>
-        </div>
-      ) : null}
+      {menu}
     </div>
   );
 }

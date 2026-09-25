@@ -91,6 +91,20 @@ const Order = sequelize.define('Order', {
         type: DataTypes.DATE,
         allowNull: true,
     },
+    /** MNG / DHL eCommerce TR ApiZone referans (createOrder / createBarcode) */
+    mngReferenceId: {
+        type: DataTypes.STRING(64),
+        allowNull: true,
+    },
+    mngShipmentId: {
+        type: DataTypes.STRING(32),
+        allowNull: true,
+    },
+    /** ZPL veya barkod etiket ham verisi (createBarcode) */
+    mngLabelPayload: {
+        type: DataTypes.TEXT('medium'),
+        allowNull: true,
+    },
     /** Müşteri e-fatura / e-arşiv talebi (firma seçimi entegrasyonda yapılabilir) */
     wantsElectronicInvoice: {
         type: DataTypes.BOOLEAN,

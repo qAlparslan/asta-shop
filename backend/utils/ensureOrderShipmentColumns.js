@@ -12,6 +12,9 @@ async function ensureOrderShipmentColumns() {
             ddl: 'VARCHAR(20) NULL DEFAULT NULL AFTER `trackingNumber`',
         },
         { name: 'shippedAt', ddl: 'DATETIME NULL DEFAULT NULL' },
+        { name: 'mngReferenceId', ddl: 'VARCHAR(64) NULL DEFAULT NULL' },
+        { name: 'mngShipmentId', ddl: 'VARCHAR(32) NULL DEFAULT NULL' },
+        { name: 'mngLabelPayload', ddl: 'MEDIUMTEXT NULL DEFAULT NULL' },
     ];
 
     for (const col of columns) {
