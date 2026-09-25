@@ -85,7 +85,9 @@ Admin panelde ortam `production` ise kargoya ver bölümünde **canlı API** uya
 Sunucuda bağlantı testi:
 
 ```bash
-cd backend && node scripts/mng-ping.js
+cd backend && npm run mng:ping
+# yalnızca token:
+cd backend && node scripts/mng-ping.js --quick
 ```
 
 Akış: `createOrder` → `createbarcode` → `orders.trackingNumber` + mail.
