@@ -50,6 +50,7 @@ async function main() {
     } catch (e) {
         console.error('\n[1/2] Token: HATA');
         console.error(e.message);
+        console.error('[2/2] CBS Info: atlandı (önce geçerli token gerekir).');
         process.exit(1);
     }
 
